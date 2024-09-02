@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 def check_payment_status(payment_id):
     try:
         client = Client(
-            access_token=os.environ.get('SQUARE_ACCESS_TOKEN'),
+            access_token="EAAAl7xof62WZ9eKwaJNvCRTvGt9l2knAO0o2oKSkOj9MwWWsNtiSWVWx-7bvKBz",
             environment='sandbox'
         )
 
@@ -99,7 +99,7 @@ class PaymentAPIView(APIView):
             return Response({"status": False, "data": "You already paid for this premium."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             client = Client(
-                access_token=os.environ.get("SQUARE_ACCESS_TOKEN"),
+                access_token="EAAAl7xof62WZ9eKwaJNvCRTvGt9l2knAO0o2oKSkOj9MwWWsNtiSWVWx-7bvKBz",
                 environment="sandbox"
             )
             idempotency_key = str(uuid.uuid4())

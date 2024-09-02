@@ -179,6 +179,7 @@ class VideoAddAPIView(APIView):
                 for chunk in uploaded_video.chunks():
                     temp_file.write(chunk)
             try:
+                print(request.user.usertype)
                 if request.user.usertype == 3:
                     with transaction.atomic():
                         video = serializer.save(client=request.user, tourplace=tourplace, status=False)
@@ -188,11 +189,12 @@ class VideoAddAPIView(APIView):
                         payment_log.remain -= 1
                         payment_log.save()
                         subprocess.Popen(
-                            ['D:\\Project\\MyProject\\OttisTourist\\1880_video_update_backend\\otisenv\\Scripts\\python.exe', 'D:\\Project\\MyProject\\OttisTourist\\1880_video_update_backend\\tourvideoproject\\videomgmt\\video_processing.py', str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
+                            ['/var/www/htdocs/Video_Backend/otisenv/bin/python', '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py', str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
                         )
                 else:
+                    video = serializer.save(client=request.user, tourplace=tourplace, status=False)
                     subprocess.Popen(
-                        ['D:\\Project\\MyProject\\OttisTourist\\1880_video_update_backend\\otisenv\\Scripts\\python.exe', 'D:\\Project\\MyProject\\OttisTourist\\1880_video_update_backend\\tourvideoproject\\videomgmt\\video_processing.py', str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
+                        ['/var/www/htdocs/Video_Backend/otisenv/bin/python', '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py', str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
                     )
             except PaymentLogs.DoesNotExist:
                 video_file_path = video.video_path.path
@@ -258,7 +260,7 @@ def download_video(request):
     video_url = request.GET.get('video_url')
     if not video_url:
         raise Http404("Video URL not provided")
-    video_path = os.path.join(settings.MEDIA_ROOT, video_url.replace('http://localhost:8000/media/', '').replace('/', os.sep))
+    video_path = os.path.join(settings.MEDIA_ROOT, video_url.replace('https://api.emmysvideos.com/media/', '').replace('/', os.sep))
     if not os.path.exists(video_path):
         raise Http404("Video not found")
     response = FileResponse(open(video_path, 'rb'), as_attachment=True, filename=os.path.basename(video_path))

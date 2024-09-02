@@ -9,7 +9,7 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Set up Django environment
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "your_project_name.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tourvideoproject.settings")
 application = get_wsgi_application()
 
 import django
@@ -31,7 +31,7 @@ def convert_webm_to_mp4(webm_path, mp4_path):
     if not os.path.exists(webm_path):
         raise ValueError(f"Input file does not exist: {webm_path}")
     command = [
-        'ffmpeg', '-i', webm_path, '-c:v', 'libx264', '-crf', '23', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-movflags', 'faststart', mp4_path
+        '/usr/local/bin/ffmpeg', '-i', webm_path, '-c:v', 'h264_nvenc', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-movflags', 'faststart', mp4_path
     ]
     print("starting to convert webm to mp4")
     print(webm_path)
@@ -61,7 +61,7 @@ def process_video(video_id, user_id, original_filename, tourplace):
     if not header or not footer:
         video.status = False
         video.save()
-        video_url = "http://localhost:8000/media/" + str(video.video_path)
+        video_url = "https://api.emmysvideos.com/media/" + str(video.video_path)
         send_notification_email(user, video_url, '')
         return
     
@@ -84,7 +84,7 @@ def process_video(video_id, user_id, original_filename, tourplace):
         video.video_path = final_video_relative_path
         video.status = True
         video.save()
-        video_url = "http://localhost:8000/media/" + final_video_relative_path
+        video_url = "https://api.emmysvideos.com/media/" + final_video_relative_path
         send_notification_email(user, video_url, final_video_name)
         
     finally:

@@ -281,7 +281,7 @@ class InviteUserView(APIView):
             return Response({"status": True, "data": {"msg": "You don't have any permission to create ISP account."}})
         invited_by = request.user
         Invitation.objects.create(email = email, tourplace = tourplace, token = token, invited_by = invited_by)
-        invitation_link = f"{request.scheme}://{request.get_host()}/set_password/{token}"
+        invitation_link = f"https://emmysvideos.com/set_password/{token}"
         subject = 'Invitation to Join'
         message = render_to_string('isp_register.html', {
             'invitation_link': invitation_link

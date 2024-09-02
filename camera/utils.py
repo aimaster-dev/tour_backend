@@ -15,16 +15,15 @@ def convert_rtsp_to_hls(rtsp_url, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     command = [
-        'ffmpeg', '-rtsp_transport', 'tcp', '-analyzeduration', '50000000', '-probesize', '50000000',
+        '/usr/local/bin/ffmpeg', '-rtsp_transport', 'tcp', '-analyzeduration', '50000000', '-probesize', '50000000',
         '-i', rtsp_url,
-        '-map', '0:v:0', '-map', '0:a:0',
-        '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
+        '-c:v', 'h264_nvenc', '-preset', 'fast', '-cq:v', '28',  # Start simple
         '-c:a', 'aac', '-ar', '44100', '-b:a', '128k',
-        '-f', 'hls', '-hls_time', '4', '-hls_list_size', '3',  # Keep only the last 3 segments
-        '-hls_flags', 'delete_segments', '-hls_delete_threshold', '1', # Delete segments once 4 exist
+        '-f', 'hls', '-hls_time', '4', '-hls_list_size', '3',
+        '-hls_flags', 'delete_segments', '-hls_delete_threshold', '1',
         f'{output_dir}/index.m3u8'
     ]
-    
+
     process = subprocess.Popen(command)
     processes[output_dir] = process
 

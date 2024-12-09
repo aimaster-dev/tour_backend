@@ -5,7 +5,7 @@ class PaymentLogsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PaymentLogs
-        fields = ["id", "user", "price", "amount", "remain", "status", "message", "comment", "created_at", "updated_at"]
+        fields = ["id", "user", "price", "amount", "videoremain", "snapshotremain", "status", "message", "comment", "created_at", "updated_at"]
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():

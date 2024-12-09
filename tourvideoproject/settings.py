@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 # Application definition
 
 INSTALLED_APPS = [
@@ -184,6 +184,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
     'Cache-control',
+    'range'
 ]
 
 CORS_ORIGIN_ALLOW_ALL = False
@@ -198,3 +199,4 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'otis1880town@gmail.com'
 EMAIL_HOST_PASSWORD = "xofv tgul nlyv vrrb"
 DEFAULT_FROM_EMAIL = 'otis1880town@gmail.com'
+

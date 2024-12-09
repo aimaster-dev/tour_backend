@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Header, Footer, Video
+from .models import Header, Footer, Video, SnapShot
 
 class HeaderSerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,11 +40,11 @@ class FooterSerializer(serializers.ModelSerializer):
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'client', 'tourplace', 'video_path', 'status', 'created_at', 'updated_at', 'thumbnail']
-        read_only_fields = ['thumbnail']  # Make 'thumbnail' field read-only
+        fields = ['id', 'tourplace', 'video_path', 'status', 'created_at', 'updated_at', 'thumbnail']
+        # read_only_fields = ['thumbnail']  # Make 'thumbnail' field read-only
 
     def create(self, validated_data):
-        # Create a new Footer instance using the validated data.
+        # Create a new Video instance using the validated data.
         video_instance = Video.objects.create(**validated_data)
         return video_instance
 
@@ -53,3 +53,8 @@ class VideoSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+class SnatShotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SnapShot
+        fields = ['id', 'client', 'tourplace', 'image_path', 'created_at', 'updated_at']

@@ -9,3 +9,6 @@
 /otisenv
 /media
 /ffmpeg
+/opencv
+.env
+/tourvideoproject/settings.py

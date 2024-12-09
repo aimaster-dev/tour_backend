@@ -32,7 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     status = models.BooleanField(default=False)
     level = models.IntegerField(default=0)
     is_invited = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_activate = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -54,3 +54,15 @@ class Invitation(models.Model):
     tourplace = models.JSONField(blank=True, default=list)
     invited_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class EmailOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'otp_tbl'
+
+    def generate_otp(self):
+        self.otp = str(random.randint(100000, 999999))
+        self.save()

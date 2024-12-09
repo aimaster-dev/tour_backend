@@ -80,7 +80,10 @@ class PriceGetAllAPIView(APIView):
         else:
             if user.usertype == 1:
                 tourplace = TourPlace.objects.all().first()
-                Prices = Price.objects.filter(tourplace = tourplace.pk)
+                if tourplace is None:
+                    return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
+                else:
+                    Prices = Price.objects.filter(tourplace = tourplace.pk)
             elif user.usertype == 2:
                 tourplace = TourPlace.objects.filter(isp = user.pk).first()
                 Prices = Price.objects.filter(tourplace = tourplace.pk)

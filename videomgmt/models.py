@@ -74,3 +74,13 @@ class Video(models.Model):
 
     class Meta:
         db_table = 'video_tbl'
+
+class SnapShot(models.Model):
+    client = models.ForeignKey(User, on_delete=models.CASCADE)
+    tourplace = models.ForeignKey(TourPlace, on_delete=models.CASCADE)
+    image_path = models.ImageField(upload_to='images/')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'snapshot_tbl'

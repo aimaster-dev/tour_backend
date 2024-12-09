@@ -15,12 +15,13 @@ def convert_rtsp_to_hls(rtsp_url, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     command = [
-        '/usr/local/bin/ffmpeg', '-rtsp_transport', 'tcp', '-analyzeduration', '50000000', '-probesize', '50000000',
+        '/usr/local/bin/ffmpeg', '-rtsp_transport', 'udp', '-analyzeduration', '100000', '-probesize', '100000',
         '-i', rtsp_url,
-        '-c:v', 'h264_nvenc', '-preset', 'fast', '-cq:v', '28',  # Start simple
+        '-c:v', 'h264_nvenc', '-preset', 'ultrafast', '-tune', 'zerolatency', '-cq:v', '28',
         '-c:a', 'aac', '-ar', '44100', '-b:a', '128k',
-        '-f', 'hls', '-hls_time', '4', '-hls_list_size', '3',
-        '-hls_flags', 'delete_segments', '-hls_delete_threshold', '1',
+        '-f', 'hls', '-hls_time', '1', '-hls_list_size', '2',
+        '-hls_flags', 'delete_segments+single_file', '-hls_start_number_source', 'epoch',
+        '-hls_delete_threshold', '1',
         f'{output_dir}/index.m3u8'
     ]
 

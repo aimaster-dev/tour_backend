@@ -16,6 +16,7 @@ from price.serializers import PriceSerializer
 from .models import PaymentLogs
 from tourplace.models import TourPlace
 from datetime import datetime, timedelta
+from django.db.models import Q
 # Create your views here.
 
 def check_payment_status(payment_id):
@@ -88,13 +89,14 @@ class PaymentAPIView(APIView):
         data = {
             "user": user.pk,
             "price": price_id,
-            "remain": price.record_limit,
+            "snapshotremain": price.snapshot_limit,
+            "videoremain": price.record_limit,
             "amount": price.price,
             "status": 0,
             "comment": "",
             "message": ""
         }
-        logs = PaymentLogs.objects.filter(user=user.pk, price=price.pk, remain__gt = 0)
+        logs = PaymentLogs.objects.filter(user=user.pk, price=price.pk).filter(Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
         if len(logs) != 0:
             return Response({"status": False, "data": "You already paid for this premium."}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -166,7 +168,8 @@ class PaymentAPIView(APIView):
                         "date": data["updated_at"],
                         "status": data["status"],
                         "comment": data["message"],
-                        "remain": data["remain"]
+                        "videoremain": data["videoremain"],
+                        "snapshotremain": data["snapshotremain"]
                     }
                     return Response({"status": True, "data": output_data}, status=status.HTTP_201_CREATED)
                 else:
@@ -190,23 +193,28 @@ class PaymentAPIView(APIView):
         PaymentLogs.objects.bulk_update(paylogs, ['status', 'comment', 'message'])
         if user.usertype == 1:
             tourplace = TourPlace.objects.first()
+            if tourplace is None:
+                return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
             tourplace_id = request.query_params.get("tourplace", tourplace.id)
-            tourplace = TourPlace.objects.get(id = tourplace_id)
+            if tourplace_id is None:
+                Response({"status": True, "data": []}, status=status.HTTP_200_OK)
+            else:
+                tourplace = TourPlace.objects.get(id = tourplace_id)
         elif user.usertype == 2:
             tourplace_id = request.query_params.get("tourplace", user.tourplace[0])
             tourplace = TourPlace.objects.get(id = tourplace_id)
         else:
             tourplace_id = user.tourplace[0]
             tourplace = TourPlace.objects.get(id = tourplace_id)
-
         prices = Price.objects.filter(tourplace_id=tourplace, price__gt = 0)
-
+        price_ids = []
+        for price in prices:
+            price_ids.append(price.id)
         logs = []
         if user.usertype == 3:
-            logs = PaymentLogs.objects.filter(user=user.pk, price__in=prices)
+            logs = PaymentLogs.objects.filter(user=user.id, price__in=price_ids)
         else:
-            logs = PaymentLogs.objects.filter(price__in=prices)
-
+            logs = PaymentLogs.objects.filter(price__in=price_ids)
         from_date_str = request.query_params.get('from')
         to_date_str = request.query_params.get('to')
         try:
@@ -214,7 +222,6 @@ class PaymentAPIView(APIView):
             to_date = datetime.strptime(to_date_str, '%Y-%m-%d')  + timedelta(days=1) if to_date_str else None
         except ValueError:
             return Response({"status": False, "message": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
-        
         if from_date:
             logs = logs.filter(created_at__gte=from_date)
         if to_date:
@@ -233,7 +240,8 @@ class PaymentAPIView(APIView):
                 "phonenumber": client.phone_number,
                 "tourplace": tourplace.place_name,
                 "amount": price.price,
-                "remain": log.remain,
+                "videoremain": log.videoremain,
+                "snapshotremain": log.snapshotremain,
                 "date": log.updated_at,
                 "status": log.status,
                 "comment": log.message
@@ -258,8 +266,13 @@ class ValidStatusAPIView(APIView):
         PaymentLogs.objects.bulk_update(paylogs, ['status', 'comment', 'message'])
         if user.usertype == 1:
             tourplace = TourPlace.objects.first()
+            if tourplace is None:
+                return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
             tourplace_id = request.query_params.get("tourplace", tourplace.id)
-            tourplace = TourPlace.objects.get(id = tourplace_id)
+            if tourplace_id is None:
+                return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
+            else:
+                tourplace = TourPlace.objects.get(id = tourplace_id)
         elif user.usertype == 2:
             tourplace_id = request.query_params.get("tourplace", user.tourplace[0])
             tourplace = TourPlace.objects.get(id = tourplace_id)
@@ -271,9 +284,9 @@ class ValidStatusAPIView(APIView):
 
         logs = []
         if user.usertype == 3:
-            logs = PaymentLogs.objects.filter(user=user.pk, price__in=prices, remain__gt = 0)
+            logs = PaymentLogs.objects.filter(user=user.pk, price__in=prices).filter(Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
         else:
-            logs = PaymentLogs.objects.filter(price__in=prices, remain__gt = 0)
+            logs = PaymentLogs.objects.filter(price__in=prices).filter(Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
 
         output_data = []
         for log in logs:
@@ -288,7 +301,8 @@ class ValidStatusAPIView(APIView):
                 "phonenumber": client.phone_number,
                 "tourplace": tourplace.place_name,
                 "amount": price.price,
-                "remain": log.remain,
+                "videoremain": log.videoremain,
+                "snapshotremain": log.snapshotremain,
                 "date": log.updated_at,
                 "status": log.status,
                 "comment": log.message

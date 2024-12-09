@@ -16,7 +16,7 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_active')
+        fields = ('id', 'username', 'email', 'password', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_activate')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -30,7 +30,7 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
         instance.usertype = validated_data.get('usertype', instance.usertype)
         instance.tourplace = validated_data.get('tourplace', instance.tourplace)
         instance.level = validated_data.get('level', instance.level)
-        instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.is_activate = validated_data.get('is_activate', instance.is_activate)
         instance.save()
         return super().update(instance, validated_data)
 
@@ -38,7 +38,7 @@ class UserListSerializer(serializers.ModelSerializer):
     tourplace = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_active']
+        fields = ['id', 'username', 'email', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_activate']
         read_only_fields = fields
     def get_tourplace(self, obj):
         tourplace_ids = obj.tourplace

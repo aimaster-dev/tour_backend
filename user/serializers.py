@@ -16,7 +16,7 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_activate')
+        fields = ('id', 'username', 'email', 'password', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_activate', 'device_token')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -38,7 +38,7 @@ class UserListSerializer(serializers.ModelSerializer):
     tourplace = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_activate']
+        fields = ['id', 'username', 'email', 'phone_number', 'usertype', 'status', 'tourplace', 'level', 'is_activate', 'device_token']
         read_only_fields = fields
     def get_tourplace(self, obj):
         tourplace_ids = obj.tourplace
@@ -63,7 +63,8 @@ class UserLoginSerializer(serializers.Serializer):
                 'username': user.username,
                 'status' : user.status,
                 'tourplace': user.tourplace,
-                'user': user
+                'user': user,
+                'device_token': user.device_token
             }
         else:
             raise serializers.ValidationError("Invalid email or password")

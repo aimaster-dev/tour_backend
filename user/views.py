@@ -126,8 +126,10 @@ class UserLoginAPIView(APIView):
 
     def post(self, request):
         tourplace = request.data.get("tourplace")
+        device_token = request.data.get("device_token")
         login_data = request.data
         login_data.pop("tourplace", None)
+        login_data.pop("device_token", None)
         serializer = UserLoginSerializer(data = login_data)
         print(serializer.is_valid())
         if serializer.is_valid():
@@ -145,12 +147,16 @@ class UserLoginAPIView(APIView):
                         return Response({"status": False, "data": {"msg": "Please input tourplace."}}, status=status.HTTP_403_FORBIDDEN)
                     else:
                         user.tourplace = [tourplace]
+                        user.device_token = device_token
+                        print(request.data.get("device_token"))
                         user.save()
                         tourplace_field = TourPlace.objects.get(id = tourplace)
+                        userdata = serializer.validated_data
+                        userdata["device_token"] = user.device_token
                         try:
                             price = Price.objects.get(tourplace=tourplace_field.pk, price=0)
                         except Price.DoesNotExist:
-                            return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
+                            return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                         invoice_info = PaymentLogs.objects.filter(user = user.id, price = price.id)
                         if len(invoice_info) == 0:
                             data = {
@@ -166,11 +172,11 @@ class UserLoginAPIView(APIView):
                             payserializer = PaymentLogsSerializer(data = data)
                             if payserializer.is_valid():
                                 payserializer.save()
-                                return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
+                                return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                             else:
                                 return Response({"status": False, "data": {"msg": payserializer.errors}}, status=status.HTTP_403_FORBIDDEN)
                         else:
-                            return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
+                            return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                 else:
                     return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
         return Response({"status": False, "data": {"msg": "Invalid email or password"}}, status=status.HTTP_404_NOT_FOUND)

@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/v1/invoice/', include('payment.urls')),
     path('api/v1/price/', include('price.urls')),
     path('api/v1/tourplace/', include('tourplace.urls')),
+    path('api/v1/notification/', include('pushnotification.urls')),
 ]
 
 if settings.DEBUG:

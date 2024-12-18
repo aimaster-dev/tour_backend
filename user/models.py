@@ -31,7 +31,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     tourplace = models.JSONField(blank=True, default=list)
     status = models.BooleanField(default=False)
     level = models.IntegerField(default=0)
-    device_token = models.CharField(max_length=150, default='')
+    device_token = models.CharField(max_length=150, null=True, blank=True, default='')
     is_invited = models.BooleanField(default=False)
     is_activate = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)

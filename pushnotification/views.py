@@ -73,5 +73,5 @@ class PushNotification(APIView):
         else:
             return Response(
                 {"status": False, "data": {"errors": error_list}},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_200_OK
             )

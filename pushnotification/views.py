@@ -5,8 +5,10 @@ from user.permissions import IsAdmin, IsAdminOrISP
 from user.models import User
 import firebase_admin
 from firebase_admin import credentials, messaging
+from rest_framework.response import Response
+from rest_framework import status
 
-cred = credentials.Certificate("/var/www/htdocs/Video_Backend/emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
+cred = credentials.Certificate("D:\projects\Django\\tour_backend\\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
 firebase_admin.initialize_app(cred)
 # Create your views here.
 class PushNotification(APIView):
@@ -27,12 +29,15 @@ class PushNotification(APIView):
             )
 
         # Iterate through the user IDs and send the notification
+        error_list = []
         for user_id in userlist_id:
             try:
                 user = User.objects.get(id=user_id)  # Corrected 'objects' instead of 'object'
                 token = user.device_token  # Assuming device_token is a field on the User model
 
                 if not token:  # Handle cases where the user does not have a device token
+                    print(f"{user_id}'s token doesn't exist.")
+                    error_list.append(user_id)
                     continue
 
                 # Create the message
@@ -53,13 +58,20 @@ class PushNotification(APIView):
             except User.DoesNotExist:
                 # Handle case where the user with the given ID does not exist
                 print(f"{user_id} doesn't exist.")
+                error_list.append(user_id)
                 continue  # Skip this ID if the user doesn't exist
             except Exception as e:
+                error_list.append(user_id)
                 # Catch other exceptions and log them
                 print(f"Error sending notification to user {user_id}: {str(e)}")
                 continue
-
-        return Response(
-            {"status": True, "data": "Successfully sent the message"},
-            status=status.HTTP_200_OK
-        )
+        if len(error_list) == 0:
+            return Response(
+                {"status": True, "data": "Successfully sent the message"},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"status": False, "data": {"errors": error_list}},
+                status=status.HTTP_400_BAD_REQUEST
+            )

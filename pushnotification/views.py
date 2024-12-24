@@ -8,7 +8,7 @@ from firebase_admin import credentials, messaging
 from rest_framework.response import Response
 from rest_framework import status
 
-cred = credentials.Certificate("D:\projects\Django\\tour_backend\\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
+cred = credentials.Certificate("/var/www/htdocs/Video_Backend/emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
 firebase_admin.initialize_app(cred)
 # Create your views here.
 class PushNotification(APIView):

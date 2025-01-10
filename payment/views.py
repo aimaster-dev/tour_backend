@@ -309,3 +309,32 @@ class ValidStatusAPIView(APIView):
             }
             output_data.append(output_element)
         return Response({"status": True, "data": output_data}, status=status.HTTP_200_OK)
+
+class VideoSnapshotCountAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        try:
+            # Get the current price plan for the user
+            current_price = Price.objects.filter(tourplace_id=user.tourplace[0]).first()
+            if not current_price:
+                return Response({"status": False, "data": "No active price plan found."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Get the payment logs for the user
+            payment_log = PaymentLogs.objects.filter(user=user.id, price=current_price.id).first()
+            if not payment_log:
+                return Response({"status": False, "data": "No payment log found for the user."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Return the remaining video and snapshot counts
+            return Response({
+                "status": True,
+                "data": {
+                    "video_remaining": payment_log.videoremain,
+                    "snapshot_remaining": payment_log.snapshotremain
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
+        

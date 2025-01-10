@@ -34,6 +34,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     device_token = models.CharField(max_length=150, null=True, blank=True, default='')
     is_invited = models.BooleanField(default=False)
     is_activate = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -43,8 +45,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-    class Meta:
-        db_table = 'user_tbl'
+    # class Meta:
+    #     db_table = 'user_tbl'
 
     def __str__(self):
         return self.email

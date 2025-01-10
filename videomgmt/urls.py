@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HeaderAPIView, HeaderDeleteAPIView, FooterAPIView, FooterDeleteAPIView, VideoAddAPIView, download_video, getHeaderandFooterAPIView, SnapShotAPIView, SnapShotDeleteAPIView, VideoDeleteAPIView
+from .views import HeaderAPIView, HeaderDeleteAPIView, FooterAPIView, FooterDeleteAPIView, VideoAddAPIView, download_video, getHeaderandFooterAPIView, SnapShotAPIView, SnapShotDeleteAPIView, VideoDeleteAPIView, SnapShotAddAPIView
 
 urlpatterns = [
     path('header', HeaderAPIView.as_view(), name='header_api'),
@@ -13,7 +13,7 @@ urlpatterns = [
     path('getall', VideoAddAPIView.as_view(), name='get-all-video'),
     path('download', download_video, name='download_page'),
     path('getheaderfooter', getHeaderandFooterAPIView.as_view(), name='get-header-footer-url'),
-    path('snapshot/add', SnapShotAPIView.as_view(), name='add-snapshot'),
+    path('snapshot/add', SnapShotAddAPIView.as_view(), name='add-snapshot'),
     path('snapshot/get', SnapShotAPIView.as_view(), name='get-snapshot'),
     path('snapshot/delete', SnapShotDeleteAPIView.as_view(), name='delete-snapshots'),
 ]

@@ -309,37 +309,20 @@ def download_video(request):
     return response
 
 class SnapShotAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request):
         client = request.user
         if client.usertype != 3:
-            return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."}, status = status.HTTP_400_BAD_REQUEST)
+            return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."}, status=status.HTTP_400_BAD_REQUEST)
+        
         tourplace_id = client.tourplace[0]
-        images = SnapShot.objects.filter(tourplace_id = tourplace_id, client = client)
-        serializer = SnatShotSerializer(images, many = True)
+        images = SnapShot.objects.filter(tourplace_id=tourplace_id, client=client)
+        serializer = SnatShotSerializer(images, many=True)
         return Response({"status": True, "data": serializer.data}, status=status.HTTP_200_OK)
 
-    def post(self, request):
-        client = request.user
-        if client.usertype != 3:
-            return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."}, status = status.HTTP_400_BAD_REQUEST)
-        tourplace_id = client.tourplace[0]
-        images = request.FILES.getlist('image_path')
-        if not images:
-            return Response({"status": False, "data": "Tourplace and images are required."}, status = status.HTTP_400_BAD_REQUEST)
-        snapshots = []
-        for image in images:
-            snapshot = SnapShot(client = client, tourplace_id = tourplace_id, image_path = image)
-            snapshots.append(snapshot)
-        SnapShot.objects.bulk_create(snapshots)
-        serializer = SnatShotSerializer(snapshots, many = True)
-        return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
-
 class SnapShotDeleteAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
     # parser_classes = [MultiPartParser, FormParser]
 
@@ -359,3 +342,36 @@ class SnapShotDeleteAPIView(APIView):
                 os.remove(snapshot.image_path.path)
         snapshots_to_delete.delete()
         return Response({"status": True, "data": f"{len(image_ids)} images successfully deleted."}, status=status.HTTP_200_OK)
+
+class SnapShotAddAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        client = request.user
+        if client.usertype != 3:
+            return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        tourplace_id = client.tourplace[0]
+        images = request.FILES.getlist('image_path')
+        if not images:
+            return Response({"status": False, "data": "Tourplace and images are required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check the user's remaining snapshot count
+        payment_log = PaymentLogs.objects.filter(user=client.id).first()
+        if not payment_log or payment_log.snapshotremain <= 0:
+            return Response({"status": False, "data": "You don't have any remaining snapshots."}, status=status.HTTP_400_BAD_REQUEST)
+
+        snapshots = []
+        for image in images:
+            snapshot = SnapShot(client=client, tourplace_id=tourplace_id, image_path=image)
+            snapshots.append(snapshot)
+        
+        SnapShot.objects.bulk_create(snapshots)
+        
+        # Decrement the snapshot count
+        payment_log.snapshotremain -= len(images)
+        payment_log.save()
+
+        serializer = SnatShotSerializer(snapshots, many=True)
+        return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)

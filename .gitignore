@@ -12,3 +12,4 @@
 /opencv
 .env
 /tourvideoproject/settings.py
+/venv/

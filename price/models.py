@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from tourplace.models import TourPlace
 
-# Create your models here.
+
 class Price(models.Model):
     level = models.IntegerField()
     price = models.FloatField(default=0.0)

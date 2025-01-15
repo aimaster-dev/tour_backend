@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from django.db.models import Q
 # Create your views here.
 
+
 def check_payment_status(payment_id):
     try:
         client = Client(
@@ -74,14 +75,15 @@ def check_payment_status(payment_id):
     except Exception as e:
         return "error", "error", str(e)
 
+
 class PaymentAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, *args, **kwargs):
         user = request.user
         token = request.data["token"]
         price_id = request.data["price_id"]
-        prices = Price.objects.filter(id = price_id)
+        prices = Price.objects.filter(id=price_id)
         if len(prices) == 0:
             return Response({"status": False, "data": "Please input correct price id."}, status=status.HTTP_400_BAD_REQUEST)
         price = prices[0]
@@ -96,7 +98,8 @@ class PaymentAPIView(APIView):
             "comment": "",
             "message": ""
         }
-        logs = PaymentLogs.objects.filter(user=user.pk, price=price.pk).filter(Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
+        logs = PaymentLogs.objects.filter(user=user.pk, price=price.pk).filter(
+            Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
         if len(logs) != 0:
             return Response({"status": False, "data": "You already paid for this premium."}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -152,12 +155,12 @@ class PaymentAPIView(APIView):
                 else:
                     data["status"] = "unknown"
                     data["message"] = "Unknown reasons not categorized specifically."
-                serializer = PaymentLogsSerializer(data = data)
+                serializer = PaymentLogsSerializer(data=data)
                 if serializer.is_valid():
                     serializer.save()
                     data = serializer.data
                     print(data["amount"])
-                    tourplace = TourPlace.objects.get(id = price.tourplace.pk)
+                    tourplace = TourPlace.objects.get(id=price.tourplace.pk)
                     output_data = {
                         "price_id": price.pk,
                         "username": user.username,
@@ -181,7 +184,7 @@ class PaymentAPIView(APIView):
 
     def get(self, request):
         user = request.user
-        paylogs = PaymentLogs.objects.filter(status = 'PENDING')
+        paylogs = PaymentLogs.objects.filter(status='PENDING')
         for paylog in paylogs:
             comment = json.loads(paylog.comment)
             payment_id = comment.get("payment", {}).get("id")
@@ -190,36 +193,42 @@ class PaymentAPIView(APIView):
                 paylog.status = _status_
                 paylog.comment = comment
                 paylog.message = message
-        PaymentLogs.objects.bulk_update(paylogs, ['status', 'comment', 'message'])
+        PaymentLogs.objects.bulk_update(
+            paylogs, ['status', 'comment', 'message'])
         if user.usertype == 1:
             tourplace = TourPlace.objects.first()
             if tourplace is None:
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
             tourplace_id = request.query_params.get("tourplace", tourplace.id)
             if tourplace_id is None:
-                Response({"status": True, "data": []}, status=status.HTTP_200_OK)
+                Response({"status": True, "data": []},
+                         status=status.HTTP_200_OK)
             else:
-                tourplace = TourPlace.objects.get(id = tourplace_id)
+                tourplace = TourPlace.objects.get(id=tourplace_id)
         elif user.usertype == 2:
-            tourplace_id = request.query_params.get("tourplace", user.tourplace[0])
-            tourplace = TourPlace.objects.get(id = tourplace_id)
+            tourplace_id = request.query_params.get(
+                "tourplace", user.tourplace[0])
+            tourplace = TourPlace.objects.get(id=tourplace_id)
         else:
             tourplace_id = user.tourplace[0]
-            tourplace = TourPlace.objects.get(id = tourplace_id)
-        prices = Price.objects.filter(tourplace_id=tourplace, price__gt = 0)
+            tourplace = TourPlace.objects.get(id=tourplace_id)
+        prices = Price.objects.filter(tourplace_id=tourplace, price__gt=0)
         price_ids = []
         for price in prices:
             price_ids.append(price.id)
         logs = []
         if user.usertype == 3:
-            logs = PaymentLogs.objects.filter(user=user.id, price__in=price_ids)
+            logs = PaymentLogs.objects.filter(
+                user=user.id, price__in=price_ids)
         else:
             logs = PaymentLogs.objects.filter(price__in=price_ids)
         from_date_str = request.query_params.get('from')
         to_date_str = request.query_params.get('to')
         try:
-            from_date = datetime.strptime(from_date_str, '%Y-%m-%d') if from_date_str else datetime.today().replace(day=1)
-            to_date = datetime.strptime(to_date_str, '%Y-%m-%d')  + timedelta(days=1) if to_date_str else None
+            from_date = datetime.strptime(
+                from_date_str, '%Y-%m-%d') if from_date_str else datetime.today().replace(day=1)
+            to_date = datetime.strptime(
+                to_date_str, '%Y-%m-%d') + timedelta(days=1) if to_date_str else None
         except ValueError:
             return Response({"status": False, "message": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
         if from_date:
@@ -230,9 +239,9 @@ class PaymentAPIView(APIView):
         output_data = []
         for log in logs:
             user_id = log.user
-            client = User.objects.get(id = user_id)
+            client = User.objects.get(id=user_id)
             price_id = log.price
-            price = Price.objects.get(id = price_id)
+            price = Price.objects.get(id=price_id)
             output_element = {
                 "price_id": price.pk,
                 "username": client.username,
@@ -248,13 +257,14 @@ class PaymentAPIView(APIView):
             }
             output_data.append(output_element)
         return Response({"status": True, "data": output_data}, status=status.HTTP_200_OK)
-    
+
+
 class ValidStatusAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        paylogs = PaymentLogs.objects.filter(status = 'PENDING')
+        paylogs = PaymentLogs.objects.filter(status='PENDING')
         for paylog in paylogs:
             comment = json.loads(paylog.comment)
             payment_id = comment.get("payment", {}).get("id")
@@ -263,7 +273,8 @@ class ValidStatusAPIView(APIView):
                 paylog.status = _status_
                 paylog.comment = comment
                 paylog.message = message
-        PaymentLogs.objects.bulk_update(paylogs, ['status', 'comment', 'message'])
+        PaymentLogs.objects.bulk_update(
+            paylogs, ['status', 'comment', 'message'])
         if user.usertype == 1:
             tourplace = TourPlace.objects.first()
             if tourplace is None:
@@ -272,28 +283,31 @@ class ValidStatusAPIView(APIView):
             if tourplace_id is None:
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
             else:
-                tourplace = TourPlace.objects.get(id = tourplace_id)
+                tourplace = TourPlace.objects.get(id=tourplace_id)
         elif user.usertype == 2:
-            tourplace_id = request.query_params.get("tourplace", user.tourplace[0])
-            tourplace = TourPlace.objects.get(id = tourplace_id)
+            tourplace_id = request.query_params.get(
+                "tourplace", user.tourplace[0])
+            tourplace = TourPlace.objects.get(id=tourplace_id)
         else:
             tourplace_id = user.tourplace[0]
-            tourplace = TourPlace.objects.get(id = tourplace_id)
+            tourplace = TourPlace.objects.get(id=tourplace_id)
 
         prices = Price.objects.filter(tourplace_id=tourplace)
 
         logs = []
         if user.usertype == 3:
-            logs = PaymentLogs.objects.filter(user=user.pk, price__in=prices).filter(Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
+            logs = PaymentLogs.objects.filter(user=user.pk, price__in=prices).filter(
+                Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
         else:
-            logs = PaymentLogs.objects.filter(price__in=prices).filter(Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
+            logs = PaymentLogs.objects.filter(price__in=prices).filter(
+                Q(videoremain__gt=0) | Q(snapshotremain__gt=0))
 
         output_data = []
         for log in logs:
             user_id = log.user
-            client = User.objects.get(id = user_id)
+            client = User.objects.get(id=user_id)
             price_id = log.price
-            price = Price.objects.get(id = price_id)
+            price = Price.objects.get(id=price_id)
             output_element = {
                 "price_id": price.pk,
                 "username": client.username,
@@ -310,6 +324,7 @@ class ValidStatusAPIView(APIView):
             output_data.append(output_element)
         return Response({"status": True, "data": output_data}, status=status.HTTP_200_OK)
 
+
 class VideoSnapshotCountAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -317,12 +332,14 @@ class VideoSnapshotCountAPIView(APIView):
         user = request.user
         try:
             # Get the current price plan for the user
-            current_price = Price.objects.filter(tourplace_id=user.tourplace[0]).first()
+            current_price = Price.objects.filter(
+                tourplace_id=user.tourplace[0]).first()
             if not current_price:
                 return Response({"status": False, "data": "No active price plan found."}, status=status.HTTP_404_NOT_FOUND)
 
             # Get the payment logs for the user
-            payment_log = PaymentLogs.objects.filter(user=user.id, price=current_price.id).first()
+            payment_log = PaymentLogs.objects.filter(
+                user=user.id, price=current_price.id).first()
             if not payment_log:
                 return Response({"status": False, "data": "No payment log found for the user."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -337,4 +354,70 @@ class VideoSnapshotCountAPIView(APIView):
 
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+class PaymentDetailsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    # def post(self, request):
+    #     user = request.user
+    #     data = {
+    #         "user": user.pk,
+    #         "price": request.data.get("price_id"),
+    #         "amount": request.data.get("amount"),
+    #         "status": request.data.get("status", "PENDING"),
+    #         "comment": request.data.get("payment_details", ""),
+    #         "message": request.data.get("message", "Payment details saved"),
+    #         "videoremain": request.data.get("video_limit", 0),
+    #         "snapshotremain": request.data.get("snapshot_limit", 0)
+    #     }
+
+    #     serializer = PaymentLogsSerializer(data=data)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response({
+    #             "status": True,
+    #             "data": serializer.data
+    #         }, status=status.HTTP_201_CREATED)
+
+    #     return Response({
+    #         "status": False,
+    #         "data": serializer.errors
+    #     }, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        user = request.user
+        transactions = PaymentLogs.objects.filter(
+            user=user.pk).order_by('-created_at')
+
+        # Handle date filtering if provided
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+
+        if from_date:
+            transactions = transactions.filter(created_at__gte=from_date)
+        if to_date:
+            transactions = transactions.filter(created_at__lte=to_date)
+
+        output_data = []
+        for transaction in transactions:
+            price = Price.objects.get(id=transaction.price)
+            tourplace = TourPlace.objects.get(id=price.tourplace.pk)
+
+            transaction_data = {
+                "transaction_id": transaction.id,
+                "amount": transaction.amount,
+                "status": transaction.status,
+                "date": transaction.created_at,
+                "tourplace": tourplace.place_name,
+                "video_remaining": transaction.videoremain,
+                "snapshot_remaining": transaction.snapshotremain,
+                "payment_details": transaction.comment,
+                "message": transaction.message
+            }
+            output_data.append(transaction_data)
+
+        return Response({
+            "status": True,
+            "data": output_data
+        }, status=status.HTTP_200_OK)

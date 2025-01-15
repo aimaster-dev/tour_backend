@@ -1,15 +1,16 @@
 from django.db import models
-from django.utils import timezone
 from tourplace.models import TourPlace
 
 
 class Price(models.Model):
     level = models.IntegerField()
     price = models.FloatField(default=0.0)
+    product_id = models.CharField(max_length=255, null=True, blank=True)
     title = models.CharField(max_length=255)
     record_time = models.IntegerField(default=0)
     record_limit = models.IntegerField(default=0)
     snapshot_limit = models.IntegerField(default=0)
+    features = models.JSONField(default=list, blank=True)
     tourplace = models.ForeignKey(TourPlace, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

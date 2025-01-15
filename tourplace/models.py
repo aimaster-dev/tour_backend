@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-# Create your models here.
+
 class TourPlace(models.Model):
     place_name = models.CharField(max_length=255)
     status = models.BooleanField(default=True)

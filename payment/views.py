@@ -359,32 +359,6 @@ class VideoSnapshotCountAPIView(APIView):
 class PaymentDetailsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # def post(self, request):
-    #     user = request.user
-    #     data = {
-    #         "user": user.pk,
-    #         "price": request.data.get("price_id"),
-    #         "amount": request.data.get("amount"),
-    #         "status": request.data.get("status", "PENDING"),
-    #         "comment": request.data.get("payment_details", ""),
-    #         "message": request.data.get("message", "Payment details saved"),
-    #         "videoremain": request.data.get("video_limit", 0),
-    #         "snapshotremain": request.data.get("snapshot_limit", 0)
-    #     }
-
-    #     serializer = PaymentLogsSerializer(data=data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response({
-    #             "status": True,
-    #             "data": serializer.data
-    #         }, status=status.HTTP_201_CREATED)
-
-    #     return Response({
-    #         "status": False,
-    #         "data": serializer.errors
-    #     }, status=status.HTTP_400_BAD_REQUEST)
-
     def get(self, request):
         user = request.user
         transactions = PaymentLogs.objects.filter(

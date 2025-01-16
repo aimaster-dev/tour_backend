@@ -365,7 +365,7 @@ class PaymentDetailsAPIView(APIView):
         # Get query parameters for filtering
         from_date = request.query_params.get('from_date')
         to_date = request.query_params.get('to_date')
-        status = request.query_params.get('status')
+        status_filter = request.query_params.get('status')
 
         # Base query for user's transactions
         transactions = PaymentLogs.objects.filter(
@@ -394,8 +394,8 @@ class PaymentDetailsAPIView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         # Filter by status if provided
-        if status:
-            transactions = transactions.filter(status=status.upper())
+        if status_filter:
+            transactions = transactions.filter(status=status_filter.upper())
 
         output_data = []
         for transaction in transactions:

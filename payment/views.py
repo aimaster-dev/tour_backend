@@ -361,39 +361,71 @@ class PaymentDetailsAPIView(APIView):
 
     def get(self, request):
         user = request.user
+
+        # Get query parameters for filtering
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+        status = request.query_params.get('status')
+
+        # Base query for user's transactions
         transactions = PaymentLogs.objects.filter(
             user=user.pk).order_by('-created_at')
 
-        # Handle date filtering if provided
-        from_date = request.query_params.get('from_date')
-        to_date = request.query_params.get('to_date')
-
+        # Apply date filters if provided
         if from_date:
-            transactions = transactions.filter(created_at__gte=from_date)
+            try:
+                from_date = datetime.strptime(from_date, '%Y-%m-%d')
+                transactions = transactions.filter(created_at__gte=from_date)
+            except ValueError:
+                return Response({
+                    "status": False,
+                    "message": "Invalid from_date format. Use YYYY-MM-DD"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
         if to_date:
-            transactions = transactions.filter(created_at__lte=to_date)
+            try:
+                to_date = datetime.strptime(to_date, '%Y-%m-%d')
+                to_date = to_date + timedelta(days=1)  # Include the entire day
+                transactions = transactions.filter(created_at__lte=to_date)
+            except ValueError:
+                return Response({
+                    "status": False,
+                    "message": "Invalid to_date format. Use YYYY-MM-DD"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter by status if provided
+        if status:
+            transactions = transactions.filter(status=status.upper())
 
         output_data = []
         for transaction in transactions:
-            price = Price.objects.get(id=transaction.price)
-            tourplace = TourPlace.objects.get(id=price.tourplace.pk)
+            try:
+                price = Price.objects.get(id=transaction.price.id)
+                tourplace = TourPlace.objects.get(id=price.tourplace.pk)
 
-            transaction_data = {
-                "transaction_id": transaction.id,
-                "amount": transaction.amount,
-                "status": transaction.status,
-                "date": transaction.created_at,
-                "tourplace": tourplace.place_name,
-                "video_remaining": transaction.videoremain,
-                "snapshot_remaining": transaction.snapshotremain,
-                "payment_details": transaction.comment,
-                "message": transaction.message
-            }
-            output_data.append(transaction_data)
+                transaction_data = {
+                    "id": transaction.id,
+                    "transaction_id": transaction.transaction_id,
+                    "amount": transaction.amount,
+                    "status": transaction.status,
+                    "created_at": transaction.created_at,
+                    "updated_at": transaction.updated_at,
+                    "tourplace": tourplace.place_name,
+                    "plan_name": price.title,
+                    "video_remaining": transaction.videoremain,
+                    "snapshot_remaining": transaction.snapshotremain,
+                }
+                output_data.append(transaction_data)
+            except (Price.DoesNotExist, TourPlace.DoesNotExist):
+                # Skip transactions with missing related data
+                continue
 
         return Response({
             "status": True,
-            "data": output_data
+            "data": {
+                "total_transactions": len(output_data),
+                "transactions": output_data
+            }
         }, status=status.HTTP_200_OK)
 
 

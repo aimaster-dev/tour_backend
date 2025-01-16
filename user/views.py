@@ -21,20 +21,22 @@ from payment.serializers import PaymentLogsSerializer
 import random
 # Create your views here.
 
+
 def is_subset(small, big):
     return all(item in big for item in small)
+
 
 class UserAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = UserRegUpdateSerializer(data = request.data)
+        serializer = UserRegUpdateSerializer(data=request.data)
         email_addr = request.data.get('email')
-        exist_user = User.objects.filter(email = email_addr)
+        exist_user = User.objects.filter(email=email_addr)
         if len(exist_user) != 0:
             exist_user[0].status = True
             exist_user[0].save()
-            return Response({"status": True, "past_registered": True, "data": "User Registered Successfully. You don't need email verification because you already registered to our service."}, status = status.HTTP_201_CREATED)
+            return Response({"status": True, "past_registered": True, "data": "User Registered Successfully. You don't need email verification because you already registered to our service."}, status=status.HTTP_201_CREATED)
         if serializer.is_valid():
             user = serializer.save()
             serializer.is_activate = False
@@ -50,12 +52,12 @@ class UserAPIView(APIView):
             email = EmailMessage(mail_subject, message, to=[user.email])
             email.content_subtype = "html"
             email.send()
-            return Response({"status": True, "past_registered": False, "data": "User Registered Successfully. Please check your email to activate your account."}, status = status.HTTP_201_CREATED)
+            return Response({"status": True, "past_registered": False, "data": "User Registered Successfully. Please check your email to activate your account."}, status=status.HTTP_201_CREATED)
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def get(self, request, pk, format=None):
         try:
-            user = User.objects.get(id = pk)
+            user = User.objects.get(id=pk)
             serializer = UserDetailSerializer(user)
             data = serializer.data
             tourpl = data['tourplace']
@@ -64,15 +66,17 @@ class UserAPIView(APIView):
             for tour in tourpl:
                 tour_data = {
                     'id': tour,
-                    'place_name': TourPlace.objects.get(id = tour).place_name
+                    'place_name': TourPlace.objects.get(id=tour).place_name
                 }
                 data['tourplace'].append(tour_data)
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         except user.DoesNotExist:
-            Response({"status": False, "data": {"msg": "User not found."}}, status=status.HTTP_404_NOT_FOUND)
+            Response({"status": False, "data": {"msg": "User not found."}},
+                     status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class UserDeleteAPIView(APIView):
     permission_classes = [IsAdmin]
 
@@ -81,16 +85,18 @@ class UserDeleteAPIView(APIView):
         if not user_id:
             return Response({"status": False, "data": {"msg": "User ID is required."}}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            user = User.objects.get(id = user_id)
+            user = User.objects.get(id=user_id)
             tourplace = user.tourplace
             for tour in tourplace:
                 print(tour)
             user.delete()
             return Response({"status": True, "data": "The User Successfully deleted."}, status=status.HTTP_200_OK)
         except user.DoesNotExist:
-            Response({"status": False, "data": {"msg": "User not found."}}, status=status.HTTP_404_NOT_FOUND)
+            Response({"status": False, "data": {"msg": "User not found."}},
+                     status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class SelfDeleteAPIView(APIView):
 
@@ -109,7 +115,7 @@ class SelfDeleteAPIView(APIView):
         if not user_id:
             return Response({"status": False, "data": {"msg": "User ID is required."}}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            user = User.objects.get(id = user_id)
+            user = User.objects.get(id=user_id)
             tourplace = user.tourplace
             for tour in tourplace:
                 print(tour)
@@ -117,9 +123,11 @@ class SelfDeleteAPIView(APIView):
             user.save()
             return Response({"status": True, "data": "The User Successfully deleted."}, status=status.HTTP_200_OK)
         except user.DoesNotExist:
-            Response({"status": False, "data": {"msg": "User not found."}}, status=status.HTTP_404_NOT_FOUND)
+            Response({"status": False, "data": {"msg": "User not found."}},
+                     status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserLoginAPIView(APIView):
     permission_classes = [AllowAny]
@@ -130,9 +138,9 @@ class UserLoginAPIView(APIView):
         login_data = request.data
         login_data.pop("tourplace", None)
         login_data.pop("device_token", None)
-        serializer = UserLoginSerializer(data = login_data)
+        serializer = UserLoginSerializer(data=login_data)
         if serializer.is_valid():
-            validated_data =serializer.validated_data
+            validated_data = serializer.validated_data
             if validated_data['status'] == False and validated_data['usertype'] == 2:
                 return Response({"status": False, "data": {"msg": "Please wait until admin allows you"}}, status=status.HTTP_423_LOCKED)
             else:
@@ -147,16 +155,17 @@ class UserLoginAPIView(APIView):
                     else:
                         user.tourplace = [tourplace]
                         user.device_token = device_token
-                        print(request.data.get("device_token"))
                         user.save()
-                        tourplace_field = TourPlace.objects.get(id = tourplace)
+                        tourplace_field = TourPlace.objects.get(id=tourplace)
                         userdata = serializer.validated_data
                         userdata["device_token"] = user.device_token
                         try:
-                            price = Price.objects.get(tourplace=tourplace_field.pk, price=0)
+                            price = Price.objects.get(
+                                tourplace=tourplace_field.pk, price=0)
                         except Price.DoesNotExist:
                             return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
-                        invoice_info = PaymentLogs.objects.filter(user = user.id, price = price.id)
+                        invoice_info = PaymentLogs.objects.filter(
+                            user=user.id, price=price.id)
                         if len(invoice_info) == 0:
                             data = {
                                 "user": user.id,
@@ -168,7 +177,7 @@ class UserLoginAPIView(APIView):
                                 "comment": "Free Version",
                                 "message": "Free Version"
                             }
-                            payserializer = PaymentLogsSerializer(data = data)
+                            payserializer = PaymentLogsSerializer(data=data)
                             if payserializer.is_valid():
                                 payserializer.save()
                                 return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
@@ -180,22 +189,24 @@ class UserLoginAPIView(APIView):
                     return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
         return Response({"status": False, "data": {"msg": "Invalid email or password"}}, status=status.HTTP_404_NOT_FOUND)
 
+
 class UserUpdateAPIView(APIView):
     permission_classes = [IsAdmin]
 
     def post(self, request, *args, **kwargs):
         user_id = request.data['user_id']
-        user = User.objects.get(id = user_id)
+        user = User.objects.get(id=user_id)
         print(user)
         if user == None:
-            Response({"status": False, "data": "User isn't existed now."}, status=status.HTTP_404_NOT_FOUND)
+            Response({"status": False, "data": "User isn't existed now."},
+                     status=status.HTTP_404_NOT_FOUND)
         origin_tour = user.tourplace
         for tour in origin_tour:
-            place = TourPlace.objects.get(id = tour)
+            place = TourPlace.objects.get(id=tour)
             place.isp = 0
             place.save()
         userdata = request.data
-        serializer = UserRegUpdateSerializer(user, data=userdata, partial = True)
+        serializer = UserRegUpdateSerializer(user, data=userdata, partial=True)
         if serializer.is_valid():
             serializer.save()
             data = serializer.data
@@ -205,27 +216,30 @@ class UserUpdateAPIView(APIView):
             for tourplace in tourplaces:
                 tour_data = {
                     'id': tourplace,
-                    'place_name': TourPlace.objects.get(id = tourplace).place_name
+                    'place_name': TourPlace.objects.get(id=tourplace).place_name
                 }
                 data['tourplace'].append(tour_data)
                 if user.usertype == 2:
-                    place = TourPlace.objects.get(id = tourplace)
+                    place = TourPlace.objects.get(id=tourplace)
                     place.isp = user.pk
                     place.save()
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ISPRangeListAPIView(ListAPIView):
     serializer_class = UserListSerializer
-    permission_classes = [IsAdmin]  # Assuming you want this endpoint to be protected
+    # Assuming you want this endpoint to be protected
+    permission_classes = [IsAdmin]
 
     def get_queryset(self):
         """
         Optionally restricts the returned users to a given range,
         by filtering against a `start_row_index` and `end_row_index` query parameter in the URL.
         """
-        queryset = User.objects.filter(usertype = 2)
-        start_row_index = self.request.query_params.get('start_row_index', None)
+        queryset = User.objects.filter(usertype=2)
+        start_row_index = self.request.query_params.get(
+            'start_row_index', None)
         end_row_index = self.request.query_params.get('end_row_index', None)
 
         if start_row_index is not None and end_row_index is not None:
@@ -233,31 +247,35 @@ class ISPRangeListAPIView(ListAPIView):
             end_row_index = int(end_row_index)
             return queryset[start_row_index:end_row_index]
         return queryset
-    
+
+
 class ClientRangeListAPIView(ListAPIView):
     serializer_class = UserListSerializer
     permission_classes = [IsAdminOrISP]
+
     def get_queryset(self):
         tourplace_id = self.request.query_params.get('tourplace', None)
         tourplace = None
         user = self.request.user
         if tourplace_id:
-            tourplace = TourPlace.objects.get(id = tourplace_id)
+            tourplace = TourPlace.objects.get(id=tourplace_id)
         else:
             if user.usertype == 1:
                 tourplace = TourPlace.objects.all().first()
             else:
-                tourplace = TourPlace.objects.filter(isp = user.pk).first()
+                tourplace = TourPlace.objects.filter(isp=user.pk).first()
         if tourplace is None:
             return []
-        prices = Price.objects.filter(tourplace = tourplace.pk)
+        prices = Price.objects.filter(tourplace=tourplace.pk)
         user_id_list = set()
-        invoice_list = PaymentLogs.objects.filter(price__in = prices, amount__gt = 0)
+        invoice_list = PaymentLogs.objects.filter(
+            price__in=prices, amount__gt=0)
         for invoicelog in invoice_list:
             user_id_list.add(invoicelog.user)
         user_id_list = list(user_id_list)
-        queryset = User.objects.filter(id__in = user_id_list)
-        start_row_index = self.request.query_params.get('start_row_index', None)
+        queryset = User.objects.filter(id__in=user_id_list)
+        start_row_index = self.request.query_params.get(
+            'start_row_index', None)
         end_row_index = self.request.query_params.get('end_row_index', None)
 
         if start_row_index is not None and end_row_index is not None:
@@ -265,7 +283,8 @@ class ClientRangeListAPIView(ListAPIView):
             end_row_index = int(end_row_index)
             return queryset[start_row_index:end_row_index]
         return queryset
-    
+
+
 class ActivateAccount(APIView):
     permission_classes = [AllowAny]
 
@@ -275,7 +294,7 @@ class ActivateAccount(APIView):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
-        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
 
         if user is not None and account_activation_token.check_token(user, token):
@@ -319,6 +338,7 @@ class ResendActivationEmail(APIView):
         except User.DoesNotExist:
             return Response({"status": False, "data": "No user found with this email address."}, status=status.HTTP_404_NOT_FOUND)
 
+
 class InviteUserView(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -327,7 +347,8 @@ class InviteUserView(APIView):
         if request.user.usertype != 1:
             return Response({"status": True, "data": {"msg": "You don't have any permission to create ISP account."}})
         invited_by = request.user
-        Invitation.objects.create(email = email, tourplace = tourplace, token = token, invited_by = invited_by)
+        Invitation.objects.create(
+            email=email, tourplace=tourplace, token=token, invited_by=invited_by)
         invitation_link = f"https://emmysvideos.com/set_password/{token}"
         subject = 'Invitation to Join'
         message = render_to_string('isp_register.html', {
@@ -337,20 +358,21 @@ class InviteUserView(APIView):
         email.content_subtype = "html"
         email.send()
         return Response({"status": True, "data": {"msg": "Invitation Sent."}}, status=status.HTTP_200_OK)
-    
+
+
 class SetPasswordView(APIView):
     def post(self, request, token):
-        invitation = get_object_or_404(Invitation, token = token)
+        invitation = get_object_or_404(Invitation, token=token)
         userdata = request.data
         userdata["tourplace"] = invitation.tourplace
         userdata["email"] = invitation.email
         userdata["usertype"] = 2
-        serializer = UserRegUpdateSerializer(data = userdata)
+        serializer = UserRegUpdateSerializer(data=userdata)
         if serializer.is_valid():
             user = serializer.save()
             tourplaces = invitation.tourplace
             for tourplace in tourplaces:
-                tourplace_model = TourPlace.objects.get(pk = tourplace)
+                tourplace_model = TourPlace.objects.get(pk=tourplace)
                 tourplace_model.isp = user.pk
                 tourplace_model.save()
             user.is_invited = True
@@ -370,30 +392,31 @@ class SetPasswordView(APIView):
             for tourplace in tourplaces:
                 tourdata = {
                     'id': tourplace,
-                    'place_name': TourPlace.objects.get(id = tourplace).place_name
+                    'place_name': TourPlace.objects.get(id=tourplace).place_name
                 }
                 data['tourplace'].append(tourdata)
             return Response({"status": True, "data": data}, status=status.HTTP_201_CREATED)
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class PhoneRegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = UserRegUpdateSerializer(data = request.data)
+        serializer = UserRegUpdateSerializer(data=request.data)
         email_addr = request.data.get('email')
-        exist_user = User.objects.filter(email = email_addr)
+        exist_user = User.objects.filter(email=email_addr)
         if len(exist_user) != 0:
             exist_user[0].status = True
             exist_user[0].save()
-            return Response({"status": True, "past_registered": True, "data": "User Registered Successfully. You don't need email verification because you already registered to our service."}, status = status.HTTP_201_CREATED)
+            return Response({"status": True, "past_registered": True, "data": "User Registered Successfully. You don't need email verification because you already registered to our service."}, status=status.HTTP_201_CREATED)
         print(serializer.is_valid())
         if serializer.is_valid():
             user = serializer.save()
             serializer.is_activate = False
             user.save()
             otp = str(random.randint(100000, 999999))
-            EmailOTP.objects.create(user = user, otp = otp)
+            EmailOTP.objects.create(user=user, otp=otp)
             mail_subject = 'Activate your account'
             message = f"""
                             <html>
@@ -405,30 +428,31 @@ class PhoneRegisterView(APIView):
             email = EmailMessage(mail_subject, message, to=[user.email])
             email.content_subtype = "html"
             email.send()
-            return Response({"status": True, "past_registered": False, "data": {"msg": "User Registered Successfully. OTP sent to your email.", "user_id": user.id}}, status = status.HTTP_201_CREATED)
+            return Response({"status": True, "past_registered": False, "data": {"msg": "User Registered Successfully. OTP sent to your email.", "user_id": user.id}}, status=status.HTTP_201_CREATED)
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def get(self, request, otp, format=None):
         try:
-            email_otp = EmailOTP.objects.get(otp = otp)
+            email_otp = EmailOTP.objects.get(otp=otp)
             user = email_otp.user
             user.is_activate = True
             user.save()
             email_otp.delete()
-            return Response({"status": True, "data": "Your account has been successfully activated."}, status = status.HTTP_201_CREATED)
+            return Response({"status": True, "data": "Your account has been successfully activated."}, status=status.HTTP_201_CREATED)
         except EmailOTP.DoesNotExist:
-            return Response({"status": False, "data": "OTP code isn't invalid."}, status = status.HTTP_404_NOT_FOUND)
+            return Response({"status": False, "data": "OTP code isn't invalid."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class ResendActivationCode(APIView):
 
     permission_classes = [AllowAny]
-    
+
     def get(self, request, pk, format=None):
         try:
-            user = User.objects.get(id = pk)
-            code_otp = EmailOTP.objects.get(user = user)
+            user = User.objects.get(id=pk)
+            code_otp = EmailOTP.objects.get(user=user)
             otp = code_otp.otp
             mail_subject = 'Activate your account'
             message = f"""
@@ -441,11 +465,12 @@ class ResendActivationCode(APIView):
             email = EmailMessage(mail_subject, message, to=[user.email])
             email.content_subtype = "html"
             email.send()
-            return Response({"status": True, "data": {"msg": "User Registered Successfully. OTP sent to your email.", "user_id": user.id}}, status = status.HTTP_201_CREATED)
+            return Response({"status": True, "data": {"msg": "User Registered Successfully. OTP sent to your email.", "user_id": user.id}}, status=status.HTTP_201_CREATED)
         except EmailOTP.DoesNotExist:
-            return Response({"status": False, "data": "User isn't valid or already activated."}, status = status.HTTP_404_NOT_FOUND)
+            return Response({"status": False, "data": "User isn't valid or already activated."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class GetProfileAPIView(APIView):
 
@@ -460,11 +485,12 @@ class GetProfileAPIView(APIView):
             for tour in tourpl:
                 tour_data = {
                     'id': tour,
-                    'place_name': TourPlace.objects.get(id = tour).place_name
+                    'place_name': TourPlace.objects.get(id=tour).place_name
                 }
                 data['tourplace'].append(tour_data)
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         except user.DoesNotExist:
-            Response({"status": False, "data": {"msg": "User not found."}}, status=status.HTTP_404_NOT_FOUND)
+            Response({"status": False, "data": {"msg": "User not found."}},
+                     status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)

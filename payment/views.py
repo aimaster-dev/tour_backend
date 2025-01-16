@@ -421,3 +421,76 @@ class PaymentDetailsAPIView(APIView):
             "status": True,
             "data": output_data
         }, status=status.HTTP_200_OK)
+
+
+class InAppPurchaseAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = request.user
+            purchase_data = request.data[0]  # Get first purchase object
+            product_id = purchase_data.get('productId')
+            transaction_id = purchase_data.get('transactionId')
+
+            # Validate required fields
+            if not all([product_id, transaction_id]):
+                return Response({
+                    "status": False,
+                    "data": "Missing required purchase information"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check for duplicate transaction
+            if PaymentLogs.objects.filter(transaction_id=transaction_id).exists():
+                return Response({
+                    "status": False,
+                    "data": "Transaction already processed"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Find matching price plan
+            try:
+                price = Price.objects.get(product_id=product_id)
+            except Price.DoesNotExist:
+                return Response({
+                    "status": False,
+                    "data": "Invalid product ID"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create payment record
+            payment_data = {
+                "user": user.pk,
+                "price": price.pk,
+                "amount": price.price,
+                "videoremain": price.record_limit,
+                "snapshotremain": price.snapshot_limit,
+                "status": "COMPLETED",
+                "transaction_id": transaction_id
+            }
+
+            serializer = PaymentLogsSerializer(data=payment_data)
+            if serializer.is_valid():
+                payment = serializer.save()
+
+                return Response({
+                    "status": True,
+                    "data": {
+                        "payment_id": payment.id,
+                        "plan_name": price.title,
+                        "amount": price.price,
+                        "video_limit": price.record_limit,
+                        "snapshot_limit": price.snapshot_limit,
+                        "transaction_id": transaction_id,
+                        "purchase_date": payment.created_at
+                    }
+                }, status=status.HTTP_201_CREATED)
+
+            return Response({
+                "status": False,
+                "data": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

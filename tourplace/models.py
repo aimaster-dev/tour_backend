@@ -11,3 +11,6 @@ class TourPlace(models.Model):
 
     class Meta:
         db_table = 'tourplace_tbl'
+
+    def __str__(self):
+        return f"{self.place_name}"

@@ -17,3 +17,6 @@ class Price(models.Model):
 
     class Meta:
         db_table = 'pricing_tbl'
+
+    def __str__(self):
+        return f"{self.title} - {self.price}"

@@ -19,6 +19,9 @@ from price.models import Price
 from payment.models import PaymentLogs
 from payment.serializers import PaymentLogsSerializer
 import random
+from django.db import transaction
+from django.utils import timezone
+
 # Create your views here.
 
 
@@ -33,26 +36,48 @@ class UserAPIView(APIView):
         serializer = UserRegUpdateSerializer(data=request.data)
         email_addr = request.data.get('email')
         exist_user = User.objects.filter(email=email_addr)
+
         if len(exist_user) != 0:
             exist_user[0].status = True
             exist_user[0].save()
             return Response({"status": True, "past_registered": True, "data": "User Registered Successfully. You don't need email verification because you already registered to our service."}, status=status.HTTP_201_CREATED)
+
         if serializer.is_valid():
-            user = serializer.save()
-            serializer.is_activate = False
-            user.save()
-            token = account_activation_token.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            activation_url = f"https://emmysvideos.com/email_verify?uid={uid}&token={token}"
-            mail_subject = 'Activate your account'
-            message = render_to_string('acc_active_email.html', {
-                'user': user,
-                'activation_url': activation_url,
-            })
-            email = EmailMessage(mail_subject, message, to=[user.email])
-            email.content_subtype = "html"
-            email.send()
-            return Response({"status": True, "past_registered": False, "data": "User Registered Successfully. Please check your email to activate your account."}, status=status.HTTP_201_CREATED)
+            with transaction.atomic():
+                user = serializer.save()
+                serializer.is_activate = False
+                user.save()
+
+                # Create free payment log entry
+                PaymentLogs.objects.create(
+                    user=user,
+                    price=None,  # No price plan associated
+                    amount=0,
+                    videoremain=3,  # 3 free recordings
+                    snapshotremain=3,  # 3 free snapshots
+                    status='COMPLETED',
+                    transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
+                )
+
+                # Send verification email
+                token = account_activation_token.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                activation_url = f"https://emmysvideos.com/email_verify?uid={uid}&token={token}"
+                mail_subject = 'Activate your account'
+                message = render_to_string('acc_active_email.html', {
+                    'user': user,
+                    'activation_url': activation_url,
+                })
+                email = EmailMessage(mail_subject, message, to=[user.email])
+                email.content_subtype = "html"
+                email.send()
+
+                return Response({
+                    "status": True,
+                    "past_registered": False,
+                    "data": "User Registered Successfully. Please check your email to activate your account."
+                }, status=status.HTTP_201_CREATED)
+
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, pk, format=None):
@@ -406,29 +431,53 @@ class PhoneRegisterView(APIView):
         serializer = UserRegUpdateSerializer(data=request.data)
         email_addr = request.data.get('email')
         exist_user = User.objects.filter(email=email_addr)
+
         if len(exist_user) != 0:
             exist_user[0].status = True
             exist_user[0].save()
             return Response({"status": True, "past_registered": True, "data": "User Registered Successfully. You don't need email verification because you already registered to our service."}, status=status.HTTP_201_CREATED)
-        print(serializer.is_valid())
+
         if serializer.is_valid():
-            user = serializer.save()
-            serializer.is_activate = False
-            user.save()
-            otp = str(random.randint(100000, 999999))
-            EmailOTP.objects.create(user=user, otp=otp)
-            mail_subject = 'Activate your account'
-            message = f"""
-                            <html>
-                            <body>
-                                <p>Your OTP code for <strong>emmysvideos.com</strong> is <strong>{otp}</strong></p>
-                            </body>
-                            </html>
-                        """
-            email = EmailMessage(mail_subject, message, to=[user.email])
-            email.content_subtype = "html"
-            email.send()
-            return Response({"status": True, "past_registered": False, "data": {"msg": "User Registered Successfully. OTP sent to your email.", "user_id": user.id}}, status=status.HTTP_201_CREATED)
+            with transaction.atomic():
+                user = serializer.save()
+                serializer.is_activate = False
+                user.save()
+
+                # Create free payment log entry
+                PaymentLogs.objects.create(
+                    user=user,
+                    price=None,
+                    amount=0,
+                    videoremain=3,
+                    snapshotremain=3,
+                    status='COMPLETED',
+                    transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
+                )
+
+                # Send OTP
+                otp = str(random.randint(100000, 999999))
+                EmailOTP.objects.create(user=user, otp=otp)
+                mail_subject = 'Activate your account'
+                message = f"""
+                    <html>
+                    <body>
+                        <p>Your OTP code for <strong>emmysvideos.com</strong> is <strong>{otp}</strong></p>
+                    </body>
+                    </html>
+                """
+                email = EmailMessage(mail_subject, message, to=[user.email])
+                email.content_subtype = "html"
+                email.send()
+
+                return Response({
+                    "status": True,
+                    "past_registered": False,
+                    "data": {
+                        "msg": "User Registered Successfully. OTP sent to your email.",
+                        "user_id": user.id
+                    }
+                }, status=status.HTTP_201_CREATED)
+
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, otp, format=None):

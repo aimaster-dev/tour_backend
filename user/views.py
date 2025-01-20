@@ -528,6 +528,8 @@ class GetProfileAPIView(APIView):
             user = request.user
             serializer = UserDetailSerializer(user)
             data = serializer.data
+
+            # Get tourplace data
             tourpl = data['tourplace']
             del data['tourplace']
             data['tourplace'] = []
@@ -537,6 +539,17 @@ class GetProfileAPIView(APIView):
                     'place_name': TourPlace.objects.get(id=tour).place_name
                 }
                 data['tourplace'].append(tour_data)
+
+            # Calculate total remaining videos and snapshots from PaymentLogs
+            payment_logs = PaymentLogs.objects.filter(user=user.id)
+            total_videoremain = sum(log.videoremain for log in payment_logs)
+            total_snapshotremain = sum(
+                log.snapshotremain for log in payment_logs)
+
+            # Add the totals to the response data
+            data['total_videoremain'] = total_videoremain
+            data['total_snapshotremain'] = total_snapshotremain
+
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         except user.DoesNotExist:
             Response({"status": False, "data": {"msg": "User not found."}},

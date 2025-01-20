@@ -523,6 +523,8 @@ class ResendActivationCode(APIView):
 
 class GetProfileAPIView(APIView):
 
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         try:
             user = request.user

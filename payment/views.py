@@ -337,16 +337,20 @@ class VideoSnapshotCountAPIView(APIView):
             if not current_price:
                 return Response({"status": False, "data": "No active price plan found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Get the payment logs for the user
+            # Get the latest payment log for the user
             payment_log = PaymentLogs.objects.filter(
-                user=user.id, price=current_price.id).first()
+                user=user.id,
+                price=current_price.id
+            ).order_by('-created_at').first()
+
             if not payment_log:
                 return Response({"status": False, "data": "No payment log found for the user."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Return the remaining video and snapshot counts
+            # Return the remaining video and snapshot counts along with price ID
             return Response({
                 "status": True,
                 "data": {
+                    "price_id": payment_log.price.id,
                     "video_remaining": payment_log.videoremain,
                     "snapshot_remaining": payment_log.snapshotremain
                 }

@@ -1,0 +1,135 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>Snapshots Created</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type="text/css">
+      @media screen {
+        @font-face {
+          font-family: "Source Sans Pro";
+          font-style: normal;
+          font-weight: 400;
+          src: local("Source Sans Pro Regular"), local("SourceSansPro-Regular"),
+            url(https://fonts.gstatic.com/s/sourcesanspro/v10/ODelI1aHBYDBqgeIAH2zlBM0YzuT7MdOe03otPbuUS0.woff)
+              format("woff");
+        }
+        @font-face {
+          font-family: "Source Sans Pro";
+          font-style: normal;
+          font-weight: 700;
+          src: local("Source Sans Pro Bold"), local("SourceSansPro-Bold"),
+            url(https://fonts.gstatic.com/s/sourcesanspro/v10/toadOcfmlt9b38dHJxOBGFkQc6VGVFSmCnC_l7QZG60.woff)
+              format("woff");
+        }
+      }
+      body {
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background-color: #e9ecef;
+      }
+      table {
+        border-collapse: collapse !important;
+      }
+      img {
+        height: auto;
+        line-height: 100%;
+        text-decoration: none;
+        border: 0;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td align="center" bgcolor="#e9ecef">
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            width="100%"
+            style="max-width: 600px"
+          >
+            <tr>
+              <td
+                align="center"
+                bgcolor="#ffffff"
+                style="
+                  padding: 24px;
+                  font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                  border-top: 10px solid #d4dadf;
+                "
+              >
+                <a
+                  href="https://emmysvideos.com"
+                  target="_blank"
+                  style="display: inline-block"
+                >
+                  <img
+                    src="https://res.cloudinary.com/mailmodo/image/upload/v1719947154/editor/p/2a043116-c2ef-4137-b590-3113a360e697/33a9af31b593186d556fe5883b511a25_jib39o.png"
+                    alt="Logo"
+                    border="0"
+                    width="250"
+                    style="
+                      display: block;
+                      width: 250px;
+                      max-width: 250px;
+                      min-width: 250px;
+                    "
+                  />
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td
+                align="center"
+                bgcolor="#ffffff"
+                style="
+                  padding: 24px;
+                  font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+                "
+              >
+                <h1
+                  style="
+                    margin: 0;
+                    font-size: 32px;
+                    font-weight: 700;
+                    letter-spacing: -1px;
+                    line-height: 48px;
+                  "
+                >
+                  Snapshots Created Successfully!
+                </h1>
+                <p style="margin: 20px 0">Hi {{ user.username }},</p>
+                <p style="margin: 0">
+                  Your snapshots have been successfully created! Here they are:
+                </p>
+                {% for snapshot in snapshots %}
+                <div style="margin: 20px 0">
+                  <img
+                    src="{{ snapshot.image_url }}"
+                    alt="Snapshot"
+                    style="max-width: 100%; height: auto; margin: 10px 0"
+                  />
+                </div>
+                {% endfor %}
+                <p style="margin: 20px 0">
+                  You have {{ remaining_snapshots }} snapshots remaining.
+                </p>
+                <p style="margin: 20px 0">
+                  Best regards,<br />Emmy's Videos Team
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+{% endautoescape %}

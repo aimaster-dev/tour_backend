@@ -542,7 +542,6 @@ class ResendActivationCode(APIView):
 
 
 class GetProfileAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -562,19 +561,34 @@ class GetProfileAPIView(APIView):
                 }
                 data['tourplace'].append(tour_data)
 
-            # Calculate total remaining videos and snapshots from PaymentLogs
-            payment_logs = PaymentLogs.objects.filter(user=user.id)
-            total_videoremain = sum(log.videoremain for log in payment_logs)
-            total_snapshotremain = sum(
-                log.snapshotremain for log in payment_logs)
+            # Get the latest payment log for both paid and free plans
+            payment_logs_query = PaymentLogs.objects.filter(user=user.id)
+            latest_payment = payment_logs_query.order_by('-created_at').first()
 
-            # Add the totals to the response data
-            data['total_videoremain'] = total_videoremain
-            data['total_snapshotremain'] = total_snapshotremain
+            # Get free plan details
+            free_plan = PaymentLogs.objects.filter(
+                user=user.id,
+                price__isnull=True,
+                transaction_id__startswith='FREE_TRIAL_'
+            ).first()
+
+            # Calculate total remaining credits
+            total_video_remaining = (latest_payment.videoremain if latest_payment else 0) + \
+                (free_plan.videoremain if free_plan else 0)
+            total_snapshot_remaining = (latest_payment.snapshotremain if latest_payment else 0) + \
+                (free_plan.snapshotremain if free_plan else 0)
+
+            # Add permissions and remaining counts to the response data
+            data['recording_permissions'] = {
+                "is_video_recording_allowed": total_video_remaining > 0,
+                "is_snapshot_allowed": total_snapshot_remaining > 0,
+                "video_remaining": total_video_remaining,
+                "snapshot_remaining": total_snapshot_remaining
+            }
 
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
-        except user.DoesNotExist:
-            Response({"status": False, "data": {"msg": "User not found."}},
+        except User.DoesNotExist:
+            return Response({"status": False, "data": {"msg": "User not found."}},
                      status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)

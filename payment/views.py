@@ -355,7 +355,8 @@ class VideoSnapshotCountAPIView(APIView):
                     "price_id": latest_payment.price.id if latest_payment and latest_payment.price else None,
                     "video_remaining": total_video_remaining,
                     "snapshot_remaining": total_snapshot_remaining,
-                    "is_free_plan": latest_payment.price is None if latest_payment else True
+                    "is_free_plan": latest_payment.price is None if latest_payment else True,
+                    "record_time": latest_payment.price.record_time if latest_payment and latest_payment.price else 0
                 }
             }
 

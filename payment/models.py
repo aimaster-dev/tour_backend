@@ -16,6 +16,7 @@ class PaymentLogs(models.Model):
     amount = models.FloatField(default=0.0)
     videoremain = models.IntegerField(default=0)
     snapshotremain = models.IntegerField(default=0)
+    record_time = models.IntegerField(default=10)
     status = models.CharField(
         max_length=20, choices=PAYMENT_STATUS, default='PENDING')
     transaction_id = models.CharField(max_length=255, unique=True)

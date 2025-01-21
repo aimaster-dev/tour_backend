@@ -331,33 +331,9 @@ class VideoSnapshotCountAPIView(APIView):
     def get(self, request):
         user = request.user
         try:
-            # First try to get paid plan
-            current_price = Price.objects.filter(
-                tourplace_id=user.tourplace[0]).first()
-
             # Get the latest payment log for both paid and free plans
-            payment_logs_query = PaymentLogs.objects.filter(
-                user=user.id
-            )
-
-            if current_price:
-                # If there's a price plan, include it in the filter
-                payment_logs_query = payment_logs_query.filter(
-                    Q(price=current_price.id) | Q(price__isnull=True)
-                )
-            else:
-                # If no price plan, just get free plan
-                payment_logs_query = payment_logs_query.filter(
-                    price__isnull=True)
-
-            # Get the latest payment log
-            payment_log = payment_logs_query.order_by('-created_at').first()
-
-            if not payment_log:
-                return Response({
-                    "status": False,
-                    "data": "No payment log found for the user."
-                }, status=status.HTTP_404_NOT_FOUND)
+            payment_logs_query = PaymentLogs.objects.filter(user=user.id)
+            latest_payment = payment_logs_query.order_by('-created_at').first()
 
             # Get free plan details
             free_plan = PaymentLogs.objects.filter(
@@ -367,25 +343,19 @@ class VideoSnapshotCountAPIView(APIView):
             ).first()
 
             # Calculate total remaining credits
-            total_video_remaining = payment_log.videoremain + \
+            total_video_remaining = (latest_payment.videoremain if latest_payment else 0) + \
                 (free_plan.videoremain if free_plan else 0)
-            total_snapshot_remaining = payment_log.snapshotremain + \
+            total_snapshot_remaining = (latest_payment.snapshotremain if latest_payment else 0) + \
                 (free_plan.snapshotremain if free_plan else 0)
 
             # Return the remaining video and snapshot counts
             response_data = {
                 "status": True,
                 "data": {
-                    "price_id": payment_log.price.id if payment_log.price else None,
+                    "price_id": latest_payment.price.id if latest_payment and latest_payment.price else None,
                     "video_remaining": total_video_remaining,
                     "snapshot_remaining": total_snapshot_remaining,
-                    "is_free_plan": payment_log.price is None,
-                    # TODO: If necessary
-                    # "free_plan": {
-                    #     "video_credits": free_plan.videoremain if free_plan else 0,
-                    #     "snapshot_credits": free_plan.snapshotremain if free_plan else 0,
-                    #     "is_available": bool(free_plan and (free_plan.videoremain > 0 or free_plan.snapshotremain > 0))
-                    # }
+                    "is_free_plan": latest_payment.price is None if latest_payment else True
                 }
             }
 

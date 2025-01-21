@@ -67,6 +67,7 @@ class UserAPIView(APIView):
                         amount=0,
                         videoremain=3,
                         snapshotremain=3,
+                        record_time=10,
                         status='COMPLETED',
                         transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
                     )
@@ -470,6 +471,7 @@ class PhoneRegisterView(APIView):
                         amount=0,
                         videoremain=3,
                         snapshotremain=3,
+                        record_time=10,
                         status='COMPLETED',
                         transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
                     )
@@ -589,6 +591,6 @@ class GetProfileAPIView(APIView):
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({"status": False, "data": {"msg": "User not found."}},
-                     status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)

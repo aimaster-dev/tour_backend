@@ -206,17 +206,18 @@ class VideoAddAPIView(APIView):
                 # If user is type 3, handle subscription and payment logic
                 if request.user.usertype == 3:
                     with transaction.atomic():
-                        payment_log = PaymentLogs.objects.select_for_update().get(
+                        payment_log = PaymentLogs.objects.filter(
                             user=request.user.id, price=pricing_id, videoremain__gt=0
-                        )
-                        payment_log.videoremain -= 1
-                        payment_log.save()
+                        ).first()
+                        if payment_log:
+                            payment_log.videoremain -= 1
+                            payment_log.save()
 
-                        # Call the external video processing script
-                        subprocess.Popen(
-                            ['/var/www/htdocs/Video_Backend/otisenv/bin/python', '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
-                                str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
-                        )
+                            # Call the external video processing script
+                            subprocess.Popen(
+                                ['/var/www/htdocs/Video_Backend/otisenv/bin/python', '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
+                                    str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
+                            )
                 else:
                     # Regular user, just process video and save
                     subprocess.Popen(
@@ -406,7 +407,8 @@ class SnapShotAddAPIView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         # Check the user's remaining snapshot count
-        payment_log = PaymentLogs.objects.filter(user=client.id).first()
+        payment_log = PaymentLogs.objects.filter(
+            user=client.id).order_by('-created_at').first()
         if not payment_log or payment_log.snapshotremain <= 0:
             return Response({"status": False, "data": "You don't have any remaining snapshots."},
                             status=status.HTTP_400_BAD_REQUEST)

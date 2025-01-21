@@ -40,7 +40,11 @@ class UserAPIView(APIView):
         if len(exist_user) != 0:
             exist_user[0].status = True
             exist_user[0].save()
-            return Response({"status": True, "past_registered": True, "data": "User Registered Successfully. You don't need email verification because you already registered to our service."}, status=status.HTTP_201_CREATED)
+            return Response({
+                "status": True,
+                "past_registered": True,
+                "data": "User Registered Successfully. You don't need email verification because you already registered to our service."
+            }, status=status.HTTP_201_CREATED)
 
         if serializer.is_valid():
             with transaction.atomic():
@@ -48,16 +52,24 @@ class UserAPIView(APIView):
                 serializer.is_activate = False
                 user.save()
 
-                # Create free payment log entry
-                PaymentLogs.objects.create(
-                    user=user,
-                    price=None,  # No price plan associated
-                    amount=0,
-                    videoremain=3,  # 3 free recordings
-                    snapshotremain=3,  # 3 free snapshots
-                    status='COMPLETED',
-                    transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
-                )
+                # Check if user already had a free plan before
+                existing_free_plan = PaymentLogs.objects.filter(
+                    user__email=email_addr,
+                    price__isnull=True,
+                    transaction_id__startswith='FREE_TRIAL_'
+                ).exists()
+
+                # Only create free plan if user never had one
+                if not existing_free_plan:
+                    PaymentLogs.objects.create(
+                        user=user,
+                        price=None,
+                        amount=0,
+                        videoremain=3,
+                        snapshotremain=3,
+                        status='COMPLETED',
+                        transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
+                    )
 
                 # Send verification email
                 token = account_activation_token.make_token(user)
@@ -443,16 +455,24 @@ class PhoneRegisterView(APIView):
                 serializer.is_activate = False
                 user.save()
 
-                # Create free payment log entry
-                PaymentLogs.objects.create(
-                    user=user,
-                    price=None,
-                    amount=0,
-                    videoremain=3,
-                    snapshotremain=3,
-                    status='COMPLETED',
-                    transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
-                )
+                # Check if user already had a free plan before
+                existing_free_plan = PaymentLogs.objects.filter(
+                    user__email=email_addr,
+                    price__isnull=True,
+                    transaction_id__startswith='FREE_TRIAL_'
+                ).exists()
+
+                # Only create free plan if user never had one
+                if not existing_free_plan:
+                    PaymentLogs.objects.create(
+                        user=user,
+                        price=None,
+                        amount=0,
+                        videoremain=3,
+                        snapshotremain=3,
+                        status='COMPLETED',
+                        transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
+                    )
 
                 # Send OTP
                 otp = str(random.randint(100000, 999999))

@@ -359,14 +359,33 @@ class VideoSnapshotCountAPIView(APIView):
                     "data": "No payment log found for the user."
                 }, status=status.HTTP_404_NOT_FOUND)
 
+            # Get free plan details
+            free_plan = PaymentLogs.objects.filter(
+                user=user.id,
+                price__isnull=True,
+                transaction_id__startswith='FREE_TRIAL_'
+            ).first()
+
+            # Calculate total remaining credits
+            total_video_remaining = payment_log.videoremain + \
+                (free_plan.videoremain if free_plan else 0)
+            total_snapshot_remaining = payment_log.snapshotremain + \
+                (free_plan.snapshotremain if free_plan else 0)
+
             # Return the remaining video and snapshot counts
             response_data = {
                 "status": True,
                 "data": {
                     "price_id": payment_log.price.id if payment_log.price else None,
-                    "video_remaining": payment_log.videoremain,
-                    "snapshot_remaining": payment_log.snapshotremain,
-                    "is_free_plan": payment_log.price is None
+                    "video_remaining": total_video_remaining,
+                    "snapshot_remaining": total_snapshot_remaining,
+                    "is_free_plan": payment_log.price is None,
+                    # TODO: If necessary
+                    # "free_plan": {
+                    #     "video_credits": free_plan.videoremain if free_plan else 0,
+                    #     "snapshot_credits": free_plan.snapshotremain if free_plan else 0,
+                    #     "is_available": bool(free_plan and (free_plan.videoremain > 0 or free_plan.snapshotremain > 0))
+                    # }
                 }
             }
 

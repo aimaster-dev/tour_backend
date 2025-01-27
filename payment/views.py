@@ -413,9 +413,6 @@ class PaymentDetailsAPIView(APIView):
         output_data = []
         for transaction in transactions:
             try:
-                price = Price.objects.get(id=transaction.price.id)
-                tourplace = TourPlace.objects.get(id=price.tourplace.pk)
-
                 transaction_data = {
                     "id": transaction.id,
                     "transaction_id": transaction.transaction_id,
@@ -423,11 +420,25 @@ class PaymentDetailsAPIView(APIView):
                     "status": transaction.status,
                     "created_at": transaction.created_at,
                     "updated_at": transaction.updated_at,
-                    "tourplace": tourplace.place_name,
-                    "plan_name": price.title,
                     "video_remaining": transaction.videoremain,
                     "snapshot_remaining": transaction.snapshotremain,
                 }
+
+                # Handle free plan case
+                if transaction.price is None:
+                    transaction_data.update({
+                        "tourplace": "N/A",
+                        "plan_name": "Free Plan",
+                    })
+                else:
+                    # Paid plan case
+                    price = Price.objects.get(id=transaction.price.id)
+                    tourplace = TourPlace.objects.get(id=price.tourplace.pk)
+                    transaction_data.update({
+                        "tourplace": tourplace.place_name,
+                        "plan_name": price.title,
+                    })
+
                 output_data.append(transaction_data)
             except (Price.DoesNotExist, TourPlace.DoesNotExist):
                 # Skip transactions with missing related data

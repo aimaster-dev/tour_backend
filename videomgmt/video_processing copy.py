@@ -134,17 +134,18 @@ def process_video(video_id, user_id, original_filename, tourplace):
 
     header = Header.objects.filter(
         tourplace=tourplace.pk).order_by('?').first()
+    footer = Footer.objects.filter(
+        tourplace=tourplace.pk).order_by('?').first()
 
-    if not header:
-        logging.info(f"Header doesn't exist...: {tourplace.pk}")
+    if not header or not footer:
+        logging.info(f"Header and Footer doesn't existed...: {tourplace.pk}")
         video.status = False
         video.save()
         video_url = "https://api.emmysvideos.com/media/" + \
             str(video.video_path)
         send_notification_email(user, video_url, '')
         return
-
-    logging.info("Header existed")
+    logging.info("Header and Footer existed")
     current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
     temp_video_path = os.path.join(settings.MEDIA_ROOT, str(video.video_path))
     converted_video_path = os.path.join(
@@ -152,7 +153,6 @@ def process_video(video_id, user_id, original_filename, tourplace):
     convert_webm_to_mp4(temp_video_path, converted_video_path)
     logging.info(
         f"Finished process for video_id: {video_id}, user_id: {user_id}")
-
     try:
         logging.info("Preparing to concatenate video clips using GPU...")
 
@@ -161,17 +161,15 @@ def process_video(video_id, user_id, original_filename, tourplace):
         final_video_relative_path = os.path.join('videos', final_video_name)
         final_video_absolute_path = os.path.join(
             settings.MEDIA_ROOT, final_video_relative_path)
-
-        # Re-encode audio for header and main video
         reencode_audio(header.video_path.path,
                        f"{header.video_path.path}_reencoded.mp4")
+        reencode_audio(footer.video_path.path,
+                       f"{footer.video_path.path}_reencoded.mp4")
         reencode_audio(converted_video_path,
                        f"{converted_video_path}_reencoded.mp4")
-
-        # Use ffmpeg to concatenate just the header and main video
-        concatenate_videos_gpu(final_video_absolute_path,
-                               f"{header.video_path.path}_reencoded.mp4",
-                               f"{converted_video_path}_reencoded.mp4")
+        # Use ffmpeg to concatenate the videos with GPU acceleration
+        concatenate_videos_gpu(final_video_absolute_path, f"{header.video_path.path}_reencoded.mp4",
+                               f"{converted_video_path}_reencoded.mp4", f"{footer.video_path.path}_reencoded.mp4")
 
         final_video_relative_path = final_video_relative_path.replace(
             '\\', '/')
@@ -190,11 +188,6 @@ def process_video(video_id, user_id, original_filename, tourplace):
             os.remove(temp_video_path)
         if os.path.exists(converted_video_path):
             os.remove(converted_video_path)
-        # Clean up reencoded files
-        if os.path.exists(f"{header.video_path.path}_reencoded.mp4"):
-            os.remove(f"{header.video_path.path}_reencoded.mp4")
-        if os.path.exists(f"{converted_video_path}_reencoded.mp4"):
-            os.remove(f"{converted_video_path}_reencoded.mp4")
         logging.info("Finalizing Cleaning...")
 
 

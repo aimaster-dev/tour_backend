@@ -129,11 +129,26 @@ def concatenate_videos_gpu(output_path, *input_paths):
 
 
 def process_video(video_id, user_id, original_filename, tourplace):
-    video = Video.objects.get(pk=video_id)
-    user = User.objects.get(pk=user_id)
+    # Add debug logging
+    logging.info(
+        f"Received parameters - video_id: {video_id}, user_id: {user_id}, tourplace: {tourplace.pk if tourplace else 'None'}")
 
+    # Check tourplace object
+    if not tourplace:
+        logging.error("Tourplace object is None")
+        return
+
+    # Get header with debug logging
+    logging.info(f"Searching for header with tourplace_id: {tourplace.pk}")
     header = Header.objects.filter(
         tourplace=tourplace.pk).order_by('?').first()
+    if header:
+        logging.info(f"Found header with ID: {header.pk}")
+    else:
+        logging.info(f"No header found for tourplace_id: {tourplace.pk}")
+
+    video = Video.objects.get(pk=video_id)
+    user = User.objects.get(pk=user_id)
 
     if not header:
         logging.info(f"Header doesn't exist...: {tourplace.pk}")
@@ -199,14 +214,35 @@ def process_video(video_id, user_id, original_filename, tourplace):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("Usage: python video_processing.py <video_id> <user_id> <original_filename> <tourplace>")
-        sys.exit(1)
+    try:
+        if len(sys.argv) != 5:
+            logging.error(
+                f"Incorrect number of arguments. Received {len(sys.argv)} arguments")
+            print(
+                "Usage: python video_processing.py <video_id> <user_id> <original_filename> <tourplace>")
+            sys.exit(1)
 
-    video_id = int(sys.argv[1])
-    user_id = int(sys.argv[2])
-    original_filename = sys.argv[3]
-    tourplace_id = int(sys.argv[4])
-    tourplace = TourPlace.objects.get(pk=tourplace_id)
-    logging.info(f"Starting Video Editing...")
-    process_video(video_id, user_id, original_filename, tourplace)
+        video_id = sys.argv[1]
+        user_id = sys.argv[2]
+        original_filename = sys.argv[3]
+        tourplace_id = sys.argv[4]
+
+        logging.info(
+            f"Received arguments - video_id: {video_id}, user_id: {user_id}, tourplace_id: {tourplace_id}")
+
+        # Validate tourplace_id
+        if not tourplace_id or tourplace_id == '""':
+            logging.error("Empty tourplace_id received")
+            sys.exit(1)
+
+        # Convert to integer and get tourplace object
+        tourplace_id = int(tourplace_id)
+        tourplace = TourPlace.objects.get(pk=tourplace_id)
+
+        logging.info(
+            f"Starting Video Editing for tourplace_id: {tourplace_id}")
+        process_video(video_id, user_id, original_filename, tourplace)
+
+    except Exception as e:
+        logging.error(f"Error in video processing: {str(e)}")
+        sys.exit(1)

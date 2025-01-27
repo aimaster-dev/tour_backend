@@ -586,7 +586,7 @@ class GetProfileAPIView(APIView):
                 "is_snapshot_allowed": total_snapshot_remaining > 0,
                 "video_remaining": total_video_remaining,
                 "snapshot_remaining": total_snapshot_remaining,
-                "record_time": latest_payment.price.record_time if latest_payment and latest_payment.price else 0
+                "record_time": latest_payment.price.record_time if latest_payment and latest_payment.price else 10
             }
 
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)

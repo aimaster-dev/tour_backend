@@ -199,74 +199,46 @@ class VideoAddAPIView(APIView):
         data = request.data
         data['tourplace'] = TourPlace.objects.get(id=tourplace_id).pk
         serializer = VideoSerializer(data=data)
-
         if serializer.is_valid():
             try:
                 video = serializer.save(client=request.user, status=False)
                 original_filename = os.path.basename(video.video_path.path)
-
                 # If user is type 3, handle subscription and payment logic
                 if request.user.usertype == 3:
                     with transaction.atomic():
-                        # If pricing_id is provided, use that specific plan
-                        if pricing_id:
-                            payment_log = PaymentLogs.objects.filter(
-                                user=request.user.id,
-                                price=pricing_id,
-                                videoremain__gt=0
-                            ).first()
-                        else:
-                            # If no pricing_id, look for free plan
-                            payment_log = PaymentLogs.objects.filter(
-                                user=request.user.id,
-                                price__isnull=True,
-                                transaction_id__startswith='FREE_TRIAL_',
-                                videoremain__gt=0
-                            ).first()
-
+                        payment_log = PaymentLogs.objects.filter(
+                            user=request.user.id, price=pricing_id, videoremain__gt=0
+                        ).first()
                         if payment_log:
                             payment_log.videoremain -= 1
                             payment_log.save()
 
                             # Call the external video processing script
                             subprocess.Popen(
-                                ['/var/www/htdocs/Video_Backend/otisenv/bin/python',
-                                 '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
-                                 str(video.id), str(request.user.id),
-                                 original_filename, str(tourplace_id)]
+                                ['/var/www/htdocs/Video_Backend/otisenv/bin/python', '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
+                                    str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
                             )
-                            return Response({"status": True, "data": serializer.data},
-                                            status=status.HTTP_201_CREATED)
-                        else:
-                            # Clean up if no valid payment log found
-                            video_file_path = video.video_path.path
-                            video.delete()
-                            if os.path.exists(video_file_path):
-                                os.remove(video_file_path)
-                            return Response({
-                                'status': False,
-                                "data": "You don't have any remaining video credits."
-                            }, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     # Regular user, just process video and save
                     subprocess.Popen(
-                        ['/var/www/htdocs/Video_Backend/otisenv/bin/python',
-                         '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
-                         str(video.id), str(request.user.id),
-                         original_filename, str(tourplace_id)]
+                        ['/var/www/htdocs/Video_Backend/otisenv/bin/python', '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
+                            str(video.id), str(request.user.id), original_filename, str(tourplace_id)]
                     )
-                    return Response({"status": True, "data": serializer.data},
-                                    status=status.HTTP_201_CREATED)
 
-            except Exception as e:
-                return Response({
-                    'status': False,
-                    "data": str(e)
-                }, status=status.HTTP_400_BAD_REQUEST)
+                # Return success response
+                return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
+
+            except PaymentLogs.DoesNotExist:
+                # In case of no valid payment log, clean up and return error
+                video_file_path = video.video_path.path
+                video.delete()
+                if os.path.exists(video_file_path):
+                    os.remove(video_file_path)
+
+                return Response({'status': False, "data": "You don't have any remaining case for this subscription."}, status=status.HTTP_400_BAD_REQUEST)
 
         # If the serializer is not valid, return validation errors
-        return Response({"status": False, "data": serializer.errors},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
         user = request.user

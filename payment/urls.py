@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import PaymentAPIView, ValidStatusAPIView, VideoSnapshotCountAPIView, PaymentDetailsAPIView, InAppPurchaseAPIView
+from .views import PaymentAPIView, ValidStatusAPIView, VideoSnapshotCountAPIView, PaymentDetailsAPIView, InAppPurchaseAPIView, AdminTransactionListAPIView
 
 urlpatterns = [
     path('pay', PaymentAPIView.as_view(), name='process_payment'),
@@ -11,4 +11,6 @@ urlpatterns = [
     path('transactions', PaymentDetailsAPIView.as_view(),
          name='payment_transactions'),
     path('in-app-purchase', InAppPurchaseAPIView.as_view(), name='in_app_purchase'),
+    path('admin/transactions', AdminTransactionListAPIView.as_view(),
+         name='admin_transactions'),
 ]

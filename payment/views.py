@@ -2,7 +2,7 @@ from user.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from user.permissions import IsClient
+from user.permissions import IsClient, IsAdmin
 from django.core.files.storage import default_storage
 from rest_framework.parsers import MultiPartParser, FormParser
 from square.client import Client
@@ -523,4 +523,90 @@ class InAppPurchaseAPIView(APIView):
             return Response({
                 "status": False,
                 "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminTransactionListAPIView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        try:
+            # Get query parameters for filtering
+            from_date = request.query_params.get('from_date')
+            to_date = request.query_params.get('to_date')
+            status_filter = request.query_params.get('status')
+            search_term = request.query_params.get(
+                'search')  # For searching username/email
+
+            # Base query
+            transactions = PaymentLogs.objects.all().order_by('-created_at')
+
+            # Apply filters
+            if from_date:
+                try:
+                    from_date = datetime.strptime(from_date, '%Y-%m-%d')
+                    transactions = transactions.filter(
+                        created_at__gte=from_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid from_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            if to_date:
+                try:
+                    to_date = datetime.strptime(to_date, '%Y-%m-%d')
+                    transactions = transactions.filter(created_at__lte=to_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid to_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            if status_filter:
+                transactions = transactions.filter(
+                    status=status_filter.upper())
+
+            if search_term:
+                transactions = transactions.filter(
+                    Q(user__username__icontains=search_term) |
+                    Q(user__email__icontains=search_term)
+                )
+
+            # Prepare response data
+            transaction_data = []
+            for transaction in transactions:
+                user = User.objects.get(id=transaction.user.id)
+
+                transaction_info = {
+                    "transaction_id": transaction.transaction_id,
+                    "plan_name": transaction.price.title if transaction.price else "Free Trial",
+                    "user_details": {
+                        "username": user.username,
+                        "email": user.email,
+                        "phone_number": user.phone_number
+                    },
+                    "amount": transaction.amount,
+                    "status": transaction.status,
+                    "created_at": transaction.created_at,
+                    "updated_at": transaction.updated_at,
+                    "remaining_credits": {
+                        "video": transaction.videoremain,
+                        "snapshot": transaction.snapshotremain
+                    }
+                }
+                transaction_data.append(transaction_info)
+
+            return Response({
+                "status": True,
+                "data": {
+                    "total_transactions": len(transaction_data),
+                    "transactions": transaction_data
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

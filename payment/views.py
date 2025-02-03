@@ -373,84 +373,202 @@ class PaymentDetailsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
+        try:
+            user = request.user
 
-        # Get query parameters for filtering
-        from_date = request.query_params.get('from_date')
-        to_date = request.query_params.get('to_date')
-        status_filter = request.query_params.get('status')
+            # Get query parameters for filtering
+            from_date = request.query_params.get('from_date')
+            to_date = request.query_params.get('to_date')
+            status_filter = request.query_params.get('status')
+            search_term = request.query_params.get('search')
 
-        # Base query for user's transactions
-        transactions = PaymentLogs.objects.filter(
-            user=user.pk).order_by('-created_at')
+            # Base query depending on user type
+            if user.usertype == 1:  # Admin - can see all transactions
+                transactions = PaymentLogs.objects.all()
+            elif user.usertype == 2:  # ISP - can see transactions from their tourplaces
+                isp_tourplaces = TourPlace.objects.filter(isp=user.pk)
+                prices = Price.objects.filter(tourplace__in=isp_tourplaces)
+                transactions = PaymentLogs.objects.filter(price__in=prices)
+            else:  # Client - can only see their own transactions
+                transactions = PaymentLogs.objects.filter(user=user.pk)
 
-        # Apply date filters if provided
-        if from_date:
-            try:
-                from_date = datetime.strptime(from_date, '%Y-%m-%d')
-                transactions = transactions.filter(created_at__gte=from_date)
-            except ValueError:
-                return Response({
-                    "status": False,
-                    "message": "Invalid from_date format. Use YYYY-MM-DD"
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Order by most recent first
+            transactions = transactions.order_by('-created_at')
 
-        if to_date:
-            try:
-                to_date = datetime.strptime(to_date, '%Y-%m-%d')
-                to_date = to_date + timedelta(days=1)  # Include the entire day
-                transactions = transactions.filter(created_at__lte=to_date)
-            except ValueError:
-                return Response({
-                    "status": False,
-                    "message": "Invalid to_date format. Use YYYY-MM-DD"
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Apply date filters
+            if from_date:
+                try:
+                    from_date = datetime.strptime(from_date, '%Y-%m-%d')
+                    transactions = transactions.filter(
+                        created_at__gte=from_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid from_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Filter by status if provided
-        if status_filter:
-            transactions = transactions.filter(status=status_filter.upper())
+            if to_date:
+                try:
+                    to_date = datetime.strptime(to_date, '%Y-%m-%d')
+                    to_date = to_date + timedelta(days=1)  # Include entire day
+                    transactions = transactions.filter(created_at__lte=to_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid to_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-        output_data = []
-        for transaction in transactions:
-            try:
-                transaction_data = {
-                    "id": transaction.id,
-                    "transaction_id": transaction.transaction_id,
-                    "amount": transaction.amount,
-                    "status": transaction.status,
-                    "created_at": transaction.created_at,
-                    "updated_at": transaction.updated_at,
-                    "video_remaining": transaction.videoremain,
-                    "snapshot_remaining": transaction.snapshotremain,
+            # Filter by status if provided
+            if status_filter:
+                transactions = transactions.filter(
+                    status=status_filter.upper())
+
+            # Apply search filter for admin and ISP users
+            if search_term and user.usertype in [1, 2]:
+                transactions = transactions.filter(
+                    Q(user__username__icontains=search_term) |
+                    Q(user__email__icontains=search_term)
+                )
+
+            # Prepare response data
+            transaction_data = []
+            for transaction in transactions:
+                try:
+                    transaction_user = User.objects.get(id=transaction.user.id)
+
+                    transaction_info = {
+                        "transaction_id": transaction.transaction_id,
+                        "user_details": {
+                            "username": transaction_user.username,
+                            "email": transaction_user.email,
+                            "phone_number": transaction_user.phone_number
+                        },
+                        "amount": transaction.amount,
+                        "status": transaction.status,
+                        "created_at": transaction.created_at,
+                        "updated_at": transaction.updated_at,
+                        "remaining_credits": {
+                            "video": transaction.videoremain,
+                            "snapshot": transaction.snapshotremain
+                        }
+                    }
+
+                    # Add plan details
+                    if transaction.price is None:
+                        transaction_info.update({
+                            "tourplace": "N/A",
+                            "plan_name": "Free Trial",
+                        })
+                    else:
+                        price = Price.objects.get(id=transaction.price.id)
+                        tourplace = TourPlace.objects.get(
+                            id=price.tourplace.pk)
+                        transaction_info.update({
+                            "tourplace": tourplace.place_name,
+                            "plan_name": price.title,
+                        })
+
+                    transaction_data.append(transaction_info)
+                except (User.DoesNotExist, Price.DoesNotExist, TourPlace.DoesNotExist):
+                    continue
+
+            return Response({
+                "status": True,
+                "data": {
+                    "total_transactions": len(transaction_data),
+                    "transactions": transaction_data
                 }
+            }, status=status.HTTP_200_OK)
 
-                # Handle free plan case
-                if transaction.price is None:
-                    transaction_data.update({
-                        "tourplace": "N/A",
-                        "plan_name": "Free Plan",
-                    })
-                else:
-                    # Paid plan case
-                    price = Price.objects.get(id=transaction.price.id)
-                    tourplace = TourPlace.objects.get(id=price.tourplace.pk)
-                    transaction_data.update({
-                        "tourplace": tourplace.place_name,
-                        "plan_name": price.title,
-                    })
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                output_data.append(transaction_data)
-            except (Price.DoesNotExist, TourPlace.DoesNotExist):
-                # Skip transactions with missing related data
-                continue
+# Backup
+# class PaymentDetailsAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
 
-        return Response({
-            "status": True,
-            "data": {
-                "total_transactions": len(output_data),
-                "transactions": output_data
-            }
-        }, status=status.HTTP_200_OK)
+#     def get(self, request):
+#         user = request.user
+
+#         # Get query parameters for filtering
+#         from_date = request.query_params.get('from_date')
+#         to_date = request.query_params.get('to_date')
+#         status_filter = request.query_params.get('status')
+
+#         # Base query for user's transactions
+#         transactions = PaymentLogs.objects.filter(
+#             user=user.pk).order_by('-created_at')
+
+#         # Apply date filters if provided
+#         if from_date:
+#             try:
+#                 from_date = datetime.strptime(from_date, '%Y-%m-%d')
+#                 transactions = transactions.filter(created_at__gte=from_date)
+#             except ValueError:
+#                 return Response({
+#                     "status": False,
+#                     "message": "Invalid from_date format. Use YYYY-MM-DD"
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#         if to_date:
+#             try:
+#                 to_date = datetime.strptime(to_date, '%Y-%m-%d')
+#                 to_date = to_date + timedelta(days=1)  # Include the entire day
+#                 transactions = transactions.filter(created_at__lte=to_date)
+#             except ValueError:
+#                 return Response({
+#                     "status": False,
+#                     "message": "Invalid to_date format. Use YYYY-MM-DD"
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Filter by status if provided
+#         if status_filter:
+#             transactions = transactions.filter(status=status_filter.upper())
+
+#         output_data = []
+#         for transaction in transactions:
+#             try:
+#                 transaction_data = {
+#                     "id": transaction.id,
+#                     "transaction_id": transaction.transaction_id,
+#                     "amount": transaction.amount,
+#                     "status": transaction.status,
+#                     "created_at": transaction.created_at,
+#                     "updated_at": transaction.updated_at,
+#                     "video_remaining": transaction.videoremain,
+#                     "snapshot_remaining": transaction.snapshotremain,
+#                 }
+
+#                 # Handle free plan case
+#                 if transaction.price is None:
+#                     transaction_data.update({
+#                         "tourplace": "N/A",
+#                         "plan_name": "Free Plan",
+#                     })
+#                 else:
+#                     # Paid plan case
+#                     price = Price.objects.get(id=transaction.price.id)
+#                     tourplace = TourPlace.objects.get(id=price.tourplace.pk)
+#                     transaction_data.update({
+#                         "tourplace": tourplace.place_name,
+#                         "plan_name": price.title,
+#                     })
+
+#                 output_data.append(transaction_data)
+#             except (Price.DoesNotExist, TourPlace.DoesNotExist):
+#                 # Skip transactions with missing related data
+#                 continue
+
+#         return Response({
+#             "status": True,
+#             "data": {
+#                 "total_transactions": len(output_data),
+#                 "transactions": output_data
+#             }
+#         }, status=status.HTTP_200_OK)
 
 
 class InAppPurchaseAPIView(APIView):

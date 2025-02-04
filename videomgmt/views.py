@@ -19,6 +19,8 @@ from django.db import transaction
 import logging
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from asgiref.sync import async_to_sync
+from .video_processing import handle_video_processing
 
 
 class HeaderAPIView(APIView):
@@ -204,11 +206,12 @@ class VideoAddAPIView(APIView):
             try:
                 video = serializer.save(client=request.user, status=False)
                 original_filename = os.path.basename(video.video_path.path)
+                tourplace = TourPlace.objects.get(id=tourplace_id)
 
                 # If user is type 3, handle subscription and payment logic
                 if request.user.usertype == 3:
                     with transaction.atomic():
-                        # If pricing_id is provided, use that specific plan
+                        # Payment logic remains the same
                         if pricing_id:
                             payment_log = PaymentLogs.objects.filter(
                                 user=request.user.id,
@@ -216,7 +219,6 @@ class VideoAddAPIView(APIView):
                                 videoremain__gt=0
                             ).first()
                         else:
-                            # If no pricing_id, look for free plan
                             payment_log = PaymentLogs.objects.filter(
                                 user=request.user.id,
                                 price__isnull=True,
@@ -228,15 +230,24 @@ class VideoAddAPIView(APIView):
                             payment_log.videoremain -= 1
                             payment_log.save()
 
-                            # Call the external video processing script
-                            subprocess.Popen(
-                                ['/var/www/htdocs/Video_Backend/otisenv/bin/python',
-                                 '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
-                                 str(video.id), str(request.user.id),
-                                 original_filename, str(tourplace_id)]
+                            # Process video directly
+                            success = async_to_sync(handle_video_processing)(
+                                video,
+                                request.user,
+                                original_filename,
+                                tourplace
                             )
-                            return Response({"status": True, "data": serializer.data},
-                                            status=status.HTTP_201_CREATED)
+
+                            if success:
+                                return Response(
+                                    {"status": True, "data": serializer.data},
+                                    status=status.HTTP_201_CREATED
+                                )
+                            else:
+                                return Response({
+                                    "status": False,
+                                    "data": "Video processing failed"
+                                }, status=status.HTTP_400_BAD_REQUEST)
                         else:
                             # Clean up if no valid payment log found
                             video_file_path = video.video_path.path
@@ -248,15 +259,24 @@ class VideoAddAPIView(APIView):
                                 "data": "You don't have any remaining video credits."
                             }, status=status.HTTP_400_BAD_REQUEST)
                 else:
-                    # Regular user, just process video and save
-                    subprocess.Popen(
-                        ['/var/www/htdocs/Video_Backend/otisenv/bin/python',
-                         '/var/www/htdocs/Video_Backend/videomgmt/video_processing.py',
-                         str(video.id), str(request.user.id),
-                         original_filename, str(tourplace_id)]
+                    # Regular user, just process video
+                    success = async_to_sync(handle_video_processing)(
+                        video,
+                        request.user,
+                        original_filename,
+                        tourplace
                     )
-                    return Response({"status": True, "data": serializer.data},
-                                    status=status.HTTP_201_CREATED)
+
+                    if success:
+                        return Response(
+                            {"status": True, "data": serializer.data},
+                            status=status.HTTP_201_CREATED
+                        )
+                    else:
+                        return Response({
+                            "status": False,
+                            "data": "Video processing failed"
+                        }, status=status.HTTP_400_BAD_REQUEST)
 
             except Exception as e:
                 return Response({
@@ -264,9 +284,10 @@ class VideoAddAPIView(APIView):
                     "data": str(e)
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-        # If the serializer is not valid, return validation errors
-        return Response({"status": False, "data": serializer.errors},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"status": False, "data": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     def get(self, request):
         user = request.user

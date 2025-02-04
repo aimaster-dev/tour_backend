@@ -40,13 +40,12 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
     Converts a .webm file to .mp4 with specified resolution, frame rate, and bitrate.
     """
     command = [
-        '/usr/local/bin/ffmpeg',
+        'ffmpeg',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
         '-y',  # Overwrite output files without asking
         '-i', input_path,  # Input file
-        # Video filter: scale to desired resolution
         '-vf', f'scale={resolution}',
         '-r', str(frame_rate),  # Set frame rate
-        '-c:v', 'h264_nvenc',  # Use NVIDIA's H.264 encoder
+        '-c:v', 'libx264',  # Changed from h264_nvenc to libx264 for better compatibility
         '-preset', 'medium',  # Encoding preset
         '-b:v', bitrate,  # Video bitrate
         '-c:a', 'aac',  # Audio codec
@@ -55,17 +54,19 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
         output_path  # Output file
     ]
 
-    logging.info(
-        f"Converting {input_path} to {output_path} with resolution {resolution}, frame rate {frame_rate}, and bitrate {bitrate}...")
+    logging.info(f"Converting {input_path} to {output_path}...")
 
-    result = subprocess.run(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    if result.returncode != 0:
-        # Log the full ffmpeg stderr output for better debugging
-        error_message = result.stderr.decode('utf-8')
-        logging.error(f"FFmpeg conversion error: {error_message}")
-        raise ValueError(f"Error converting webm to mp4: {error_message}")
+    try:
+        result = subprocess.run(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            error_message = result.stderr.decode('utf-8')
+            logging.error(f"FFmpeg conversion error: {error_message}")
+            raise ValueError(f"Error converting video: {error_message}")
+    except FileNotFoundError:
+        logging.error(
+            "FFmpeg not found. Please ensure FFmpeg is installed and in your system PATH")
+        raise
 
     logging.info(f"Conversion successful: {output_path}")
 
@@ -87,7 +88,7 @@ def reencode_audio(input_path, output_path):
     Re-encodes the audio of the given input video to ensure uniformity.
     """
     command = [
-        '/usr/local/bin/ffmpeg', '-y',  # Overwrite files
+        'ffmpeg', '-y',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
         '-i', input_path,  # Input video file
         '-c:v', 'copy',  # Copy video without re-encoding
         '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2',  # Re-encode audio
@@ -106,111 +107,121 @@ def reencode_audio(input_path, output_path):
 def concatenate_videos_gpu(output_path, *input_paths):
     current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
     concat_list_filename = f"concat_list_{current_time}.txt"
-    with open(concat_list_filename, "w") as f:
-        for input_path in input_paths:
-            f.write(f"file '{input_path}'\n")
-    # output_path_mkv = output_path.replace('.mp4', '.mkv')
-    command = [
-        '/usr/local/bin/ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', concat_list_filename,
-        '-c:v', 'h264_nvenc', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2',
-        '-movflags', 'faststart', output_path
-    ]
-    logging.info(
-        f"Starting to concatenate video clips using GPU with list {concat_list_filename}...")
-    result = subprocess.run(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if result.returncode != 0:
-        logging.info(
-            f"Error concatenating videos: {result.stderr.decode('utf-8')}")
-        raise ValueError(
-            f"Error concatenating videos: {result.stderr.decode('utf-8')}")
-    os.remove(concat_list_filename)
-    logging.info(f"Temporary concat list file {concat_list_filename} deleted.")
+
+    try:
+        with open(concat_list_filename, "w") as f:
+            for input_path in input_paths:
+                f.write(f"file '{input_path}'\n")
+
+        command = [
+            'ffmpeg',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
+            '-y',
+            '-f', 'concat',
+            '-safe', '0',
+            '-i', concat_list_filename,
+            '-c:v', 'libx264',  # Changed from h264_nvenc to libx264
+            '-preset', 'medium',
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            '-ar', '48000',
+            '-ac', '2',
+            '-movflags', 'faststart',
+            output_path
+        ]
+
+        logging.info(f"Starting to concatenate video clips...")
+        result = subprocess.run(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if result.returncode != 0:
+            error_message = result.stderr.decode('utf-8')
+            logging.error(f"Error concatenating videos: {error_message}")
+            raise ValueError(f"Error concatenating videos: {error_message}")
+
+    finally:
+        if os.path.exists(concat_list_filename):
+            os.remove(concat_list_filename)
+            logging.info(
+                f"Temporary concat list file {concat_list_filename} deleted.")
 
 
-def process_video(video_id, user_id, original_filename, tourplace):
-    # Add debug logging
-    logging.info(
-        f"Received parameters - video_id: {video_id}, user_id: {user_id}, tourplace: {tourplace.pk if tourplace else 'None'}")
+async def handle_video_processing(video, user, original_filename, tourplace):
+    logging.info(f"Starting video processing for user: {user.username}")
 
-    # Check tourplace object
-    if not tourplace:
-        logging.error("Tourplace object is None")
-        return
-
-    # Get header with debug logging
-    logging.info(f"Searching for header with tourplace_id: {tourplace.pk}")
+    # Get header
     header = Header.objects.filter(
         tourplace=tourplace.pk).order_by('?').first()
-    if header:
-        logging.info(f"Found header with ID: {header.pk}")
-    else:
-        logging.info(f"No header found for tourplace_id: {tourplace.pk}")
-
-    video = Video.objects.get(pk=video_id)
-    user = User.objects.get(pk=user_id)
-
     if not header:
-        logging.info(f"Header doesn't exist...: {tourplace.pk}")
+        logging.info(f"Header doesn't exist for tourplace: {tourplace.pk}")
         video.status = False
         video.save()
         video_url = "https://api.emmysvideos.com/media/" + \
             str(video.video_path)
         send_notification_email(user, video_url, '')
-        return
-
-    logging.info("Header existed")
-    current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
-    temp_video_path = os.path.join(settings.MEDIA_ROOT, str(video.video_path))
-    converted_video_path = os.path.join(
-        settings.MEDIA_ROOT, f'converted_video_{user.username}_{current_time}.mp4')
-    convert_webm_to_mp4(temp_video_path, converted_video_path)
-    logging.info(
-        f"Finished process for video_id: {video_id}, user_id: {user_id}")
+        return False
 
     try:
-        logging.info("Preparing to concatenate video clips using GPU...")
+        # Convert the uploaded video
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        temp_video_path = os.path.join(
+            settings.MEDIA_ROOT, str(video.video_path))
+        converted_video_path = os.path.join(
+            settings.MEDIA_ROOT,
+            f'converted_video_{user.username}_{current_time}.mp4'
+        )
 
+        # Convert video to MP4
+        convert_webm_to_mp4(temp_video_path, converted_video_path)
+
+        # Generate final video name and paths
         final_video_name = generate_unique_filename(
             original_filename, user.username)
         final_video_relative_path = os.path.join('videos', final_video_name)
         final_video_absolute_path = os.path.join(
-            settings.MEDIA_ROOT, final_video_relative_path)
+            settings.MEDIA_ROOT, final_video_relative_path
+        )
 
-        # Re-encode audio for header and main video
+        # Re-encode audio for both videos
         reencode_audio(header.video_path.path,
                        f"{header.video_path.path}_reencoded.mp4")
         reencode_audio(converted_video_path,
                        f"{converted_video_path}_reencoded.mp4")
 
-        # Use ffmpeg to concatenate just the header and main video
-        concatenate_videos_gpu(final_video_absolute_path,
-                               f"{header.video_path.path}_reencoded.mp4",
-                               f"{converted_video_path}_reencoded.mp4")
+        # Concatenate videos
+        concatenate_videos_gpu(
+            final_video_absolute_path,
+            f"{header.video_path.path}_reencoded.mp4",
+            f"{converted_video_path}_reencoded.mp4"
+        )
 
+        # Update video path and status
         final_video_relative_path = final_video_relative_path.replace(
             '\\', '/')
-        logging.info(f"Saving {final_video_relative_path}...")
         video.video_path = final_video_relative_path
         video.status = True
         video.save()
-        logging.info(f"Saved {video.video_path}...")
+
+        # Send email notification
         video_url = "https://api.emmysvideos.com/media/" + final_video_relative_path
         send_notification_email(user, video_url, final_video_name)
-        logging.info("Finalizing...")
+
+        return True
+
+    except Exception as e:
+        logging.error(f"Error processing video: {str(e)}")
+        return False
 
     finally:
-        logging.info("Cleaning up temporary files...")
-        if os.path.exists(temp_video_path):
-            os.remove(temp_video_path)
-        if os.path.exists(converted_video_path):
-            os.remove(converted_video_path)
-        # Clean up reencoded files
-        if os.path.exists(f"{header.video_path.path}_reencoded.mp4"):
-            os.remove(f"{header.video_path.path}_reencoded.mp4")
-        if os.path.exists(f"{converted_video_path}_reencoded.mp4"):
-            os.remove(f"{converted_video_path}_reencoded.mp4")
-        logging.info("Finalizing Cleaning...")
+        # Clean up temporary files
+        cleanup_paths = [
+            temp_video_path,
+            converted_video_path,
+            f"{header.video_path.path}_reencoded.mp4",
+            f"{converted_video_path}_reencoded.mp4"
+        ]
+        for path in cleanup_paths:
+            if os.path.exists(path):
+                os.remove(path)
 
 
 if __name__ == "__main__":

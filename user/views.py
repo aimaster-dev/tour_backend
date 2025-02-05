@@ -3,10 +3,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import ListAPIView
-from .serializers import UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer
+from .serializers import UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer, ISPCreateSerializer
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .models import User, Invitation, EmailOTP
+from tourplace.models import Venue
 from .permissions import IsAdmin, IsAdminOrISP
 from .tokens import account_activation_token
 from django.template.loader import render_to_string
@@ -595,3 +596,59 @@ class GetProfileAPIView(APIView):
                             status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ISPManagementView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        serializer = ISPCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            isp = serializer.save()
+            return Response({
+                'status': True,
+                'data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'status': False,
+            'data': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        venue_id = request.query_params.get('venue_id')
+        queryset = User.objects.filter(usertype=2)
+
+        if venue_id:
+            queryset = queryset.filter(venue_id=venue_id)
+
+        serializer = ISPCreateSerializer(queryset, many=True)
+        return Response({
+            'status': True,
+            'data': serializer.data
+        })
+
+
+class VenueISPListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        venues = Venue.objects.filter(status=True)
+        data = []
+
+        for venue in venues:
+            isps = User.objects.filter(usertype=2, venue=venue, status=True)
+            venue_data = {
+                'id': venue.id,
+                'name': venue.venue_name,
+                'isps': [{
+                    'id': isp.id,
+                    'name': isp.username,
+                    'email': isp.email
+                } for isp in isps]
+            }
+            data.append(venue_data)
+
+        return Response({
+            'status': True,
+            'data': data
+        })

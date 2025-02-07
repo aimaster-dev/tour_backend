@@ -16,7 +16,7 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
     Converts a .webm file to .mp4 with specified resolution, frame rate, and bitrate.
     """
     command = [
-        'ffmpeg',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
+        '/usr/local/bin/ffmpeg',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
         '-y',  # Overwrite output files without asking
         '-i', input_path,  # Input file
         '-vf', f'scale={resolution}',

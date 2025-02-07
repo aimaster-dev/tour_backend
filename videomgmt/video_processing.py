@@ -1,5 +1,3 @@
-
-
 def generate_unique_filename(original_filename, username):
     current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     hash_input = f"{original_filename}{username}{current_datetime}".encode(
@@ -21,7 +19,7 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
         '-i', input_path,  # Input file
         '-vf', f'scale={resolution}',
         '-r', str(frame_rate),  # Set frame rate
-        '-c:v', 'libx264',  # Changed from h264_nvenc to libx264 for better compatibility
+        '-c:v', 'h264',  # Changed from libx264 to h264
         '-preset', 'medium',  # Encoding preset
         '-b:v', bitrate,  # Video bitrate
         '-c:a', 'aac',  # Audio codec

@@ -21,6 +21,7 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from asgiref.sync import async_to_sync
 from .video_processing import handle_video_processing
+import sys
 
 
 class HeaderAPIView(APIView):
@@ -198,21 +199,41 @@ class VideoAddAPIView(APIView):
     def post(self, request):
         tourplace_id = request.data.get('tourplace_id')
         pricing_id = request.data.get('pricing_id')
-        data = request.data
-        data['tourplace'] = TourPlace.objects.get(id=tourplace_id).pk
+
+        # Check if video file is present in request
+        if 'video_path' not in request.FILES:
+            return Response({
+                "status": False,
+                "data": {"video_path": ["Video file is required."]}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create a new dict with the data we need
+        data = {
+            'video_path': request.FILES['video_path']
+        }
+
+        # Add any other fields from request.data that we need
+        for key in request.data:
+            if key != 'video_path':  # Skip the file field
+                data[key] = request.data[key]
+
+        try:
+            tourplace = TourPlace.objects.get(id=tourplace_id)
+            data['tourplace'] = tourplace.pk
+        except TourPlace.DoesNotExist:
+            return Response({"status": False, "data": {"msg": "Tourplace not found."}}, status=status.HTTP_404_NOT_FOUND)
+
         serializer = VideoSerializer(data=data)
 
         if serializer.is_valid():
             try:
                 video = serializer.save(client=request.user, status=False)
                 original_filename = os.path.basename(video.video_path.path)
-                tourplace = TourPlace.objects.get(id=tourplace_id)
 
                 # If user is type 3, handle subscription and payment logic
                 if request.user.usertype == 3:
                     with transaction.atomic():
-                        # Payment logic remains the same
-                        if pricing_id:
+                        if pricing_id and pricing_id != "" and pricing_id != None:
                             payment_log = PaymentLogs.objects.filter(
                                 user=request.user.id,
                                 price=pricing_id,
@@ -230,24 +251,27 @@ class VideoAddAPIView(APIView):
                             payment_log.videoremain -= 1
                             payment_log.save()
 
-                            # Process video directly
-                            success = async_to_sync(handle_video_processing)(
-                                video,
-                                request.user,
+                            # Use subprocess for video processing instead of async
+                            subprocess.Popen([
+                                sys.executable,  # Use the same Python interpreter running Django
+                                os.path.join(
+                                    settings.BASE_DIR, 'videomgmt', 'video_processing.py'),
+                                str(video.id),
+                                str(request.user.id),
                                 original_filename,
-                                tourplace
-                            )
+                                str(tourplace_id)
+                            ], env={
+                                **os.environ,
+                                'PYTHONPATH': str(settings.BASE_DIR),
+                                'DJANGO_SETTINGS_MODULE': 'tourvideoproject.settings',
+                                # Pass virtual environment path
+                                'VIRTUAL_ENV': os.environ.get('VIRTUAL_ENV', '')
+                            })
 
-                            if success:
-                                return Response(
-                                    {"status": True, "data": serializer.data},
-                                    status=status.HTTP_201_CREATED
-                                )
-                            else:
-                                return Response({
-                                    "status": False,
-                                    "data": "Video processing failed"
-                                }, status=status.HTTP_400_BAD_REQUEST)
+                            return Response(
+                                {"status": True, "data": serializer.data},
+                                status=status.HTTP_201_CREATED
+                            )
                         else:
                             # Clean up if no valid payment log found
                             video_file_path = video.video_path.path
@@ -260,23 +284,26 @@ class VideoAddAPIView(APIView):
                             }, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     # Regular user, just process video
-                    success = async_to_sync(handle_video_processing)(
-                        video,
-                        request.user,
+                    subprocess.Popen([
+                        sys.executable,  # Use the same Python interpreter running Django
+                        os.path.join(settings.BASE_DIR, 'videomgmt',
+                                     'video_processing.py'),
+                        str(video.id),
+                        str(request.user.id),
                         original_filename,
-                        tourplace
-                    )
+                        str(tourplace_id)
+                    ], env={
+                        **os.environ,
+                        'PYTHONPATH': str(settings.BASE_DIR),
+                        'DJANGO_SETTINGS_MODULE': 'tourvideoproject.settings',
+                        # Pass virtual environment path
+                        'VIRTUAL_ENV': os.environ.get('VIRTUAL_ENV', '')
+                    })
 
-                    if success:
-                        return Response(
-                            {"status": True, "data": serializer.data},
-                            status=status.HTTP_201_CREATED
-                        )
-                    else:
-                        return Response({
-                            "status": False,
-                            "data": "Video processing failed"
-                        }, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"status": True, "data": serializer.data},
+                        status=status.HTTP_201_CREATED
+                    )
 
             except Exception as e:
                 return Response({

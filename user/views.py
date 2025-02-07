@@ -195,7 +195,11 @@ class UserLoginAPIView(APIView):
                         user.tourplace = [tourplace]
                         user.device_token = device_token
                         user.save()
-                        tourplace_field = TourPlace.objects.get(id=tourplace)
+                        try:
+                            tourplace_field = TourPlace.objects.get(
+                                id=tourplace)
+                        except TourPlace.DoesNotExist:
+                            return Response({"status": False, "data": {"msg": "Tourplace not found."}}, status=status.HTTP_404_NOT_FOUND)
                         userdata = serializer.validated_data
                         userdata["device_token"] = user.device_token
                         try:
@@ -205,6 +209,7 @@ class UserLoginAPIView(APIView):
                             return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                         invoice_info = PaymentLogs.objects.filter(
                             user=user.id, price=price.id)
+                        print('here', price.id)
                         if len(invoice_info) == 0:
                             data = {
                                 "user": user.id,
@@ -212,7 +217,7 @@ class UserLoginAPIView(APIView):
                                 "videoremain": price.record_limit,
                                 "snapshotremain": price.snapshot_limit,
                                 "amount": price.price,
-                                "status": "Completed",
+                                "status": "COMPLETED",
                                 "comment": "Free Version",
                                 "message": "Free Version"
                             }
@@ -311,8 +316,9 @@ class ClientRangeListAPIView(ListAPIView):
             price__in=prices, amount__gt=0)
         for invoicelog in invoice_list:
             user_id_list.add(invoicelog.user)
-        user_id_list = list(user_id_list)
-        queryset = User.objects.filter(id__in=user_id_list)
+        user_ids = [user.id if isinstance(
+            user, User) else user for user in user_id_list]
+        queryset = User.objects.filter(id__in=user_ids)
         start_row_index = self.request.query_params.get(
             'start_row_index', None)
         end_row_index = self.request.query_params.get('end_row_index', None)

@@ -7,7 +7,7 @@ class TourPlace(models.Model):
     status = models.BooleanField(default=True)
     isp = models.IntegerField(default=0)
     venue = models.ForeignKey(
-        "Venue", on_delete=models.CASCADE, null=True, related_name='tourplaces')
+        "Venue", on_delete=models.CASCADE, null=True, related_name='tourplaces', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

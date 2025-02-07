@@ -1,27 +1,3 @@
-import logging
-from tourplace.models import TourPlace
-from user.models import User
-from videomgmt.models import Video, Header, Footer
-from django.conf import settings
-import django
-import os
-import sys
-import subprocess
-import hashlib
-from datetime import datetime
-from moviepy.editor import VideoFileClip, concatenate_videoclips
-from django.core.wsgi import get_wsgi_application
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# Set up Django environment
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tourvideoproject.settings")
-application = get_wsgi_application()
-
-django.setup()
-
-logging.basicConfig(level=logging.INFO, filename='video_processing.log', filemode='a',
-                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def generate_unique_filename(original_filename, username):
@@ -145,23 +121,25 @@ def concatenate_videos_gpu(output_path, *input_paths):
                 f"Temporary concat list file {concat_list_filename} deleted.")
 
 
-async def handle_video_processing(video, user, original_filename, tourplace):
-    logging.info(f"Starting video processing for user: {user.username}")
+async def handle_video_processing(video_id, user_id, original_filename, tourplace_id):
+    """Handles video processing with async/sync operations properly separated"""
 
-    # Get header
-    header = Header.objects.filter(
-        tourplace=tourplace.pk).order_by('?').first()
+    # Convert sync database operations to async
+    video = await sync_to_async(Video.objects.get)(pk=video_id)
+    user = await sync_to_async(User.objects.get)(pk=user_id)
+    header = await sync_to_async(Header.objects.filter(tourplace=tourplace_id).order_by('?').first)()
+
     if not header:
-        logging.info(f"Header doesn't exist for tourplace: {tourplace.pk}")
-        video.status = False
-        video.save()
+        logging.info(f"Header doesn't exist for tourplace: {tourplace_id}")
+        await sync_to_async(setattr)(video, 'status', False)
+        await sync_to_async(video.save)()
         video_url = "https://api.emmysvideos.com/media/" + \
             str(video.video_path)
-        send_notification_email(user, video_url, '')
+        await sync_to_async(send_notification_email)(user, video_url, '')
         return False
 
     try:
-        # Convert the uploaded video
+        # Rest of your processing logic remains the same
         current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
         temp_video_path = os.path.join(
             settings.MEDIA_ROOT, str(video.video_path))
@@ -173,37 +151,34 @@ async def handle_video_processing(video, user, original_filename, tourplace):
         # Convert video to MP4
         convert_webm_to_mp4(temp_video_path, converted_video_path)
 
-        # Generate final video name and paths
         final_video_name = generate_unique_filename(
             original_filename, user.username)
         final_video_relative_path = os.path.join('videos', final_video_name)
         final_video_absolute_path = os.path.join(
-            settings.MEDIA_ROOT, final_video_relative_path
-        )
+            settings.MEDIA_ROOT, final_video_relative_path)
 
-        # Re-encode audio for both videos
+        # Process videos
         reencode_audio(header.video_path.path,
                        f"{header.video_path.path}_reencoded.mp4")
         reencode_audio(converted_video_path,
                        f"{converted_video_path}_reencoded.mp4")
 
-        # Concatenate videos
         concatenate_videos_gpu(
             final_video_absolute_path,
             f"{header.video_path.path}_reencoded.mp4",
             f"{converted_video_path}_reencoded.mp4"
         )
 
-        # Update video path and status
+        # Update video information
         final_video_relative_path = final_video_relative_path.replace(
             '\\', '/')
-        video.video_path = final_video_relative_path
-        video.status = True
-        video.save()
+        await sync_to_async(setattr)(video, 'video_path', final_video_relative_path)
+        await sync_to_async(setattr)(video, 'status', True)
+        await sync_to_async(video.save)()
 
-        # Send email notification
+        # Send notification
         video_url = "https://api.emmysvideos.com/media/" + final_video_relative_path
-        send_notification_email(user, video_url, final_video_name)
+        await sync_to_async(send_notification_email)(user, video_url, final_video_name)
 
         return True
 
@@ -225,12 +200,48 @@ async def handle_video_processing(video, user, original_filename, tourplace):
 
 
 if __name__ == "__main__":
+    import django
+
+    django.setup()
+
+    from tourplace.models import TourPlace
+    from user.models import User
+    from videomgmt.models import Video, Header, Footer
+    from django.template.loader import render_to_string
+    from django.core.mail import EmailMessage
+    from django.conf import settings
+    import os
+    import sys
+    from pathlib import Path
+    import logging
+    import asyncio
+    from datetime import datetime
+    import hashlib
+    import subprocess
+    from asgiref.sync import sync_to_async
+    from pathlib import Path
+    import logging
+    import sys
+    import os
+
+    # Add the project root directory to Python path
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    sys.path.append(str(BASE_DIR))
+
+    # Setup Django environment before any Django imports
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE',
+                          'tourvideoproject.settings')
+
+    # Now import Django-related modules
+
+    logging.basicConfig(level=logging.INFO, filename='video_processing.log', filemode='a',
+                        format='%(asctime)s - %(levelname)s - %(message)s')
+
     try:
+
         if len(sys.argv) != 5:
             logging.error(
                 f"Incorrect number of arguments. Received {len(sys.argv)} arguments")
-            print(
-                "Usage: python video_processing.py <video_id> <user_id> <original_filename> <tourplace>")
             sys.exit(1)
 
         video_id = sys.argv[1]
@@ -241,18 +252,9 @@ if __name__ == "__main__":
         logging.info(
             f"Received arguments - video_id: {video_id}, user_id: {user_id}, tourplace_id: {tourplace_id}")
 
-        # Validate tourplace_id
-        if not tourplace_id or tourplace_id == '""':
-            logging.error("Empty tourplace_id received")
-            sys.exit(1)
-
-        # Convert to integer and get tourplace object
-        tourplace_id = int(tourplace_id)
-        tourplace = TourPlace.objects.get(pk=tourplace_id)
-
-        logging.info(
-            f"Starting Video Editing for tourplace_id: {tourplace_id}")
-        process_video(video_id, user_id, original_filename, tourplace)
+        # Run the async function
+        asyncio.run(handle_video_processing(
+            video_id, user_id, original_filename, tourplace_id))
 
     except Exception as e:
         logging.error(f"Error in video processing: {str(e)}")

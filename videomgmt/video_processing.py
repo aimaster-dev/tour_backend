@@ -109,6 +109,23 @@ def reencode_audio(input_path, output_path):
     logging.info(f"Re-encoding successful: {output_path}")
 
 
+def check_ffmpeg_codecs():
+    """Check available FFmpeg codecs"""
+    try:
+        result = subprocess.run(
+            [FFMPEG_PATH, '-codecs'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        output = result.stdout.lower()
+        has_libx264 = 'libx264' in output
+        has_h264 = 'h264' in output
+        return has_libx264, has_h264
+    except Exception:
+        return False, False
+
+
 def concatenate_videos_gpu(output_path, *input_paths):
     """
     Concatenates multiple videos using FFmpeg with GPU acceleration if available,
@@ -118,6 +135,12 @@ def concatenate_videos_gpu(output_path, *input_paths):
     concat_list_filename = f"concat_list_{current_time}.txt"
 
     try:
+        # Check available codecs
+        has_libx264, has_h264 = check_ffmpeg_codecs()
+        if not (has_libx264 or has_h264):
+            raise ValueError(
+                "No suitable video codec found. Please install libx264 or h264 codec.")
+
         # Create concat list file with absolute paths
         with open(concat_list_filename, "w") as f:
             for input_path in input_paths:
@@ -126,12 +149,12 @@ def concatenate_videos_gpu(output_path, *input_paths):
 
         # Try GPU encoding first
         gpu_command = [
-            FFMPEG_PATH,  # Use environment-specific path
+            FFMPEG_PATH,
             '-y',
             '-f', 'concat',
             '-safe', '0',
             '-i', concat_list_filename,
-            '-c:v', 'h264_nvenc',  # NVIDIA GPU encoder
+            '-c:v', 'h264_nvenc' if has_h264 else 'libx264',
             '-preset', 'medium',
             '-c:a', 'aac',
             '-b:a', '128k',
@@ -141,7 +164,6 @@ def concatenate_videos_gpu(output_path, *input_paths):
             output_path
         ]
 
-        # Try GPU encoding first
         try:
             logging.info("Attempting GPU acceleration...")
             result = subprocess.run(
@@ -157,12 +179,22 @@ def concatenate_videos_gpu(output_path, *input_paths):
 
         # Fallback to CPU encoding
         cpu_command = [
-            FFMPEG_PATH,  # Use environment-specific path
+            FFMPEG_PATH,
             '-y',
             '-f', 'concat',
             '-safe', '0',
-            '-i', concat_list_filename,
-            '-c:v', 'libx264',  # CPU encoder
+            '-i', concat_list_filename
+        ]
+
+        # Add video codec based on availability
+        if has_libx264:
+            cpu_command.extend(['-c:v', 'libx264'])
+        elif has_h264:
+            cpu_command.extend(['-c:v', 'h264'])
+        else:
+            raise ValueError("No suitable video codec available")
+
+        cpu_command.extend([
             '-preset', 'medium',
             '-c:a', 'aac',
             '-b:a', '128k',
@@ -170,7 +202,7 @@ def concatenate_videos_gpu(output_path, *input_paths):
             '-ac', '2',
             '-movflags', 'faststart',
             output_path
-        ]
+        ])
 
         logging.info("Starting video concatenation with CPU...")
         result = subprocess.run(
@@ -184,12 +216,14 @@ def concatenate_videos_gpu(output_path, *input_paths):
     except subprocess.CalledProcessError as e:
         error_message = e.stderr.decode('utf-8')
         logging.error(f"FFmpeg concatenation error: {error_message}")
+        if "Unknown encoder 'libx264'" in error_message:
+            raise ValueError(
+                "Video codec (libx264) is not installed. Please install ffmpeg with libx264 support.")
         raise ValueError(f"Error concatenating videos: {error_message}")
     except Exception as e:
         logging.error(f"Unexpected error during concatenation: {str(e)}")
         raise
     finally:
-        # Clean up the temporary concat list file
         if os.path.exists(concat_list_filename):
             os.remove(concat_list_filename)
             logging.info(

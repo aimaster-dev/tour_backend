@@ -22,6 +22,13 @@ django.setup()
 logging.basicConfig(level=logging.INFO, filename='video_processing.log', filemode='a',
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Define ffmpeg path based on environment
+FFMPEG_PATH = (
+    '/usr/local/bin/ffmpeg' if os.path.exists('/usr/local/bin/ffmpeg')
+    else '/usr/bin/ffmpeg' if os.path.exists('/usr/bin/ffmpeg')
+    else 'ffmpeg'
+)
+
 
 def generate_unique_filename(original_filename, username):
     current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -38,9 +45,8 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
     """
     Converts a .webm file to .mp4 with specified resolution, frame rate, and bitrate.
     """
-    # Use 'ffmpeg' instead of full path for Windows compatibility
     command = [
-        'ffmpeg',  # Changed from '/usr/local/bin/ffmpeg'
+        FFMPEG_PATH,  # Use environment-specific path
         '-y',  # Overwrite output files without asking
         '-i', input_path,  # Input file
         # Video filter: scale to desired resolution
@@ -62,7 +68,6 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if result.returncode != 0:
-        # Log the full ffmpeg stderr output for better debugging
         error_message = result.stderr.decode('utf-8')
         logging.error(f"FFmpeg conversion error: {error_message}")
         raise ValueError(f"Error converting webm to mp4: {error_message}")
@@ -87,7 +92,8 @@ def reencode_audio(input_path, output_path):
     Re-encodes the audio of the given input video to ensure uniformity.
     """
     command = [
-        'ffmpeg', '-y',  # Overwrite files
+        FFMPEG_PATH,  # Use environment-specific path
+        '-y',  # Overwrite files
         '-i', input_path,  # Input video file
         '-c:v', 'copy',  # Copy video without re-encoding
         '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2',  # Re-encode audio
@@ -115,13 +121,12 @@ def concatenate_videos_gpu(output_path, *input_paths):
         # Create concat list file with absolute paths
         with open(concat_list_filename, "w") as f:
             for input_path in input_paths:
-                # Normalize path for Windows
                 normalized_path = input_path.replace('\\', '/')
                 f.write(f"file '{normalized_path}'\n")
 
         # Try GPU encoding first
         gpu_command = [
-            'ffmpeg',
+            FFMPEG_PATH,  # Use environment-specific path
             '-y',
             '-f', 'concat',
             '-safe', '0',
@@ -152,7 +157,7 @@ def concatenate_videos_gpu(output_path, *input_paths):
 
         # Fallback to CPU encoding
         cpu_command = [
-            'ffmpeg',
+            FFMPEG_PATH,  # Use environment-specific path
             '-y',
             '-f', 'concat',
             '-safe', '0',

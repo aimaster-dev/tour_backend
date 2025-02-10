@@ -271,15 +271,30 @@ class VideoAddAPIView(APIView):
                         original_filename,
                         tourplace
                     )
-                except Exception as e:
+                except ValueError as e:
                     # If video processing fails, clean up and return error
+                    if video.video_path and default_storage.exists(video.video_path.name):
+                        default_storage.delete(video.video_path.name)
+                    video.delete()
+
+                    # Check for specific error messages
+                    error_msg = str(e)
+                    if "codec" in error_msg.lower():
+                        error_msg = "Server configuration error: Video codec not available. Please contact support."
+
+                    return Response({
+                        'status': False,
+                        "data": f"Video processing failed: {error_msg}"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                except Exception as e:
+                    # Handle other exceptions
                     if video.video_path and default_storage.exists(video.video_path.name):
                         default_storage.delete(video.video_path.name)
                     video.delete()
                     return Response({
                         'status': False,
-                        "data": f"Video processing failed: {str(e)}"
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                        "data": f"Video processing failed: An unexpected error occurred"
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
                 return Response(
                     {"status": True, "data": serializer.data},

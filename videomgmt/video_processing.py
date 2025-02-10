@@ -1,3 +1,28 @@
+import logging
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from moviepy.editor import VideoFileClip
+from datetime import datetime
+import hashlib
+import subprocess
+from django.conf import settings
+from videomgmt.models import Video, Header, Footer
+from user.models import User
+from tourplace.models import TourPlace
+import os
+import sys
+import django
+
+# Set up Django environment FIRST before any other imports
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tourvideoproject.settings")
+django.setup()
+
+# Now we can import Django models
+
+logging.basicConfig(level=logging.INFO, filename='video_processing.log', filemode='a',
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 def generate_unique_filename(original_filename, username):
     current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     hash_input = f"{original_filename}{username}{current_datetime}".encode(
@@ -13,13 +38,15 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
     """
     Converts a .webm file to .mp4 with specified resolution, frame rate, and bitrate.
     """
+    # Use 'ffmpeg' instead of full path for Windows compatibility
     command = [
-        '/usr/local/bin/ffmpeg',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
+        'ffmpeg',  # Changed from '/usr/local/bin/ffmpeg'
         '-y',  # Overwrite output files without asking
         '-i', input_path,  # Input file
+        # Video filter: scale to desired resolution
         '-vf', f'scale={resolution}',
         '-r', str(frame_rate),  # Set frame rate
-        '-c:v', 'h264',  # Changed from libx264 to h264
+        '-c:v', 'h264',  # Use H.264 encoder instead of NVIDIA
         '-preset', 'medium',  # Encoding preset
         '-b:v', bitrate,  # Video bitrate
         '-c:a', 'aac',  # Audio codec
@@ -28,19 +55,17 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
         output_path  # Output file
     ]
 
-    logging.info(f"Converting {input_path} to {output_path}...")
+    logging.info(
+        f"Converting {input_path} to {output_path} with resolution {resolution}, frame rate {frame_rate}, and bitrate {bitrate}...")
 
-    try:
-        result = subprocess.run(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if result.returncode != 0:
-            error_message = result.stderr.decode('utf-8')
-            logging.error(f"FFmpeg conversion error: {error_message}")
-            raise ValueError(f"Error converting video: {error_message}")
-    except FileNotFoundError:
-        logging.error(
-            "FFmpeg not found. Please ensure FFmpeg is installed and in your system PATH")
-        raise
+    result = subprocess.run(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    if result.returncode != 0:
+        # Log the full ffmpeg stderr output for better debugging
+        error_message = result.stderr.decode('utf-8')
+        logging.error(f"FFmpeg conversion error: {error_message}")
+        raise ValueError(f"Error converting webm to mp4: {error_message}")
 
     logging.info(f"Conversion successful: {output_path}")
 
@@ -62,7 +87,7 @@ def reencode_audio(input_path, output_path):
     Re-encodes the audio of the given input video to ensure uniformity.
     """
     command = [
-        'ffmpeg', '-y',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
+        'ffmpeg', '-y',  # Overwrite files
         '-i', input_path,  # Input video file
         '-c:v', 'copy',  # Copy video without re-encoding
         '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-ac', '2',  # Re-encode audio
@@ -79,21 +104,29 @@ def reencode_audio(input_path, output_path):
 
 
 def concatenate_videos_gpu(output_path, *input_paths):
+    """
+    Concatenates multiple videos using FFmpeg with GPU acceleration if available,
+    falls back to CPU if GPU encoding is not available.
+    """
     current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
     concat_list_filename = f"concat_list_{current_time}.txt"
 
     try:
+        # Create concat list file with absolute paths
         with open(concat_list_filename, "w") as f:
             for input_path in input_paths:
-                f.write(f"file '{input_path}'\n")
+                # Normalize path for Windows
+                normalized_path = input_path.replace('\\', '/')
+                f.write(f"file '{normalized_path}'\n")
 
-        command = [
-            'ffmpeg',  # Changed from '/usr/local/bin/ffmpeg' to just 'ffmpeg'
+        # Try GPU encoding first
+        gpu_command = [
+            'ffmpeg',
             '-y',
             '-f', 'concat',
             '-safe', '0',
             '-i', concat_list_filename,
-            '-c:v', 'libx264',  # Changed from h264_nvenc to libx264
+            '-c:v', 'h264_nvenc',  # NVIDIA GPU encoder
             '-preset', 'medium',
             '-c:a', 'aac',
             '-b:a', '128k',
@@ -103,157 +136,186 @@ def concatenate_videos_gpu(output_path, *input_paths):
             output_path
         ]
 
-        logging.info(f"Starting to concatenate video clips...")
+        # Try GPU encoding first
+        try:
+            logging.info("Attempting GPU acceleration...")
+            result = subprocess.run(
+                gpu_command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True
+            )
+            logging.info("GPU acceleration successful")
+            return
+        except subprocess.CalledProcessError:
+            logging.info("GPU encoding failed, falling back to CPU...")
+
+        # Fallback to CPU encoding
+        cpu_command = [
+            'ffmpeg',
+            '-y',
+            '-f', 'concat',
+            '-safe', '0',
+            '-i', concat_list_filename,
+            '-c:v', 'libx264',  # CPU encoder
+            '-preset', 'medium',
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            '-ar', '48000',
+            '-ac', '2',
+            '-movflags', 'faststart',
+            output_path
+        ]
+
+        logging.info("Starting video concatenation with CPU...")
         result = subprocess.run(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            cpu_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True
+        )
+        logging.info("CPU encoding successful")
 
-        if result.returncode != 0:
-            error_message = result.stderr.decode('utf-8')
-            logging.error(f"Error concatenating videos: {error_message}")
-            raise ValueError(f"Error concatenating videos: {error_message}")
-
+    except subprocess.CalledProcessError as e:
+        error_message = e.stderr.decode('utf-8')
+        logging.error(f"FFmpeg concatenation error: {error_message}")
+        raise ValueError(f"Error concatenating videos: {error_message}")
+    except Exception as e:
+        logging.error(f"Unexpected error during concatenation: {str(e)}")
+        raise
     finally:
+        # Clean up the temporary concat list file
         if os.path.exists(concat_list_filename):
             os.remove(concat_list_filename)
             logging.info(
-                f"Temporary concat list file {concat_list_filename} deleted.")
+                f"Temporary concat list file {concat_list_filename} deleted")
 
 
-async def handle_video_processing(video_id, user_id, original_filename, tourplace_id):
-    """Handles video processing with async/sync operations properly separated"""
+def process_video(video_id, user_id, original_filename, tourplace):
+    video = Video.objects.get(pk=video_id)
+    user = User.objects.get(pk=user_id)
 
-    # Convert sync database operations to async
-    video = await sync_to_async(Video.objects.get)(pk=video_id)
-    user = await sync_to_async(User.objects.get)(pk=user_id)
-    header = await sync_to_async(Header.objects.filter(tourplace=tourplace_id).order_by('?').first)()
+    header = Header.objects.filter(
+        tourplace=tourplace.pk).order_by('?').first()
 
     if not header:
-        logging.info(f"Header doesn't exist for tourplace: {tourplace_id}")
-        await sync_to_async(setattr)(video, 'status', False)
-        await sync_to_async(video.save)()
+        logging.info(f"Header doesn't exist for tourplace: {tourplace.pk}")
+        video.status = False
+        video.save()
         video_url = "https://api.emmysvideos.com/media/" + \
             str(video.video_path)
-        await sync_to_async(send_notification_email)(user, video_url, '')
-        return False
+        send_notification_email(user, video_url, '')
+        return
 
+    logging.info("Header existed")
+
+    # Get absolute paths for all files
+    temp_video_path = os.path.abspath(os.path.join(
+        settings.MEDIA_ROOT, str(video.video_path)))
+    header_path = os.path.abspath(os.path.join(
+        settings.MEDIA_ROOT, str(header.video_path)))
+
+    # Log file existence and permissions
+    logging.info(f"Checking file paths:")
+    logging.info(
+        f"Video path: {temp_video_path} (exists: {os.path.exists(temp_video_path)})")
+    logging.info(
+        f"Header path: {header_path} (exists: {os.path.exists(header_path)})")
+
+    # Generate paths for temporary and final files
+    current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+    converted_video_path = os.path.join(
+        settings.MEDIA_ROOT,
+        'temp',
+        f'converted_video_{user.username}_{current_time}.mp4'
+    )
+
+    # Ensure temp directory exists
+    os.makedirs(os.path.dirname(converted_video_path), exist_ok=True)
+
+    # Convert the video
     try:
-        # Rest of your processing logic remains the same
-        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
-        temp_video_path = os.path.join(
-            settings.MEDIA_ROOT, str(video.video_path))
-        converted_video_path = os.path.join(
-            settings.MEDIA_ROOT,
-            f'converted_video_{user.username}_{current_time}.mp4'
-        )
-
-        # Convert video to MP4
         convert_webm_to_mp4(temp_video_path, converted_video_path)
+        logging.info(f"Finished converting video for video_id: {video_id}")
 
+        # Generate final paths
         final_video_name = generate_unique_filename(
             original_filename, user.username)
         final_video_relative_path = os.path.join('videos', final_video_name)
         final_video_absolute_path = os.path.join(
             settings.MEDIA_ROOT, final_video_relative_path)
 
-        # Process videos
-        reencode_audio(header.video_path.path,
-                       f"{header.video_path.path}_reencoded.mp4")
-        reencode_audio(converted_video_path,
-                       f"{converted_video_path}_reencoded.mp4")
+        # Ensure output directory exists
+        os.makedirs(os.path.dirname(final_video_absolute_path), exist_ok=True)
 
-        concatenate_videos_gpu(
-            final_video_absolute_path,
-            f"{header.video_path.path}_reencoded.mp4",
-            f"{converted_video_path}_reencoded.mp4"
+        # Create temporary files for reencoded videos
+        header_reencoded = os.path.join(
+            settings.MEDIA_ROOT,
+            'temp',
+            f'header_reencoded_{current_time}.mp4'
+        )
+        video_reencoded = os.path.join(
+            settings.MEDIA_ROOT,
+            'temp',
+            f'video_reencoded_{current_time}.mp4'
         )
 
-        # Update video information
+        # Reencode audio for both videos
+        reencode_audio(header_path, header_reencoded)
+        reencode_audio(converted_video_path, video_reencoded)
+
+        # Concatenate videos
+        logging.info("Starting video concatenation...")
+        concatenate_videos_gpu(
+            final_video_absolute_path,
+            header_reencoded,
+            video_reencoded
+        )
+
+        # Update video object
         final_video_relative_path = final_video_relative_path.replace(
             '\\', '/')
-        await sync_to_async(setattr)(video, 'video_path', final_video_relative_path)
-        await sync_to_async(setattr)(video, 'status', True)
-        await sync_to_async(video.save)()
+        video.video_path = final_video_relative_path
+        video.status = True
+        video.save()
 
         # Send notification
         video_url = "https://api.emmysvideos.com/media/" + final_video_relative_path
-        await sync_to_async(send_notification_email)(user, video_url, final_video_name)
-
-        return True
+        send_notification_email(user, video_url, final_video_name)
+        logging.info("Video processing completed successfully")
 
     except Exception as e:
         logging.error(f"Error processing video: {str(e)}")
-        return False
-
+        video.status = False
+        video.save()
+        raise
     finally:
-        # Clean up temporary files
-        cleanup_paths = [
-            temp_video_path,
+        # Clean up all temporary files
+        temp_files = [
             converted_video_path,
-            f"{header.video_path.path}_reencoded.mp4",
-            f"{converted_video_path}_reencoded.mp4"
+            header_reencoded if 'header_reencoded' in locals() else None,
+            video_reencoded if 'video_reencoded' in locals() else None
         ]
-        for path in cleanup_paths:
-            if os.path.exists(path):
-                os.remove(path)
+
+        for temp_file in temp_files:
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    logging.info(f"Cleaned up temporary file: {temp_file}")
+                except Exception as e:
+                    logging.warning(
+                        f"Failed to clean up {temp_file}: {str(e)}")
 
 
 if __name__ == "__main__":
-    import django
-
-    django.setup()
-
-    from tourplace.models import TourPlace
-    from user.models import User
-    from videomgmt.models import Video, Header, Footer
-    from django.template.loader import render_to_string
-    from django.core.mail import EmailMessage
-    from django.conf import settings
-    import os
-    import sys
-    from pathlib import Path
-    import logging
-    import asyncio
-    from datetime import datetime
-    import hashlib
-    import subprocess
-    from asgiref.sync import sync_to_async
-    from pathlib import Path
-    import logging
-    import sys
-    import os
-
-    # Add the project root directory to Python path
-    BASE_DIR = Path(__file__).resolve().parent.parent
-    sys.path.append(str(BASE_DIR))
-
-    # Setup Django environment before any Django imports
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE',
-                          'tourvideoproject.settings')
-
-    # Now import Django-related modules
-
-    logging.basicConfig(level=logging.INFO, filename='video_processing.log', filemode='a',
-                        format='%(asctime)s - %(levelname)s - %(message)s')
-
-    try:
-
-        if len(sys.argv) != 5:
-            logging.error(
-                f"Incorrect number of arguments. Received {len(sys.argv)} arguments")
-            sys.exit(1)
-
-        video_id = sys.argv[1]
-        user_id = sys.argv[2]
-        original_filename = sys.argv[3]
-        tourplace_id = sys.argv[4]
-
-        logging.info(
-            f"Received arguments - video_id: {video_id}, user_id: {user_id}, tourplace_id: {tourplace_id}")
-
-        # Run the async function
-        asyncio.run(handle_video_processing(
-            video_id, user_id, original_filename, tourplace_id))
-
-    except Exception as e:
-        logging.error(f"Error in video processing: {str(e)}")
+    if len(sys.argv) != 5:
+        print("Usage: python video_processing.py <video_id> <user_id> <original_filename> <tourplace>")
         sys.exit(1)
+
+    video_id = int(sys.argv[1])
+    user_id = int(sys.argv[2])
+    original_filename = sys.argv[3]
+    tourplace_id = int(sys.argv[4])
+    tourplace = TourPlace.objects.get(pk=tourplace_id)
+    logging.info(f"Starting Video Editing...")
+    process_video(video_id, user_id, original_filename, tourplace)

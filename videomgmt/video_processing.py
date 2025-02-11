@@ -231,107 +231,172 @@ def concatenate_videos_gpu(output_path, *input_paths):
 
 
 def process_video(video_id, user_id, original_filename, tourplace):
-    video = Video.objects.get(pk=video_id)
-    user = User.objects.get(pk=user_id)
-
-    header = Header.objects.filter(
-        tourplace=tourplace.pk).order_by('?').first()
-
-    if not header:
-        logging.info(f"Header doesn't exist for tourplace: {tourplace.pk}")
-        video.status = False
-        video.save()
-        video_url = "https://api.emmysvideos.com/media/" + \
-            str(video.video_path)
-        send_notification_email(user, video_url, '')
-        return
-
-    logging.info("Header existed")
-
-    # Get absolute paths for all files
-    temp_video_path = os.path.abspath(os.path.join(
-        settings.MEDIA_ROOT, str(video.video_path)))
-    header_path = os.path.abspath(os.path.join(
-        settings.MEDIA_ROOT, str(header.video_path)))
-
-    # Log file existence and permissions
-    logging.info(f"Checking file paths:")
-    logging.info(
-        f"Video path: {temp_video_path} (exists: {os.path.exists(temp_video_path)})")
-    logging.info(
-        f"Header path: {header_path} (exists: {os.path.exists(header_path)})")
-
-    # Generate paths for temporary and final files
-    current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
-    converted_video_path = os.path.join(
-        settings.MEDIA_ROOT,
-        'temp',
-        f'converted_video_{user.username}_{current_time}.mp4'
-    )
-
-    # Ensure temp directory exists
-    os.makedirs(os.path.dirname(converted_video_path), exist_ok=True)
-
-    # Convert the video
     try:
-        convert_webm_to_mp4(temp_video_path, converted_video_path)
-        logging.info(f"Finished converting video for video_id: {video_id}")
+        # Log initial parameters
+        logging.info(f"Starting video processing with parameters:")
+        logging.info(f"- Video ID: {video_id}")
+        logging.info(f"- User ID: {user_id}")
+        logging.info(f"- Original filename: {original_filename}")
+        logging.info(f"- Tourplace ID: {tourplace.id}")
 
-        # Generate final paths
-        final_video_name = generate_unique_filename(
-            original_filename, user.username)
-        final_video_relative_path = os.path.join('videos', final_video_name)
-        final_video_absolute_path = os.path.join(
-            settings.MEDIA_ROOT, final_video_relative_path)
+        # Get video object with error handling
+        try:
+            video = Video.objects.get(pk=video_id)
+            logging.info(
+                f"Successfully retrieved video object with ID: {video.id}")
+        except Video.DoesNotExist:
+            logging.error(f"Video with ID {video_id} not found")
+            raise
+        except Exception as e:
+            logging.error(f"Error retrieving video object: {str(e)}")
+            raise
 
-        # Ensure output directory exists
-        os.makedirs(os.path.dirname(final_video_absolute_path), exist_ok=True)
+        # Get user object with error handling
+        try:
+            user = User.objects.get(pk=user_id)
+            logging.info(
+                f"Successfully retrieved user object: {user.username} (ID: {user.id})")
+        except User.DoesNotExist:
+            logging.error(f"User with ID {user_id} not found")
+            raise
+        except Exception as e:
+            logging.error(f"Error retrieving user object: {str(e)}")
+            raise
 
-        # Create temporary files for reencoded videos
-        header_reencoded = os.path.join(
+        # Get header with error handling
+        try:
+            header = Header.objects.filter(
+                tourplace=tourplace.pk).order_by('?').first()
+            if header:
+                logging.info(
+                    f"Found header for tourplace {tourplace.pk} (Header ID: {header.id})")
+            else:
+                logging.info(f"No header found for tourplace {tourplace.pk}")
+        except Exception as e:
+            logging.error(f"Error retrieving header: {str(e)}")
+            raise
+
+        if not header:
+            logging.info(f"Header doesn't exist for tourplace: {tourplace.pk}")
+            video.status = False
+            video.save()
+            logging.info(f"Updated video status to False (ID: {video.id})")
+            video_url = "https://api.emmysvideos.com/media/" + \
+                str(video.video_path)
+            send_notification_email(user, video_url, '')
+            return
+
+        logging.info("Header and Footer existed")
+
+        # Get absolute paths for all files
+        temp_video_path = os.path.abspath(os.path.join(
+            settings.MEDIA_ROOT, str(video.video_path)))
+        header_path = os.path.abspath(os.path.join(
+            settings.MEDIA_ROOT, str(header.video_path)))
+
+        # Log file existence and permissions with more detail
+        logging.info("Checking file paths:")
+        for path in [temp_video_path, header_path]:
+            exists = os.path.exists(path)
+            readable = os.access(path, os.R_OK) if exists else False
+            writable = os.access(path, os.W_OK) if exists else False
+            logging.info(f"Path: {path}")
+            logging.info(f"- Exists: {exists}")
+            logging.info(f"- Readable: {readable}")
+            logging.info(f"- Writable: {writable}")
+
+        # Generate paths for temporary and final files
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        converted_video_path = os.path.join(
             settings.MEDIA_ROOT,
             'temp',
-            f'header_reencoded_{current_time}.mp4'
-        )
-        video_reencoded = os.path.join(
-            settings.MEDIA_ROOT,
-            'temp',
-            f'video_reencoded_{current_time}.mp4'
+            f'converted_video_{user.username}_{current_time}.mp4'
         )
 
-        # Reencode audio for both videos
-        reencode_audio(header_path, header_reencoded)
-        reencode_audio(converted_video_path, video_reencoded)
+        # Ensure temp directory exists
+        os.makedirs(os.path.dirname(converted_video_path), exist_ok=True)
 
-        # Concatenate videos
-        logging.info("Starting video concatenation...")
-        concatenate_videos_gpu(
-            final_video_absolute_path,
-            header_reencoded,
-            video_reencoded
-        )
+        # Convert the video
+        try:
+            convert_webm_to_mp4(temp_video_path, converted_video_path)
+            logging.info(f"Finished converting video for video_id: {video_id}")
 
-        # Update video object
-        final_video_relative_path = final_video_relative_path.replace(
-            '\\', '/')
-        video.video_path = final_video_relative_path
-        video.status = True
-        video.save()
+            # Generate final paths
+            final_video_name = generate_unique_filename(
+                original_filename, user.username)
+            final_video_relative_path = os.path.join(
+                'videos', final_video_name)
+            final_video_absolute_path = os.path.join(
+                settings.MEDIA_ROOT, final_video_relative_path)
 
-        # Send notification
-        video_url = "https://api.emmysvideos.com/media/" + final_video_relative_path
-        send_notification_email(user, video_url, final_video_name)
-        logging.info("Video processing completed successfully")
+            # Ensure output directory exists
+            os.makedirs(os.path.dirname(
+                final_video_absolute_path), exist_ok=True)
+
+            # Create temporary files for reencoded videos
+            header_reencoded = os.path.join(
+                settings.MEDIA_ROOT,
+                'temp',
+                f'header_reencoded_{current_time}.mp4'
+            )
+            video_reencoded = os.path.join(
+                settings.MEDIA_ROOT,
+                'temp',
+                f'video_reencoded_{current_time}.mp4'
+            )
+
+            # Reencode audio for both videos
+            reencode_audio(header_path, header_reencoded)
+            reencode_audio(converted_video_path, video_reencoded)
+
+            # Concatenate videos
+            logging.info("Starting video concatenation...")
+            concatenate_videos_gpu(
+                final_video_absolute_path,
+                header_reencoded,
+                video_reencoded
+            )
+
+            # Update video object
+            final_video_relative_path = final_video_relative_path.replace(
+                '\\', '/')
+            video.video_path = final_video_relative_path
+            video.status = True
+            video.save()
+
+            # Send notification
+            video_url = "https://api.emmysvideos.com/media/" + final_video_relative_path
+            send_notification_email(user, video_url, final_video_name)
+            logging.info("Video processing completed successfully")
+
+        except Exception as e:
+            logging.error(f"Error processing video: {str(e)}")
+            logging.error(f"Error type: {type(e).__name__}")
+            # This will log the full traceback
+            logging.error(f"Error details:", exc_info=True)
+            if 'video' in locals():
+                video.status = False
+                video.save()
+                logging.info(
+                    f"Updated video status to False after error (ID: {video.id})")
+            raise
 
     except Exception as e:
         logging.error(f"Error processing video: {str(e)}")
-        video.status = False
-        video.save()
+        logging.error(f"Error type: {type(e).__name__}")
+        # This will log the full traceback
+        logging.error(f"Error details:", exc_info=True)
+        if 'video' in locals():
+            video.status = False
+            video.save()
+            logging.info(
+                f"Updated video status to False after error (ID: {video.id})")
         raise
+
     finally:
-        # Clean up all temporary files
+        # Clean up all temporary files with detailed logging
         temp_files = [
-            converted_video_path,
+            converted_video_path if 'converted_video_path' in locals() else None,
             header_reencoded if 'header_reencoded' in locals() else None,
             video_reencoded if 'video_reencoded' in locals() else None
         ]
@@ -340,10 +405,12 @@ def process_video(video_id, user_id, original_filename, tourplace):
             if temp_file and os.path.exists(temp_file):
                 try:
                     os.remove(temp_file)
-                    logging.info(f"Cleaned up temporary file: {temp_file}")
+                    logging.info(
+                        f"Successfully cleaned up temporary file: {temp_file}")
                 except Exception as e:
                     logging.warning(
                         f"Failed to clean up {temp_file}: {str(e)}")
+                    logging.warning(f"Clean up error type: {type(e).__name__}")
 
 
 if __name__ == "__main__":

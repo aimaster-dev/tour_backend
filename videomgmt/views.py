@@ -254,7 +254,7 @@ class VideoAddAPIView(APIView):
                     try:
                         with transaction.atomic():
                             # Log payment search criteria
-                            if pricing_id and pricing_id != "" and pricing_id != None:
+                            if pricing_id and pricing_id not in ["", "null", "undefined", None]:
                                 logging.info(
                                     f"Searching for payment log with pricing ID: {pricing_id}")
                                 payment_log = PaymentLogs.objects.filter(
@@ -287,14 +287,25 @@ class VideoAddAPIView(APIView):
                             if not payment_log:
                                 logging.warning(
                                     f"No remaining video credits for user {request.user.username}")
-                                if video.video_path and default_storage.exists(video.video_path.name):
-                                    default_storage.delete(
-                                        video.video_path.name)
+                                # Store video ID before deletion for logging
+                                video_id = getattr(video, 'id', None)
+                                video_path = getattr(video, 'video_path', None)
+
+                                # Delete file if it exists
+                                if video_path and default_storage.exists(video_path.name):
+                                    default_storage.delete(video_path.name)
                                     logging.info(
-                                        f"Deleted video file: {video.video_path.name}")
-                                video.delete()
-                                logging.info(
-                                    f"Deleted video record with ID: {video.id}")
+                                        f"Deleted video file: {video_path.name}")
+
+                                # Only attempt to delete if we have a valid ID
+                                if video_id is not None:
+                                    video.delete()
+                                    logging.info(
+                                        f"Deleted video record with ID: {video_id}")
+                                else:
+                                    logging.warning(
+                                        "Video record not deleted - no valid ID")
+
                                 return Response({
                                     'status': False,
                                     "data": "You don't have any remaining video credits."
@@ -313,15 +324,30 @@ class VideoAddAPIView(APIView):
                         logging.error(
                             f"Payment error type: {type(e).__name__}")
                         logging.error("Payment error details:", exc_info=True)
-                        if video.video_path and default_storage.exists(video.video_path.name):
-                            default_storage.delete(video.video_path.name)
+
+                        # Store video ID before deletion for logging
+                        video_id = getattr(video, 'id', None)
+                        video_path = getattr(video, 'video_path', None)
+
+                        # Delete file if it exists
+                        if video_path and default_storage.exists(video_path.name):
+                            default_storage.delete(video_path.name)
                             logging.info(
-                                f"Cleaned up video file after payment error: {video.video_path.name}")
-                        if hasattr(video, 'id'):
+                                f"Cleaned up video file after payment error: {video_path.name}")
+
+                        # Only attempt to delete if we have a valid ID
+                        if video_id is not None:
                             video.delete()
                             logging.info(
-                                f"Cleaned up video record after payment error: {video.id}")
-                        raise
+                                f"Cleaned up video record after payment error: {video_id}")
+                        else:
+                            logging.warning(
+                                "Video record not deleted - no valid ID")
+
+                        return Response({
+                            'status': False,
+                            "data": "Error processing payment. Please try again."
+                        }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Process video
                 try:

@@ -30,4 +30,4 @@ class PaymentLogs(models.Model):
         verbose_name_plural = "PaymentLogs"
 
     def __str__(self):
-        return f"{self.user.username} - {self.price.title if self.price else 'No Plan'} - {self.status}"
+        return f"{self.user.email} - {self.price.title if self.price else 'No Plan'} - {self.status}"

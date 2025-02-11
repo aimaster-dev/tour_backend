@@ -251,39 +251,77 @@ class VideoAddAPIView(APIView):
                 if request.user.usertype == 3:
                     logging.info(
                         f"Processing payment for type 3 user: {request.user.username}")
-                    with transaction.atomic():
-                        if pricing_id and pricing_id != "" and pricing_id != None:
-                            payment_log = PaymentLogs.objects.filter(
-                                user=request.user.id,
-                                price=pricing_id,
-                                videoremain__gt=0
-                            ).first()
+                    try:
+                        with transaction.atomic():
+                            # Log payment search criteria
+                            if pricing_id and pricing_id != "" and pricing_id != None:
+                                logging.info(
+                                    f"Searching for payment log with pricing ID: {pricing_id}")
+                                payment_log = PaymentLogs.objects.filter(
+                                    user=request.user.id,
+                                    price=pricing_id,
+                                    videoremain__gt=0
+                                ).first()
+                                if payment_log:
+                                    logging.info(
+                                        f"Found payment log - ID: {payment_log.id}, Remaining videos: {payment_log.videoremain}")
+                                else:
+                                    logging.warning(
+                                        f"No payment log found with pricing ID: {pricing_id}")
+                            else:
+                                logging.info(
+                                    "Searching for free trial payment log")
+                                payment_log = PaymentLogs.objects.filter(
+                                    user=request.user.id,
+                                    price__isnull=True,
+                                    transaction_id__startswith='FREE_TRIAL_',
+                                    videoremain__gt=0
+                                ).first()
+                                if payment_log:
+                                    logging.info(
+                                        f"Found free trial payment log - ID: {payment_log.id}, Remaining videos: {payment_log.videoremain}")
+                                else:
+                                    logging.warning(
+                                        "No free trial payment log found")
+
+                            if not payment_log:
+                                logging.warning(
+                                    f"No remaining video credits for user {request.user.username}")
+                                if video.video_path and default_storage.exists(video.video_path.name):
+                                    default_storage.delete(
+                                        video.video_path.name)
+                                    logging.info(
+                                        f"Deleted video file: {video.video_path.name}")
+                                video.delete()
+                                logging.info(
+                                    f"Deleted video record with ID: {video.id}")
+                                return Response({
+                                    'status': False,
+                                    "data": "You don't have any remaining video credits."
+                                }, status=status.HTTP_400_BAD_REQUEST)
+
+                            # Log payment log state before update
                             logging.info(
-                                f"Found payment log with pricing ID: {pricing_id}")
-                        else:
-                            payment_log = PaymentLogs.objects.filter(
-                                user=request.user.id,
-                                price__isnull=True,
-                                transaction_id__startswith='FREE_TRIAL_',
-                                videoremain__gt=0
-                            ).first()
-                            logging.info("Using free trial payment log")
+                                f"Current video remain count: {payment_log.videoremain}")
+                            payment_log.videoremain -= 1
+                            payment_log.save()
+                            logging.info(
+                                f"Updated payment log, new remaining videos: {payment_log.videoremain}")
 
-                        if not payment_log:
-                            logging.warning(
-                                f"No remaining video credits for user {request.user.username}")
-                            if video.video_path and default_storage.exists(video.video_path.name):
-                                default_storage.delete(video.video_path.name)
+                    except Exception as e:
+                        logging.error(f"Payment processing error: {str(e)}")
+                        logging.error(
+                            f"Payment error type: {type(e).__name__}")
+                        logging.error("Payment error details:", exc_info=True)
+                        if video.video_path and default_storage.exists(video.video_path.name):
+                            default_storage.delete(video.video_path.name)
+                            logging.info(
+                                f"Cleaned up video file after payment error: {video.video_path.name}")
+                        if hasattr(video, 'id'):
                             video.delete()
-                            return Response({
-                                'status': False,
-                                "data": "You don't have any remaining video credits."
-                            }, status=status.HTTP_400_BAD_REQUEST)
-
-                        payment_log.videoremain -= 1
-                        payment_log.save()
-                        logging.info(
-                            f"Updated payment log, remaining videos: {payment_log.videoremain}")
+                            logging.info(
+                                f"Cleaned up video record after payment error: {video.id}")
+                        raise
 
                 # Process video
                 try:

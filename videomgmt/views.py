@@ -200,8 +200,15 @@ class VideoAddAPIView(APIView):
         tourplace_id = request.data.get('tourplace_id')
         pricing_id = request.data.get('pricing_id')
 
+        # Add logging for request details
+        logging.info(
+            f"Starting video upload process for user {request.user.username} (ID: {request.user.id})")
+        logging.info(f"Tourplace ID: {tourplace_id}, Pricing ID: {pricing_id}")
+
         # Check if video file is present in request
         if 'video_path' not in request.FILES:
+            logging.warning(
+                f"Video file missing in request from user {request.user.username}")
             return Response({
                 "status": False,
                 "data": {"video_path": ["Video file is required."]}
@@ -209,12 +216,16 @@ class VideoAddAPIView(APIView):
 
         try:
             tourplace = TourPlace.objects.get(id=tourplace_id)
+            logging.info(
+                f"Found tourplace: {tourplace.place_name} (ID: {tourplace.id})")
         except TourPlace.DoesNotExist:
+            logging.error(f"Tourplace not found with ID: {tourplace_id}")
             return Response({"status": False, "data": {"msg": "Tourplace not found."}}, status=status.HTTP_404_NOT_FOUND)
 
         # Create necessary directories
         os.makedirs(os.path.join(settings.MEDIA_ROOT, 'videos'), exist_ok=True)
         os.makedirs(os.path.join(settings.MEDIA_ROOT, 'temp'), exist_ok=True)
+        logging.info("Created necessary directories")
 
         # Create a new dict with the data we need
         data = {
@@ -233,9 +244,13 @@ class VideoAddAPIView(APIView):
             try:
                 video = serializer.save(client=request.user, status=False)
                 original_filename = os.path.basename(video.video_path.name)
+                logging.info(
+                    f"Created video record with ID: {video.id}, filename: {original_filename}")
 
                 # If user is type 3, handle subscription and payment logic
                 if request.user.usertype == 3:
+                    logging.info(
+                        f"Processing payment for type 3 user: {request.user.username}")
                     with transaction.atomic():
                         if pricing_id and pricing_id != "" and pricing_id != None:
                             payment_log = PaymentLogs.objects.filter(
@@ -243,6 +258,8 @@ class VideoAddAPIView(APIView):
                                 price=pricing_id,
                                 videoremain__gt=0
                             ).first()
+                            logging.info(
+                                f"Found payment log with pricing ID: {pricing_id}")
                         else:
                             payment_log = PaymentLogs.objects.filter(
                                 user=request.user.id,
@@ -250,8 +267,11 @@ class VideoAddAPIView(APIView):
                                 transaction_id__startswith='FREE_TRIAL_',
                                 videoremain__gt=0
                             ).first()
+                            logging.info("Using free trial payment log")
 
                         if not payment_log:
+                            logging.warning(
+                                f"No remaining video credits for user {request.user.username}")
                             if video.video_path and default_storage.exists(video.video_path.name):
                                 default_storage.delete(video.video_path.name)
                             video.delete()
@@ -262,22 +282,28 @@ class VideoAddAPIView(APIView):
 
                         payment_log.videoremain -= 1
                         payment_log.save()
+                        logging.info(
+                            f"Updated payment log, remaining videos: {payment_log.videoremain}")
 
-                # Process video directly instead of using subprocess
+                # Process video
                 try:
+                    logging.info(
+                        f"Starting video processing for video ID: {video.id}")
                     process_video(
                         video.id,
                         request.user.id,
                         original_filename,
                         tourplace
                     )
+                    logging.info(
+                        f"Successfully processed video ID: {video.id}")
                 except ValueError as e:
-                    # If video processing fails, clean up and return error
+                    logging.error(
+                        f"Video processing failed with ValueError: {str(e)}")
                     if video.video_path and default_storage.exists(video.video_path.name):
                         default_storage.delete(video.video_path.name)
                     video.delete()
 
-                    # Check for specific error messages
                     error_msg = str(e)
                     if "codec" in error_msg.lower():
                         error_msg = "Server configuration error: Video codec not available. Please contact support."
@@ -287,7 +313,8 @@ class VideoAddAPIView(APIView):
                         "data": f"Video processing failed: {error_msg}"
                     }, status=status.HTTP_400_BAD_REQUEST)
                 except Exception as e:
-                    # Handle other exceptions
+                    logging.error(
+                        f"Video processing failed with unexpected error: {str(e)}")
                     if video.video_path and default_storage.exists(video.video_path.name):
                         default_storage.delete(video.video_path.name)
                     video.delete()
@@ -296,13 +323,15 @@ class VideoAddAPIView(APIView):
                         "data": f"Video processing failed: An unexpected error occurred"
                     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+                logging.info(
+                    f"Video upload and processing completed successfully for video ID: {video.id}")
                 return Response(
                     {"status": True, "data": serializer.data},
                     status=status.HTTP_201_CREATED
                 )
 
             except Exception as e:
-                # Clean up any uploaded files if there's an error
+                logging.error(f"Error in video creation process: {str(e)}")
                 if video.video_path and default_storage.exists(video.video_path.name):
                     default_storage.delete(video.video_path.name)
                 if hasattr(video, 'id'):
@@ -312,6 +341,8 @@ class VideoAddAPIView(APIView):
                     "data": str(e)
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+        logging.error(
+            f"Video serializer validation failed: {serializer.errors}")
         return Response(
             {"status": False, "data": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST

@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (TourplaceAPIView, TourplaceUpdateAPIView, TourplaceDeleteAPIView,
                     TourplaceGetAllAPIView, TourplaceGetAllForISPAPIView,
-                    TourplaceGetAllForCamAPIView, VenueAPIView, VenueDetailAPIView)
+                    TourplaceGetAllForCamAPIView, VenueAPIView, VenueDetailAPIView,
+                    PublicVenueListAPIView)
 
 urlpatterns = [
     path('add', TourplaceAPIView.as_view(), name='tourplace_add'),
@@ -18,4 +19,6 @@ urlpatterns = [
          name='get-tourplace-for-cam'),
     path('venue/', VenueAPIView.as_view(), name='venue-list-create'),
     path('venue/<int:pk>/', VenueDetailAPIView.as_view(), name='venue-detail'),
+    path('venues/public/', PublicVenueListAPIView.as_view(),
+         name='public-venue-list'),
 ]

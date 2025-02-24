@@ -157,3 +157,15 @@ class VenueISPListAPIView(APIView):
         ).distinct()
         serializer = ISPSerializer(isps, many=True)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
+
+
+class PublicVenueListAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        venues = Venue.objects.filter(status=True)
+        serializer = VenueSerializer(venues, many=True)
+        return Response({
+            'status': True,
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)

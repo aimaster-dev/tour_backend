@@ -12,3 +12,4 @@
 .env
 /tourvideoproject/settings.py
 /venv/
+**/*.log

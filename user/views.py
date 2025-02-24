@@ -22,6 +22,7 @@ from payment.serializers import PaymentLogsSerializer
 import random
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import Q
 
 # Create your views here.
 
@@ -658,3 +659,45 @@ class VenueISPListView(APIView):
             'status': True,
             'data': data
         })
+
+
+class AdminCustomerListAPIView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        try:
+            # Get query parameters for filtering
+            search_term = request.query_params.get('search')
+            status_filter = request.query_params.get('status')
+
+            # Base query - get all customers (usertype=3)
+            customers = User.objects.filter(usertype=3).order_by('-created_at')
+
+            # Apply filters
+            if search_term:
+                customers = customers.filter(
+                    Q(username__icontains=search_term) |
+                    Q(email__icontains=search_term) |
+                    Q(phone_number__icontains=search_term)
+                )
+
+            if status_filter:
+                customers = customers.filter(
+                    status=status_filter.lower() == 'true')
+
+            # Serialize the data
+            serializer = UserListSerializer(customers, many=True)
+
+            return Response({
+                "status": True,
+                "data": {
+                    "total_customers": customers.count(),
+                    "customers": serializer.data
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

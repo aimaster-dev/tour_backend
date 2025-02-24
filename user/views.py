@@ -701,3 +701,104 @@ class AdminCustomerListAPIView(APIView):
                 "status": False,
                 "message": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CustomerManagementView(APIView):
+    permission_classes = [IsAdmin]  # Only admin can manage customers
+
+    def post(self, request):
+        """Create a new customer"""
+        data = request.data.copy()
+        data['usertype'] = 3  # Force usertype to be customer
+
+        # Validate venue and ISP
+        venue_id = data.get('venue_id')
+        isp_id = data.get('isp_id')
+
+        if not venue_id:
+            return Response({
+                "status": False,
+                "data": "Venue ID is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = UserRegUpdateSerializer(data=data)
+
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    user = serializer.save()
+                    user.is_activate = True
+                    user.status = True
+                    user.save()
+
+                    # Create free trial if applicable
+                    existing_free_plan = PaymentLogs.objects.filter(
+                        user__email=user.email,
+                        price__isnull=True,
+                        transaction_id__startswith='FREE_TRIAL_'
+                    ).exists()
+
+                    if not existing_free_plan:
+                        PaymentLogs.objects.create(
+                            user=user,
+                            price=None,
+                            amount=0,
+                            videoremain=3,
+                            snapshotremain=3,
+                            record_time=10,
+                            status='COMPLETED',
+                            transaction_id=f"FREE_TRIAL_{user.id}_{timezone.now().timestamp()}"
+                        )
+
+                return Response({
+                    "status": True,
+                    "data": serializer.data
+                }, status=status.HTTP_201_CREATED)
+
+            except Exception as e:
+                return Response({
+                    "status": False,
+                    "data": str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "status": False,
+            "data": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        """Update existing customer"""
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({
+                "status": False,
+                "data": "User ID is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=user_id, usertype=3)
+            data = request.data.copy()
+
+            # Prevent changing usertype
+            if 'usertype' in data:
+                del data['usertype']
+
+            serializer = UserRegUpdateSerializer(user, data=data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "status": True,
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+
+            return Response({
+                "status": False,
+                "data": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": "Customer not found"
+            }, status=status.HTTP_404_NOT_FOUND)

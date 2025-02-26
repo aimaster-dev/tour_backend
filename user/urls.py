@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView
+from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView
 
 urlpatterns = [
     path('register', UserAPIView.as_view(), name='auth_register'),
@@ -19,7 +19,7 @@ urlpatterns = [
          name='resend_activation'),
     path('resend-activation/', ResendActivationEmail.as_view(),
          name='resend_activation'),
-    path('invite', InviteUserView.as_view(), name='invite_user'),
+    # path('invite', InviteUserView.as_view(), name='invite_user'),
     path('set_password/<token>', SetPasswordView.as_view(), name='accept_invite'),
     path('deleteaccount', SelfDeleteAPIView.as_view(), name='deactivate-acccount'),
     path('isp/manage/', ISPManagementView.as_view(), name='isp-management'),
@@ -28,4 +28,5 @@ urlpatterns = [
          name='admin-customer-list'),
     path('customer/manage/', CustomerManagementView.as_view(),
          name='customer-management'),
+    path('isp/create', DirectISPCreateView.as_view(), name='create_isp'),
 ]

@@ -802,3 +802,31 @@ class CustomerManagementView(APIView):
                 "status": False,
                 "data": "Customer not found"
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class DirectISPCreateView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        if request.user.usertype != 1:
+            return Response({
+                "status": False,
+                "data": {"msg": "You don't have permission to create ISP accounts."}
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ISPCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.is_activate = True
+            user.status = True
+            user.save()
+
+            return Response({
+                "status": True,
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED)
+
+        return Response({
+            "status": False,
+            "data": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)

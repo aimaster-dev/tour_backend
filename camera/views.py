@@ -1,3 +1,4 @@
+from datetime import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,7 +15,11 @@ from user.models import User
 from tourplace.models import TourPlace
 from .camera import LiveWebCam
 from django.http.response import StreamingHttpResponse
-# Create your views here.
+from tourvideoproject.utils import LoggerHelper
+
+# Configure logger for this module
+logger = LoggerHelper.get_logger('camera')
+
 
 def gen(camera, stream_id):
     while len(Stream.objects.filter(id=stream_id)) != 0:
@@ -27,117 +32,147 @@ def gen(camera, stream_id):
             print("Error: Frame is None, skipping...")
             # Optionally, you can break the loop or continue based on your needs
             continue
-            
+
         yield (b'--frame\r\n'
-            b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
 
 class CameraClientAPIView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request):
-        tourplace = request.data.get("tourplace")
-        user = request.user
-        if tourplace is None and user.usertype == 2:
-            tourplace = TourPlace.objects.filter(isp = user.pk).first()
-            cameras = Camera.objects.filter(tourplace = tourplace.pk)
-        else:
-            cameras = Camera.objects.filter(tourplace=tourplace)
-        if len(cameras) != 0:
-            serializer = CameraUpdateSerializer(cameras, many=True)
-            return Response({'status': True, 'data': serializer.data})
-        else:
-            return Response({'status': False, 'error': 'There is no cameras now.'}, status=400)
+        try:
+            tourplace = request.data.get("tourplace")
+            user = request.user
+            if tourplace is None and user.usertype == 2:
+                tourplace = TourPlace.objects.filter(isp=user.pk).first()
+                cameras = Camera.objects.filter(tourplace=tourplace.pk)
+            else:
+                cameras = Camera.objects.filter(tourplace=tourplace)
+            if len(cameras) != 0:
+                serializer = CameraUpdateSerializer(cameras, many=True)
+                return Response({'status': True, 'data': serializer.data})
+            else:
+                return Response({'status': False, 'error': 'There is no cameras now.'}, status=400)
+        except Exception as e:
+            error_message = f"{timezone.now().strftime('%Y-%m-%d %H:%M:%S')} - {user_info} - Error retrieving tour places: {str(e)}"
+            LoggerHelper.log_exception(
+                logger, request, e, error_message)
+            return Response({'status': False, 'error': str(e)}, status=400)
+
 
 class CameraAPIView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
-  
+
     def get(self, request):
-        user = request.user
-        tourplace_id = request.query_params.get("tourplace")
-        cameras = []
+        try:
+            user = request.user
+            tourplace_id = request.query_params.get("tourplace")
+            cameras = []
 
-        if tourplace_id:
-            tourplace = TourPlace.objects.get(id = tourplace_id)
-            cameras = Camera.objects.filter(tourplace = tourplace.pk)
-        else:
-            if user.usertype == 1:
-                tourplace = TourPlace.objects.all().first()
-                if tourplace is None:
-                    return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
-                else:
-                    cameras = Camera.objects.filter(tourplace = tourplace.pk)
-            elif user.usertype == 2:
-                tourplace = TourPlace.objects.filter(isp = user.pk).first()
-                print(tourplace.pk)
-                cameras = Camera.objects.filter(tourplace = tourplace.pk)
-            elif user.usertype == 3:
-                tour_id = user.tourplace[0]
-                tourplace = TourPlace.objects.get(id = tour_id)
-                cameras = Camera.objects.filter(tourplace = tourplace.pk)
+            if tourplace_id:
+                tourplace = TourPlace.objects.get(id=tourplace_id)
+                cameras = Camera.objects.filter(tourplace=tourplace.pk)
             else:
-                return Response({'status': False, 'error': 'You have to login this site.'}, status=status.HTTP_400_BAD_REQUEST)
+                if user.usertype == 1:
+                    tourplace = TourPlace.objects.all().first()
+                    if tourplace is None:
+                        return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
+                    else:
+                        cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                elif user.usertype == 2:
+                    tourplace = TourPlace.objects.filter(isp=user.pk).first()
+                    print(tourplace.pk)
+                    cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                elif user.usertype == 3:
+                    tour_id = user.tourplace[0]
+                    tourplace = TourPlace.objects.get(id=tour_id)
+                    cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                else:
+                    return Response({'status': False, 'error': 'You have to login this site.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = CameraUpdateSerializer(cameras, many=True)
-        # print(serializer.data[0])
-        return Response({'status': True, 'data': serializer.data})
-        
+            serializer = CameraUpdateSerializer(cameras, many=True)
+            # print(serializer.data[0])
+            return Response({'status': True, 'data': serializer.data})
+
+        except Exception as e:
+            error_message = f"{timezone.now().strftime('%Y-%m-%d %H:%M:%S')} - {user_info} - Error retrieving tour places: {str(e)}"
+            LoggerHelper.log_exception(
+                logger, request, e, error_message)
+            return Response({'status': False, 'error': str(e)}, status=400)
+
     def post(self, request):
-        data = request.data
-        isp = request.user
-        if isp.usertype == 1:
-            return Response({'status': False, 'error': 'You can not register your camera'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        # rtsp_url = "rtsp://" + data.get("camera_user_name") + ":" + data.get("password") + "@" + data.get("camera_ip") + ":" + data.get("camera_port") + "/"
-        # output_dir = get_output_dir(rtsp_url)
-        # camdata = {
-        #     "camera_name": data.get("camera_name"),
-        #     "camera_ip": data.get("camera_ip"),
-        #     "camera_port": data.get("camera_port"),
-        #     "camera_user_name": data.get("camera_user_name"),
-        #     "password": data.get("password"),
-        #     "output_url": output_dir
-        # }
-        rtsp_url = data.get("rtsp_url")
-        output_dir = get_output_dir(rtsp_url)
-        camdata = {
-            "rtsp_url": data.get("rtsp_url"),
-            "camera_name": data.get("camera_name"),
-            "output_url": output_dir
-        }
-        tourplace = TourPlace.objects.get(id = data.get('tourplace'))
-        serializer = CameraSerializer(data = camdata)
-        if serializer.is_valid():
-            serializer.save(isp = request.user, tourplace = tourplace)
-            # convert_rtsp_to_hls(rtsp_url, output_dir)
-            output = serializer.data
-            output['tourplace'] = [{
-                'id': tourplace.pk,
-                'place_name': tourplace.place_name
-            }]
-            return Response({"status": True, "data": output}, status=status.HTTP_201_CREATED)
-        return Response({"status": False, "data": {"msg": serializer.errors}}, status=status.HTTP_400_BAD_REQUEST)
-    
+        try:
+            data = request.data
+            isp = request.user
+            if isp.usertype == 1:
+                return Response({'status': False, 'error': 'You can not register your camera'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            # rtsp_url = "rtsp://" + data.get("camera_user_name") + ":" + data.get("password") + "@" + data.get("camera_ip") + ":" + data.get("camera_port") + "/"
+            # output_dir = get_output_dir(rtsp_url)
+            # camdata = {
+            #     "camera_name": data.get("camera_name"),
+            #     "camera_ip": data.get("camera_ip"),
+            #     "camera_port": data.get("camera_port"),
+            #     "camera_user_name": data.get("camera_user_name"),
+            #     "password": data.get("password"),
+            #     "output_url": output_dir
+            # }
+            rtsp_url = data.get("rtsp_url")
+            output_dir = get_output_dir(rtsp_url)
+            camdata = {
+                "rtsp_url": data.get("rtsp_url"),
+                "camera_name": data.get("camera_name"),
+                "output_url": output_dir
+            }
+            tourplace = TourPlace.objects.get(id=data.get('tourplace'))
+            serializer = CameraSerializer(data=camdata)
+            if serializer.is_valid():
+                serializer.save(isp=request.user, tourplace=tourplace)
+                # convert_rtsp_to_hls(rtsp_url, output_dir)
+                output = serializer.data
+                output['tourplace'] = [{
+                    'id': tourplace.pk,
+                    'place_name': tourplace.place_name
+                }]
+                return Response({"status": True, "data": output}, status=status.HTTP_201_CREATED)
+            return Response({"status": False, "data": {"msg": serializer.errors}}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            error_message = f"{timezone.now().strftime('%Y-%m-%d %H:%M:%S')} - {user_info} - Error retrieving tour places: {str(e)}"
+            LoggerHelper.log_exception(
+                logger, request, e, error_message)
+            return Response({'status': False, 'error': str(e)}, status=400)
+
+
 class CameraUpdateAPIView(APIView):
     permission_classes = [IsISP]
     parser_classes = (MultiPartParser, FormParser)
-    
+
     def get(self, request, pk, format=None):
-        isp = request.user
-        camera_id = pk
-        if isp is not None:
-            camera = Camera.objects.get(isp=isp, id = camera_id)
-            serializer = CameraUpdateSerializer(camera)
-            data = serializer.data
-            return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
-        else:
-            return Response({'status': False, 'error': 'You have to login in this site.'}, status=400)
+        try:
+            isp = request.user
+            camera_id = pk
+            if isp is not None:
+                camera = Camera.objects.get(isp=isp, id=camera_id)
+                serializer = CameraUpdateSerializer(camera)
+                data = serializer.data
+                return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': False, 'error': 'You have to login in this site.'}, status=400)
+
+        except Exception as e:
+            error_message = f"{timezone.now().strftime('%Y-%m-%d %H:%M:%S')} - {user_info} - Error retrieving tour places: {str(e)}"
+            LoggerHelper.log_exception(
+                logger, request, e, error_message)
+            return Response({'status': False, 'error': str(e)}, status=400)
 
     def post(self, request):
         camera_id = request.data.get('id')
         print(camera_id)
         try:
-            tourplace = TourPlace.objects.get(id = request.data.get('tourplace'))
+            tourplace = TourPlace.objects.get(id=request.data.get('tourplace'))
             camera = Camera.objects.get(id=camera_id, isp=request.user)
             origin_dir = camera.output_url
             if not origin_dir:
@@ -162,9 +197,10 @@ class CameraUpdateAPIView(APIView):
                 "output_url": output_dir,
                 "camera_name": data.get("camera_name"),
             }
-            serializer = CameraUpdateSerializer(camera, data=camdata, partial=True)
+            serializer = CameraUpdateSerializer(
+                camera, data=camdata, partial=True)
             if serializer.is_valid():
-                serializer.save(tourplace = tourplace)
+                serializer.save(tourplace=tourplace)
                 # convert_rtsp_to_hls(rtsp_url, output_dir)
                 output = serializer.data
                 output['tourplace']
@@ -172,17 +208,21 @@ class CameraUpdateAPIView(APIView):
             return Response({"status": False, "data": {"msg": serializer.errors}})
         except Camera.DoesNotExist:
             try:
-                camera_existence = Camera.objects.get(id = camera_id)
+                camera_existence = Camera.objects.get(id=camera_id)
                 return Response({"status": False, "data": {"msg": "You don't have permission to delete this camera."}}, status=status.HTTP_403_FORBIDDEN)
             except Camera.DoesNotExist:
                 return Response({"status": False, "data": {"msg": "Camera not found."}}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            error_message = f"{timezone.now().strftime('%Y-%m-%d %H:%M:%S')} - {user_info} - Error retrieving tour places: {str(e)}"
+            LoggerHelper.log_exception(
+                logger, request, e, error_message)
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
 class CameraDeleteAPIView(APIView):
     permission_classes = [IsISP]
     parser_classes = (MultiPartParser, FormParser)
-    
+
     def post(self, request):
         camera_id = request.data.get('id')
         if not camera_id:
@@ -192,24 +232,27 @@ class CameraDeleteAPIView(APIView):
             output_url = camera.output_url
             if not output_url:
                 return Response({'status': False, 'error': 'Origin Dir is not existed now.'}, status=400)
-            
+
             output_url = output_url.lstrip('/')
             stop_stream(output_url)
             camera.delete()
             return Response({"status": True, "data": {"msg": "Successfully Deleted."}}, status=status.HTTP_200_OK)
         except Camera.DoesNotExist:
             try:
-                camera_existence = Camera.objects.get(id = camera_id)
+                camera_existence = Camera.objects.get(id=camera_id)
                 return Response({"status": False, "data": {"msg": "You don't have permission to delete this camera."}}, status=status.HTTP_403_FORBIDDEN)
             except Camera.DoesNotExist:
                 return Response({"status": False, "data": {"msg": "Camera not found."}}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            error_message = f"{timezone.now().strftime('%Y-%m-%d %H:%M:%S')} - {user_info} - Error retrieving tour places: {str(e)}"
+            LoggerHelper.log_exception(
+                logger, request, e, error_message)
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 # class CameraRestartAPIView(APIView):
 #     permission_classes = [IsISP]
 #     parser_classes = (MultiPartParser, FormParser)
-    
+
 #     def post(self, request):
 #         camera_id = request.data.get('id')
 #         if not camera_id:
@@ -237,7 +280,7 @@ class CameraDeleteAPIView(APIView):
 #                 return Response({"status": False, "data": {"msg": "Camera not found."}}, status=status.HTTP_404_NOT_FOUND)
 #         except Exception as e:
 #             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 # class CameraCheckAPIView(APIView):
 #     def post(self, request):
 #         userdata = request.data
@@ -264,11 +307,11 @@ class CameraDeleteAPIView(APIView):
 #         try:
 #             response = requests.get(url, headers=headers, data=json.dumps(data), verify=False)
 #             response.raise_for_status()
-            
+
 #             # Parse the JSON response
 #             data = json.loads(response.text)
 #             return Response({"status": True, "data": "Connected"}, status=status.HTTP_200_OK)
-        
+
 #         except requests.exceptions.HTTPError as http_err:
 #             return Response({"status": False, "data": f'HTTP error occurred: {http_err}', 'content': response.content.decode()}, status=status.HTTP_400_BAD_REQUEST)
 #         except requests.exceptions.ConnectionError as conn_err:
@@ -283,7 +326,7 @@ class CameraDeleteAPIView(APIView):
 #             return Response({"status": False, "data": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # class CameraStreamingAPIView(APIView):
-    
+
 #     def get(self, request, pk, userid, format=None):
 #         camera_id = pk
 #         print(pk)
@@ -321,7 +364,7 @@ class CameraDeleteAPIView(APIView):
 #                 return Response({"status": False, "data": {"msg": "Camera not found."}}, status=status.HTTP_404_NOT_FOUND)
 #         except Exception as e:
 #             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 #     def post(self, request, pk, userid, format=None):
 #         camera_id = pk
 #         if not camera_id:

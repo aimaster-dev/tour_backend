@@ -1,3 +1,5 @@
+import logging
+from django.utils import timezone
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
@@ -8,7 +10,10 @@ from django.shortcuts import get_object_or_404
 from .serializers import TourplaceSerializer, VenueSerializer, ISPSerializer
 from rest_framework.response import Response
 from rest_framework import status
-# Create your views here.
+from tourvideoproject.utils import LoggerHelper
+
+# Configure logger for this module
+logger = LoggerHelper.get_logger('tourplace')
 
 
 class TourplaceAPIView(APIView):
@@ -83,9 +88,30 @@ class TourplaceGetAllAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        tourplaces = TourPlace.objects.all()
-        serializer = TourplaceSerializer(tourplaces, many=True)
-        return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
+        try:
+            # Log the request with user info if authenticated
+            user_info = f"User: {request.user.email}" if request.user.is_authenticated else "Anonymous user"
+            LoggerHelper.log_api_request(
+                logger, request, "Tour places request received")
+
+            tourplaces = TourPlace.objects.all()
+            serializer = TourplaceSerializer(tourplaces, many=True)
+
+            # Log successful response
+            LoggerHelper.log_api_response(
+                logger,
+                request,
+                status.HTTP_200_OK,
+                f"Successfully retrieved {len(serializer.data)} tour places"
+            )
+
+            return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Log the error with detailed information
+            error_message = f"{timezone.now().strftime('%Y-%m-%d %H:%M:%S')} - {user_info} - Error retrieving tour places: {str(e)}"
+            LoggerHelper.log_exception(
+                logger, request, e, error_message)
+            return Response({"error": "Failed to retrieve tour places"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TourplaceGetAllForISPAPIView(APIView):

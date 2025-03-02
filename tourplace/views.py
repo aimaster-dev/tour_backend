@@ -189,7 +189,8 @@ class PublicVenueListAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        venues = Venue.objects.filter(status=True)
+        venues = Venue.objects.filter()
+        # venues = Venue.objects.filter(status=True)
         serializer = VenueSerializer(venues, many=True)
         return Response({
             'status': True,

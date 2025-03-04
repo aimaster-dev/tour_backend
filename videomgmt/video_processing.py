@@ -76,15 +76,22 @@ def convert_webm_to_mp4(input_path, output_path, resolution='1920x1080', frame_r
 
 
 def send_notification_email(user, video_url, final_video_name):
-    subject = 'Your Video Has Been Processed'
-    message = render_to_string('video_success_email.html', {
-        'user': user,
-        'video_url': video_url,
-        'video_name': final_video_name
-    })
-    email = EmailMessage(subject, message, to=[user.email])
-    email.content_subtype = "html"
-    email.send()
+    try:
+        subject = 'Your Video Has Been Processed'
+        message = render_to_string('video_success_email.html', {
+            'user': user,
+            'video_url': video_url,
+            'video_name': final_video_name
+        })
+        email = EmailMessage(subject, message, to=[user.email])
+        email.content_subtype = "html"
+        # Add fail_silently=True to prevent exceptions
+        email.send(fail_silently=True)
+        logging.info(f"Successfully sent notification email to {user.email}")
+    except Exception as e:
+        logging.error(
+            f"Failed to send notification email to {user.email}: {str(e)}")
+        # Don't raise the exception - we want video processing to continue even if email fails
 
 
 def reencode_audio(input_path, output_path):

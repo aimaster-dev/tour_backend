@@ -7,7 +7,7 @@ urlpatterns = [
          name='auth_phone_register'),
     path('login', UserLoginAPIView.as_view(), name='auth_login'),
     path('delete', UserDeleteAPIView.as_view(), name='user_delete'),
-    path('update', UserUpdateAPIView.as_view(), name='user-update'),
+    path('update/<int:pk>', UserUpdateAPIView.as_view(), name='user-update'),
     path('isprange', ISPRangeListAPIView.as_view(), name='isp-range-list'),
     path('getprofile', GetProfileAPIView.as_view(), name='get-profile'),
     path('clientrange', ClientRangeListAPIView.as_view(), name='client-range-list'),
@@ -28,5 +28,5 @@ urlpatterns = [
          name='admin-customer-list'),
     path('customer/manage/', CustomerManagementView.as_view(),
          name='customer-management'),
-    path('isp/create', DirectISPCreateView.as_view(), name='create_isp'),
+    path('isp/create/', DirectISPCreateView.as_view(), name='direct-isp-create'),
 ]

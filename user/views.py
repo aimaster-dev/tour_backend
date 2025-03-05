@@ -238,38 +238,93 @@ class UserLoginAPIView(APIView):
 class UserUpdateAPIView(APIView):
     permission_classes = [IsAdmin]
 
-    def post(self, request, *args, **kwargs):
-        user_id = request.data['user_id']
-        user = User.objects.get(id=user_id)
-        print(user)
-        if user == None:
-            Response({"status": False, "data": "User isn't existed now."},
-                     status=status.HTTP_404_NOT_FOUND)
-        origin_tour = user.tourplace
-        for tour in origin_tour:
-            place = TourPlace.objects.get(id=tour)
-            place.isp = 0
-            place.save()
-        userdata = request.data
-        serializer = UserRegUpdateSerializer(user, data=userdata, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            data = serializer.data
-            tourplaces = data['tourplace']
-            del data['tourplace']
-            data['tourplace'] = []
-            for tourplace in tourplaces:
-                tour_data = {
-                    'id': tourplace,
-                    'place_name': TourPlace.objects.get(id=tourplace).place_name
-                }
-                data['tourplace'].append(tour_data)
+    def put(self, request, *args, **kwargs):
+        """
+        Update user details by admin.
+        This endpoint allows admins to update user information including tourplace assignments.
+        """
+        user_id = kwargs.get('pk')
+
+        try:
+            user = get_object_or_404(User, id=user_id)
+
+            # Store original tourplaces for comparison
+            original_tourplaces = user.tourplace.copy() if user.tourplace else []
+
+            # Validate and update user data
+            serializer = UserRegUpdateSerializer(
+                user, data=request.data, partial=True)
+
+            if not serializer.is_valid():
+                return Response(
+                    {"status": False, "data": serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Use transaction to ensure data integrity
+            with transaction.atomic():
+                # First, remove ISP assignment from original tourplaces if user is ISP
                 if user.usertype == 2:
-                    place = TourPlace.objects.get(id=tourplace)
-                    place.isp = user.pk
-                    place.save()
-            return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
-        return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                    for tour_id in original_tourplaces:
+                        try:
+                            place = TourPlace.objects.get(id=tour_id)
+                            if place.isp == user.id:  # Only reset if this user is the assigned ISP
+                                place.isp = 0
+                                place.save()
+                        except TourPlace.DoesNotExist:
+                            # Skip non-existent tourplaces
+                            continue
+
+                # Save user data
+                updated_user = serializer.save()
+
+                # Process tourplaces if present in the data
+                new_tourplaces = updated_user.tourplace
+
+                # Format response data
+                response_data = serializer.data.copy()
+
+                # Replace tourplace IDs with detailed information
+                if 'tourplace' in response_data:
+                    tourplace_ids = response_data['tourplace']
+                    tourplace_details = []
+
+                    for tourplace_id in tourplace_ids:
+                        try:
+                            place = TourPlace.objects.get(id=tourplace_id)
+                            tourplace_details.append({
+                                'id': tourplace_id,
+                                'place_name': place.place_name
+                            })
+
+                            # If user is ISP, assign them to the tourplace
+                            if updated_user.usertype == 2:
+                                place.isp = updated_user.id
+                                place.save()
+                        except TourPlace.DoesNotExist:
+                            # Include ID but mark as not found
+                            tourplace_details.append({
+                                'id': tourplace_id,
+                                'place_name': 'Not found'
+                            })
+
+                    response_data['tourplace'] = tourplace_details
+
+                return Response(
+                    {"status": True, "data": response_data},
+                    status=status.HTTP_200_OK
+                )
+
+        except User.DoesNotExist:
+            return Response(
+                {"status": False, "data": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"status": False, "data": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ISPRangeListAPIView(ListAPIView):
@@ -776,32 +831,109 @@ class CustomerManagementView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.get(id=user_id, usertype=3)
+            # Ensure we're updating a customer (usertype=3)
+            user = get_object_or_404(User, id=user_id, usertype=3)
+
+            # Store original data for comparison if needed
+            original_data = {
+                'venue': user.venue.id if user.venue else None,
+                'tourplace': user.tourplace.copy() if user.tourplace else []
+            }
+
             data = request.data.copy()
 
             # Prevent changing usertype
             if 'usertype' in data:
                 del data['usertype']
 
-            serializer = UserRegUpdateSerializer(user, data=data, partial=True)
+            # Handle venue_id if provided
+            venue_id = data.pop('venue_id', None)
+            if venue_id:
+                try:
+                    venue = get_object_or_404(Venue, id=venue_id)
+                    user.venue = venue
+                except Venue.DoesNotExist:
+                    return Response({
+                        "status": False,
+                        "data": f"Venue with ID {venue_id} not found"
+                    }, status=status.HTTP_404_NOT_FOUND)
 
-            if serializer.is_valid():
-                serializer.save()
+            # Handle ISP assignment if provided
+            isp_id = data.pop('isp_id', None)
+            if isp_id:
+                try:
+                    # Verify ISP exists and belongs to the same venue
+                    isp = get_object_or_404(
+                        User,
+                        id=isp_id,
+                        usertype=2,
+                        venue=user.venue
+                    )
+                except User.DoesNotExist:
+                    return Response({
+                        "status": False,
+                        "data": f"ISP with ID {isp_id} not found or not associated with the customer's venue"
+                    }, status=status.HTTP_404_NOT_FOUND)
+
+            # Use transaction to ensure data integrity
+            with transaction.atomic():
+                serializer = UserRegUpdateSerializer(
+                    user, data=data, partial=True)
+
+                if serializer.is_valid():
+                    updated_user = serializer.save()
+
+                    # Format response data
+                    response_data = serializer.data.copy()
+
+                    # Add venue information to response
+                    if updated_user.venue:
+                        response_data['venue'] = {
+                            'id': updated_user.venue.id,
+                            'name': updated_user.venue.venue_name
+                        }
+
+                    # Replace tourplace IDs with detailed information if present
+                    if 'tourplace' in response_data and response_data['tourplace']:
+                        tourplace_ids = response_data['tourplace']
+                        tourplace_details = []
+
+                        for tourplace_id in tourplace_ids:
+                            try:
+                                place = TourPlace.objects.get(id=tourplace_id)
+                                tourplace_details.append({
+                                    'id': tourplace_id,
+                                    'place_name': place.place_name
+                                })
+                            except TourPlace.DoesNotExist:
+                                # Include ID but mark as not found
+                                tourplace_details.append({
+                                    'id': tourplace_id,
+                                    'place_name': 'Not found'
+                                })
+
+                        response_data['tourplace'] = tourplace_details
+
+                    return Response({
+                        "status": True,
+                        "data": response_data
+                    }, status=status.HTTP_200_OK)
+
                 return Response({
-                    "status": True,
-                    "data": serializer.data
-                }, status=status.HTTP_200_OK)
-
-            return Response({
-                "status": False,
-                "data": serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+                    "status": False,
+                    "data": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
 
         except User.DoesNotExist:
             return Response({
                 "status": False,
                 "data": "Customer not found"
             }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class DirectISPCreateView(APIView):

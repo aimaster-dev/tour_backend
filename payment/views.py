@@ -331,22 +331,29 @@ class VideoSnapshotCountAPIView(APIView):
     def get(self, request):
         user = request.user
         try:
-            # Get the latest payment log for both paid and free plans
-            payment_logs_query = PaymentLogs.objects.filter(user=user.id)
-            latest_payment = payment_logs_query.order_by('-created_at').first()
+            # Get the latest paid plan payment log
+            latest_payment = PaymentLogs.objects.filter(
+                user=user.id,
+                price__isnull=False,  # Only get paid plans
+                videoremain__gt=0
+            ).order_by('-created_at').first()
 
             # Get free plan details
             free_plan = PaymentLogs.objects.filter(
                 user=user.id,
                 price__isnull=True,
-                transaction_id__startswith='FREE_TRIAL_'
+                transaction_id__startswith='FREE_TRIAL_',
+                videoremain__gt=0
             ).first()
 
-            # Calculate total remaining credits
+            # Calculate total remaining credits from valid plans only
             total_video_remaining = (latest_payment.videoremain if latest_payment else 0) + \
                 (free_plan.videoremain if free_plan else 0)
             total_snapshot_remaining = (latest_payment.snapshotremain if latest_payment else 0) + \
                 (free_plan.snapshotremain if free_plan else 0)
+
+            # Get the active plan details (paid plan takes precedence over free plan)
+            active_plan = latest_payment or free_plan
 
             # Return the remaining video and snapshot counts
             response_data = {
@@ -355,8 +362,8 @@ class VideoSnapshotCountAPIView(APIView):
                     "price_id": latest_payment.price.id if latest_payment and latest_payment.price else None,
                     "video_remaining": total_video_remaining,
                     "snapshot_remaining": total_snapshot_remaining,
-                    "is_free_plan": latest_payment.price is None if latest_payment else True,
-                    "record_time": latest_payment.price.record_time if latest_payment and latest_payment.price else 10
+                    "is_free_plan": not latest_payment,  # True if no valid paid plan exists
+                    "record_time": active_plan.price.record_time if active_plan and active_plan.price else 10
                 }
             }
 

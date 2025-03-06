@@ -72,69 +72,26 @@ class UserListSerializer(serializers.ModelSerializer):
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
-    venue_id = serializers.IntegerField(required=False)
-    isp_id = serializers.IntegerField(required=False)
 
     def validate(self, data):
         user = authenticate(email=data['email'], password=data['password'])
-        if not user:
+        if user:
+            refresh = RefreshToken.for_user(user)
+            access = refresh.access_token
+            return {
+                'refresh': str(refresh),
+                'access': str(access),
+                'user_id': user.id,
+                'usertype': user.usertype,
+                'level': user.level,
+                'username': user.username,
+                'status': user.status,
+                'tourplace': user.tourplace,
+                'user': user,
+                'device_token': user.device_token
+            }
+        else:
             raise serializers.ValidationError("Invalid email or password")
-
-        # Handle different user types
-        if user.usertype == 1:  # Admin
-            # No venue/ISP validation needed
-            pass
-        elif user.usertype == 2:  # ISP
-            # Only validate venue
-            if 'venue_id' in data and data['venue_id'] != user.venue_id:
-                raise serializers.ValidationError("Invalid venue for this ISP")
-        elif user.usertype == 3:  # Customer
-            # Validate both venue and ISP
-            if not user.venue_id and 'venue_id' not in data:
-                raise serializers.ValidationError("Venue selection required")
-            if not user.isp_id and 'isp_id' not in data:
-                raise serializers.ValidationError("ISP selection required")
-
-            # For existing users without venue/ISP
-            if not user.venue_id and 'venue_id' in data:
-                user.venue_id = data['venue_id']
-            if not user.isp_id and 'isp_id' in data:
-                # Validate ISP belongs to venue
-                try:
-                    isp = User.objects.get(
-                        id=data['isp_id'],
-                        usertype=2,
-                        venue_id=user.venue_id,
-                        status=True
-                    )
-                    user.isp_id = isp.id
-                    user.save()
-                except User.DoesNotExist:
-                    raise serializers.ValidationError(
-                        "Invalid ISP for selected venue")
-
-        refresh = RefreshToken.for_user(user)
-        access = refresh.access_token
-        return {
-            'refresh': str(refresh),
-            'access': str(access),
-            'user_id': user.id,
-            'usertype': user.usertype,
-            'level': user.level,
-            'username': user.username,
-            'status': user.status,
-            'tourplace': user.tourplace,
-            'venue': {
-                'id': user.venue.id,
-                'name': user.venue.venue_name
-            } if user.venue else None,
-            'isp': {
-                'id': user.isp.id,
-                'name': user.isp.username
-            } if user.isp else None,
-            'user': user,
-            'device_token': user.device_token
-        }
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

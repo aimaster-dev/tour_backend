@@ -7,7 +7,7 @@ from user.permissions import IsAdmin, IsAdminOrISP
 from .models import TourPlace, Venue
 from user.models import User
 from django.shortcuts import get_object_or_404
-from .serializers import TourplaceSerializer, VenueSerializer, ISPSerializer
+from .serializers import TourplaceSerializer, VenueSerializer, ISPSerializer, PublicVenueSerializer, PublicISPSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from tourvideoproject.utils import LoggerHelper
@@ -196,3 +196,40 @@ class PublicVenueListAPIView(APIView):
             'status': True,
             'data': serializer.data
         }, status=status.HTTP_200_OK)
+
+
+class PublicVenueDetailAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, venue_id):
+        try:
+            venue = get_object_or_404(Venue, id=venue_id)
+            serializer = PublicVenueSerializer(venue)
+            return Response({
+                'status': True,
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+        except Venue.DoesNotExist:
+            return Response({
+                'status': False,
+                'error': 'Venue not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+class PublicISPDetailAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, isp_id):
+        try:
+            # usertype=2 ensures it's an ISP
+            isp = get_object_or_404(User, id=isp_id, usertype=2)
+            serializer = PublicISPSerializer(isp)
+            return Response({
+                'status': True,
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                'status': False,
+                'error': 'ISP not found'
+            }, status=status.HTTP_404_NOT_FOUND)

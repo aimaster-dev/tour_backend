@@ -31,3 +31,25 @@ class TourplaceSerializer(serializers.ModelSerializer):
         instance.isp = validated_data.get('isp', instance.isp)
         instance.save()
         return instance
+
+
+class PublicVenueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Venue
+        fields = ['id', 'venue_name', 'description', 'status', 'created_at']
+
+
+class PublicISPSerializer(serializers.ModelSerializer):
+    venue = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'phone_number', 'venue', 'status']
+
+    def get_venue(self, obj):
+        if obj.venue:
+            return {
+                'id': obj.venue.id,
+                'name': obj.venue.venue_name
+            }
+        return None

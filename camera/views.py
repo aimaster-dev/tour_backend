@@ -633,13 +633,13 @@ class CameraViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = CameraPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['tourplace', 'is_active']
+    filterset_fields = ['tourplace']
     search_fields = ['camera_name', 'rtsp_url']
     ordering_fields = ['created_at', 'camera_name']
 
     def get_queryset(self):
         # ISP can only see their own cameras
-        return Camera.objects.filter(isp=self.request.user)
+        return Camera.objects.all()
 
     def perform_create(self, serializer):
         serializer.save(isp=self.request.user)

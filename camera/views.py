@@ -17,6 +17,8 @@ from .camera import LiveWebCam
 from django.http.response import StreamingHttpResponse
 from tourvideoproject.utils import LoggerHelper
 import traceback
+from rest_framework import viewsets, filters
+from rest_framework.pagination import PageNumberPagination
 
 # Configure logger for this module
 logger = LoggerHelper.get_logger('camera')
@@ -618,3 +620,26 @@ class CameraDeleteAPIView(APIView):
 #                 return Response({"status": False, "data": {"msg": "Camera not found."}}, status=status.HTTP_404_NOT_FOUND)
 #         except Exception as e:
 #             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CameraPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class CameraViewSet(viewsets.ModelViewSet):
+    serializer_class = CameraSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = CameraPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['tourplace', 'is_active']
+    search_fields = ['camera_name', 'rtsp_url']
+    ordering_fields = ['created_at', 'camera_name']
+
+    def get_queryset(self):
+        # ISP can only see their own cameras
+        return Camera.objects.filter(isp=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(isp=self.request.user)

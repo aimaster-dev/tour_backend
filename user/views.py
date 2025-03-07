@@ -962,3 +962,38 @@ class DirectISPCreateView(APIView):
             "status": False,
             "data": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VenueSpecificISPListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, venue_id):
+        try:
+            venue = get_object_or_404(Venue, id=venue_id, status=True)
+            isps = User.objects.filter(usertype=2, venue=venue, status=True)
+
+            isp_data = [{
+                'id': isp.id,
+                'name': isp.username,
+                'email': isp.email,
+                'phone_number': isp.phone_number
+            } for isp in isps]
+
+            response_data = {
+                'venue': {
+                    'id': venue.id,
+                    'name': venue.venue_name
+                },
+                'isps': isp_data
+            }
+
+            return Response({
+                'status': True,
+                'data': response_data
+            }, status=status.HTTP_200_OK)
+
+        except Venue.DoesNotExist:
+            return Response({
+                'status': False,
+                'message': f'Venue with ID {venue_id} not found or inactive'
+            }, status=status.HTTP_404_NOT_FOUND)

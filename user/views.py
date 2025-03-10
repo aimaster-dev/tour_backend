@@ -1002,3 +1002,40 @@ class VenueSpecificISPListView(APIView):
                 'status': False,
                 'message': f'Venue with ID {venue_id} not found or inactive'
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class ManageUnlimitedAccessView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        grant_access = request.data.get('grant_access', False)
+
+        if not user_id:
+            return Response({"status": False, "data": "User ID is required"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=user_id)
+
+            # Admin users can't modify access for other admins or ISPs
+            if user.usertype in [1, 2]:
+                return Response(
+                    {"status": False, "data": "Cannot modify access for Admin or ISP users as they already have unlimited access"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user.has_unlimited_access = grant_access
+            user.save()
+
+            action = "granted" if grant_access else "revoked"
+            return Response(
+                {"status": True, "data": f"Unlimited access {action} for user {user.email}"},
+                status=status.HTTP_200_OK
+            )
+
+        except User.DoesNotExist:
+            return Response(
+                {"status": False, "data": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )

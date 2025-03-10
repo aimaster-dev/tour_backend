@@ -694,21 +694,26 @@ class VenueISPListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        venues = Venue.objects.filter(status=True)
+        # Get all ISPs with usertype=2 and status=True
+        isps = User.objects.filter(usertype=2, status=True)
         data = []
 
-        for venue in venues:
-            isps = User.objects.filter(usertype=2, venue=venue, status=True)
-            venue_data = {
-                'id': venue.id,
-                'name': venue.venue_name,
-                'isps': [{
-                    'id': isp.id,
-                    'name': isp.username,
-                    'email': isp.email
-                } for isp in isps]
+        for isp in isps:
+            # Get the venue information for this ISP
+            venue_data = []
+            if isp.venue:
+                venue_data = [{
+                    'id': isp.venue.id,
+                    'name': isp.venue.venue_name
+                }]
+
+            isp_data = {
+                'id': isp.id,
+                'name': isp.username,
+                'email': isp.email,
+                'venue_name': venue_data
             }
-            data.append(venue_data)
+            data.append(isp_data)
 
         return Response({
             'status': True,

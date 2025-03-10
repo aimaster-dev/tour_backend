@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView
+from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView, ManageUnlimitedAccessView
 
 urlpatterns = [
     path('register', UserAPIView.as_view(), name='auth_register'),
@@ -31,4 +31,6 @@ urlpatterns = [
     path('isp/create/', DirectISPCreateView.as_view(), name='direct-isp-create'),
     path('venue/<int:venue_id>/isps/', VenueSpecificISPListView.as_view(),
          name='venue-specific-isp-list'),
+    path('manage-unlimited-access/', ManageUnlimitedAccessView.as_view(),
+         name='manage-unlimited-access'),
 ]

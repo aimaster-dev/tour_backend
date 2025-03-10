@@ -251,103 +251,112 @@ class VideoAddAPIView(APIView):
                 if request.user.usertype == 3:
                     logging.info(
                         f"Processing payment for type 3 user: {request.user.username}")
-                    try:
-                        with transaction.atomic():
-                            # Log payment search criteria
-                            if pricing_id and pricing_id not in ["", "null", "undefined", None]:
-                                logging.info(
-                                    f"Searching for payment log with pricing ID: {pricing_id}")
-                                payment_log = PaymentLogs.objects.filter(
-                                    user=request.user.id,
-                                    price=pricing_id,
-                                    videoremain__gt=0
-                                ).first()
-                                if payment_log:
+
+                    # Check if user has unlimited access
+                    if request.user.has_free_recording_access():
+                        logging.info(
+                            f"User {request.user.username} has unlimited access - no decrement needed")
+                    else:
+                        try:
+                            with transaction.atomic():
+                                # Log payment search criteria
+                                if pricing_id and pricing_id not in ["", "null", "undefined", None]:
                                     logging.info(
-                                        f"Found payment log - ID: {payment_log.id}, Remaining videos: {payment_log.videoremain}")
+                                        f"Searching for payment log with pricing ID: {pricing_id}")
+                                    payment_log = PaymentLogs.objects.filter(
+                                        user=request.user.id,
+                                        price=pricing_id,
+                                        videoremain__gt=0
+                                    ).first()
+                                    if payment_log:
+                                        logging.info(
+                                            f"Found payment log - ID: {payment_log.id}, Remaining videos: {payment_log.videoremain}")
+                                    else:
+                                        logging.warning(
+                                            f"No payment log found with pricing ID: {pricing_id}")
                                 else:
+                                    logging.info(
+                                        "Searching for free trial payment log")
+                                    payment_log = PaymentLogs.objects.filter(
+                                        user=request.user.id,
+                                        price__isnull=True,
+                                        transaction_id__startswith='FREE_TRIAL_',
+                                        videoremain__gt=0
+                                    ).first()
+                                    if payment_log:
+                                        logging.info(
+                                            f"Found free trial payment log - ID: {payment_log.id}, Remaining videos: {payment_log.videoremain}")
+                                    else:
+                                        logging.warning(
+                                            "No free trial payment log found")
+
+                                if not payment_log:
                                     logging.warning(
-                                        f"No payment log found with pricing ID: {pricing_id}")
+                                        f"No remaining video credits for user {request.user.username}")
+                                    # Store video ID before deletion for logging
+                                    video_id = getattr(video, 'id', None)
+                                    video_path = getattr(
+                                        video, 'video_path', None)
+
+                                    # Delete file if it exists
+                                    if video_path and default_storage.exists(video_path.name):
+                                        default_storage.delete(video_path.name)
+                                        logging.info(
+                                            f"Deleted video file: {video_path.name}")
+
+                                    # Only attempt to delete if we have a valid ID
+                                    if video_id is not None:
+                                        video.delete()
+                                        logging.info(
+                                            f"Deleted video record with ID: {video_id}")
+                                    else:
+                                        logging.warning(
+                                            "Video record not deleted - no valid ID")
+
+                                    return Response({
+                                        'status': False,
+                                        "data": "You don't have any remaining video credits."
+                                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                                # Log payment log state before update
+                                logging.info(
+                                    f"Current video remain count: {payment_log.videoremain}")
+                                payment_log.videoremain -= 1
+                                payment_log.save()
+                                logging.info(
+                                    f"Updated payment log, new remaining videos: {payment_log.videoremain}")
+
+                        except Exception as e:
+                            logging.error(
+                                f"Payment processing error: {str(e)}")
+                            logging.error(
+                                f"Payment error type: {type(e).__name__}")
+                            logging.error(
+                                "Payment error details:", exc_info=True)
+
+                            # Store video ID before deletion for logging
+                            video_id = getattr(video, 'id', None)
+                            video_path = getattr(video, 'video_path', None)
+
+                            # Delete file if it exists
+                            if video_path and default_storage.exists(video_path.name):
+                                default_storage.delete(video_path.name)
+                                logging.info(
+                                    f"Cleaned up video file after payment error: {video_path.name}")
+
+                            # Only attempt to delete if we have a valid ID
+                            if video_id is not None:
+                                video.delete()
+                                logging.info(
+                                    f"Cleaned up video record after payment error: {video_id}")
                             else:
-                                logging.info(
-                                    "Searching for free trial payment log")
-                                payment_log = PaymentLogs.objects.filter(
-                                    user=request.user.id,
-                                    price__isnull=True,
-                                    transaction_id__startswith='FREE_TRIAL_',
-                                    videoremain__gt=0
-                                ).first()
-                                if payment_log:
-                                    logging.info(
-                                        f"Found free trial payment log - ID: {payment_log.id}, Remaining videos: {payment_log.videoremain}")
-                                else:
-                                    logging.warning(
-                                        "No free trial payment log found")
-
-                            if not payment_log:
                                 logging.warning(
-                                    f"No remaining video credits for user {request.user.username}")
-                                # Store video ID before deletion for logging
-                                video_id = getattr(video, 'id', None)
-                                video_path = getattr(video, 'video_path', None)
+                                    "Video record not deleted - no valid ID")
 
-                                # Delete file if it exists
-                                if video_path and default_storage.exists(video_path.name):
-                                    default_storage.delete(video_path.name)
-                                    logging.info(
-                                        f"Deleted video file: {video_path.name}")
-
-                                # Only attempt to delete if we have a valid ID
-                                if video_id is not None:
-                                    video.delete()
-                                    logging.info(
-                                        f"Deleted video record with ID: {video_id}")
-                                else:
-                                    logging.warning(
-                                        "Video record not deleted - no valid ID")
-
-                                return Response({
-                                    'status': False,
-                                    "data": "You don't have any remaining video credits."
-                                }, status=status.HTTP_400_BAD_REQUEST)
-
-                            # Log payment log state before update
-                            logging.info(
-                                f"Current video remain count: {payment_log.videoremain}")
-                            payment_log.videoremain -= 1
-                            payment_log.save()
-                            logging.info(
-                                f"Updated payment log, new remaining videos: {payment_log.videoremain}")
-
-                    except Exception as e:
-                        logging.error(f"Payment processing error: {str(e)}")
-                        logging.error(
-                            f"Payment error type: {type(e).__name__}")
-                        logging.error("Payment error details:", exc_info=True)
-
-                        # Store video ID before deletion for logging
-                        video_id = getattr(video, 'id', None)
-                        video_path = getattr(video, 'video_path', None)
-
-                        # Delete file if it exists
-                        if video_path and default_storage.exists(video_path.name):
-                            default_storage.delete(video_path.name)
-                            logging.info(
-                                f"Cleaned up video file after payment error: {video_path.name}")
-
-                        # Only attempt to delete if we have a valid ID
-                        if video_id is not None:
-                            video.delete()
-                            logging.info(
-                                f"Cleaned up video record after payment error: {video_id}")
-                        else:
-                            logging.warning(
-                                "Video record not deleted - no valid ID")
-
-                        return Response({
-                            'status': False,
-                            "data": "Error processing payment. Please try again."
-                        }, status=status.HTTP_400_BAD_REQUEST)
+                            return Response({
+                                'status': False,
+                                "data": "Error processing payment. Please try again."
+                            }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Process video
                 try:
@@ -578,12 +587,14 @@ class SnapShotAddAPIView(APIView):
             return Response({"status": False, "data": "Tourplace and images are required."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Check the user's remaining snapshot count
-        payment_log = PaymentLogs.objects.filter(
-            user=client.id).order_by('-created_at').first()
-        if not payment_log or payment_log.snapshotremain <= 0:
-            return Response({"status": False, "data": "You don't have any remaining snapshots."},
-                            status=status.HTTP_400_BAD_REQUEST)
+        # Check if user has unlimited access
+        if not client.has_free_recording_access():
+            # Check the user's remaining snapshot count
+            payment_log = PaymentLogs.objects.filter(
+                user=client.id).order_by('-created_at').first()
+            if not payment_log or payment_log.snapshotremain <= 0:
+                return Response({"status": False, "data": "You don't have any remaining snapshots."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
         snapshots = []
         for image in images:
@@ -593,12 +604,16 @@ class SnapShotAddAPIView(APIView):
 
         SnapShot.objects.bulk_create(snapshots)
 
-        # Decrement the snapshot count
-        payment_log.snapshotremain -= len(images)
-        payment_log.save()
+        # Decrement the snapshot count only if user doesn't have unlimited access
+        if not client.has_free_recording_access():
+            payment_log.snapshotremain -= len(images)
+            payment_log.save()
+            remaining_snapshots = payment_log.snapshotremain
+        else:
+            remaining_snapshots = "Unlimited"
 
         # Send email with snapshots
-        self.send_snapshot_email(client, snapshots, payment_log.snapshotremain)
+        self.send_snapshot_email(client, snapshots, remaining_snapshots)
 
         serializer = SnatShotSerializer(snapshots, many=True)
         return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)

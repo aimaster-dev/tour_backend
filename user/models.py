@@ -43,6 +43,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         limit_choices_to={'usertype': 2}
     )
     status = models.BooleanField(default=False)
+    has_unlimited_access = models.BooleanField(default=False)
     level = models.IntegerField(default=0)
     device_token = models.CharField(
         max_length=150, null=True, blank=True, default='')
@@ -75,6 +76,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def is_customer(self):
         return self.usertype == 3
+
+    def has_free_recording_access(self):
+        return self.usertype in [1, 2] or self.has_unlimited_access
 
     class Meta:
         db_table = 'user_tbl'

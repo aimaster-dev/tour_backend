@@ -8,8 +8,8 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.utils import timezone
 from rest_framework import serializers
-from tourplace.models import TourPlace, Venue
-from tourplace.serializers import TourplaceSerializer
+from tourplace.models import Venue
+from tourplace.serializers import VenueSerializer
 from django.shortcuts import get_object_or_404
 
 
@@ -60,13 +60,13 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'phone_number', 'usertype',
-                  'status', 'tourplace', 'level', 'is_activate', 'device_token']
+                  'status', 'venue', 'level', 'is_activate', 'device_token']
         read_only_fields = fields
 
-    def get_tourplace(self, obj):
-        tourplace_ids = obj.tourplace
-        tourplaces = TourPlace.objects.filter(id__in=tourplace_ids)
-        return TourplaceSerializer(tourplaces, many=True).data
+    def get_venue(self, obj):
+        venue_ids = obj.venue
+        venues = Venue.objects.filter(id__in=venue_ids)
+        return VenueSerializer(venues, many=True).data
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -92,6 +92,73 @@ class UserLoginSerializer(serializers.Serializer):
             }
         else:
             raise serializers.ValidationError("Invalid email or password")
+
+
+class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+    venue_id = serializers.IntegerField(required=False)
+    isp_id = serializers.IntegerField(required=False)
+
+    def validate(self, data):
+        user = authenticate(email=data['email'], password=data['password'])
+        if not user:
+            raise serializers.ValidationError("Invalid email or password")
+
+        # Handle different user types
+        if user.usertype == 1:  # Admin
+            # No venue/ISP validation needed
+            pass
+        elif user.usertype == 2:  # ISP
+            # Only validate venue
+            if 'venue_id' in data and data['venue_id'] != user.venue_id:
+                raise serializers.ValidationError("Invalid venue for this ISP")
+        elif user.usertype == 3:  # Customer
+            # Validate both venue and ISP
+            if not user.venue_id and 'venue_id' not in data:
+                raise serializers.ValidationError("Venue selection required")
+            if not user.isp_id and 'isp_id' not in data:
+                raise serializers.ValidationError("ISP selection required")
+
+            # For existing users without venue/ISP
+            if not user.venue_id and 'venue_id' in data:
+                user.venue_id = data['venue_id']
+            if not user.isp_id and 'isp_id' in data:
+                # Validate ISP belongs to venue
+                try:
+                    isp = User.objects.get(
+                        id=data['isp_id'],
+                        usertype=2,
+                        venue_id=user.venue_id,
+                        status=True
+                    )
+                    user.isp_id = isp.id
+                    user.save()
+                except User.DoesNotExist:
+                    raise serializers.ValidationError(
+                        "Invalid ISP for selected venue")
+
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+        return {
+            'refresh': str(refresh),
+            'access': str(access),
+            'user_id': user.id,
+            'usertype': user.usertype,
+            'level': user.level,
+            'username': user.username,
+            'status': user.status,
+            'venue': {
+                'id': user.venue.id,
+                'name': user.venue.venue_name
+            } if user.venue else None,
+            'isp': {
+                'id': user.isp.id,
+                'name': user.isp.username
+            } if user.isp else None,
+            'user': user,
+            'device_token': user.device_token
+        }
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

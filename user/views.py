@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import ListAPIView
-from .serializers import UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer, ISPCreateSerializer
+from .serializers import UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer, ISPCreateSerializer, UserLoginWithVenueISPIdSerializer
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .models import User, Invitation, EmailOTP
@@ -12,7 +12,7 @@ from .permissions import IsAdmin, IsAdminOrISP
 from .tokens import account_activation_token
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 from django.utils.crypto import get_random_string
 from django.shortcuts import get_object_or_404
 from django.db.models import F, Func
@@ -206,6 +206,72 @@ class UserLoginAPIView(APIView):
                         try:
                             price = Price.objects.get(
                                 tourplace=tourplace_field.pk, price=0)
+                        except Price.DoesNotExist:
+                            return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
+                        invoice_info = PaymentLogs.objects.filter(
+                            user=user.id, price=price.id)
+                        print('here', price.id)
+                        if len(invoice_info) == 0:
+                            data = {
+                                "user": user.id,
+                                "price": price.id,
+                                "videoremain": price.record_limit,
+                                "snapshotremain": price.snapshot_limit,
+                                "amount": price.price,
+                                "status": "COMPLETED",
+                                "comment": "Free Version",
+                                "message": "Free Version"
+                            }
+                            payserializer = PaymentLogsSerializer(data=data)
+                            if payserializer.is_valid():
+                                payserializer.save()
+                                return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
+                            else:
+                                return Response({"status": False, "data": {"msg": payserializer.errors}}, status=status.HTTP_403_FORBIDDEN)
+                        else:
+                            return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
+        return Response({"status": False, "data": {"msg": "Invalid email or password"}}, status=status.HTTP_404_NOT_FOUND)
+
+
+class UserLoginWithVenueISPIdAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        venue = request.data.get("venue")
+        device_token = request.data.get("device_token")
+        login_data = request.data
+        login_data.pop("venue", None)
+        login_data.pop("device_token", None)
+        serializer = UserLoginWithVenueISPIdSerializer(data=login_data)
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            if validated_data['status'] == False and validated_data['usertype'] == 2:
+                return Response({"status": False, "data": {"msg": "Please wait until admin allows you"}}, status=status.HTTP_423_LOCKED)
+            else:
+                user = validated_data.pop('user')
+                if user.status == False:
+                    return Response({"status": False, "data": {"msg": "Your account is deleted."}}, status=status.HTTP_403_FORBIDDEN)
+                if user.usertype == 3:
+                    if user.is_activate == False:
+                        return Response({"status": False, "data": {"msg": "Please activate your account first.", "user_id": user.id}}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                    if venue == 0:
+                        return Response({"status": False, "data": {"msg": "Please input venue."}}, status=status.HTTP_403_FORBIDDEN)
+                    else:
+                        user.venue = [venue]
+                        user.device_token = device_token
+                        user.save()
+                        try:
+                            venue_field = Venue.objects.get(
+                                id=venue)
+                        except Venue.DoesNotExist:
+                            return Response({"status": False, "data": {"msg": "Venue not found."}}, status=status.HTTP_404_NOT_FOUND)
+                        userdata = serializer.validated_data
+                        userdata["device_token"] = user.device_token
+                        try:
+                            price = Price.objects.get(
+                                venue=venue_field.pk, price=0)
                         except Price.DoesNotExist:
                             return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                         invoice_info = PaymentLogs.objects.filter(

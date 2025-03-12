@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from .serializers import PriceSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 # Create your views here.
 
 
@@ -18,9 +18,9 @@ class PriceAPIView(APIView):
     def post(self, request):
         user = request.user
         if user.usertype == 2:
-            tourplace_id = request.data.get('tourplace')
+            venue_id = request.data.get('venue')
             data = request.data.copy()
-            data["tourplace"] = TourPlace.objects.get(id=tourplace_id).pk
+            data["venue"] = Venue.objects.get(id=venue_id).pk
             serializer = PriceSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
@@ -42,9 +42,9 @@ class PriceUpdateAPIView(APIView):
     def post(self, request):
         id = request.data["id"]
         price = Price.objects.get(id=id)
-        tourplace_id = request.data.get("tourplace")
+        venue_id = request.data.get("venue")
         data = request.data.copy()
-        data["tourplace"] = TourPlace.objects.get(id=tourplace_id).pk
+        data["venue"] = Venue.objects.get(id=venue_id).pk
         serializer = PriceSerializer(price, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -77,24 +77,24 @@ class PriceGetAllAPIView(APIView):
 
     def get(self, request):
         user = request.user
-        tourplace_id = request.query_params.get("tourplace")
+        venue_id = request.query_params.get("venue")
         Prices = []
-        if tourplace_id:
-            tourplace = TourPlace.objects.get(id=tourplace_id)
-            Prices = Price.objects.filter(tourplace=tourplace.pk)
+        if venue_id:
+            venue = Venue.objects.get(id=venue_id)
+            Prices = Price.objects.filter(venue=venue.pk)
         else:
             if user.usertype == 1:
-                tourplace = TourPlace.objects.all().first()
-                if tourplace is None:
+                venue = Venue.objects.all().first()
+                if venue is None:
                     return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
                 else:
-                    Prices = Price.objects.filter(tourplace=tourplace.pk)
+                    Prices = Price.objects.filter(venue=venue.pk)
             elif user.usertype == 2:
-                tourplace = TourPlace.objects.filter(isp=user.pk).first()
-                Prices = Price.objects.filter(tourplace=tourplace.pk)
+                venue = Venue.objects.filter(isp=user.pk).first()
+                Prices = Price.objects.filter(venue=venue.pk)
             elif user.usertype == 3:
-                tour_id = user.tourplace[0]
-                tourplace = TourPlace.objects.get(id=tour_id)
-                Prices = Price.objects.filter(tourplace=tourplace.pk)
+                venue_id = user.venue[0]
+                venue = Venue.objects.get(id=venue_id)
+                Prices = Price.objects.filter(venue=venue.pk)
         serializer = PriceSerializer(Prices, many=True)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)

@@ -1,16 +1,16 @@
 from rest_framework import serializers
 from .models import Camera
-from tourplace.models import TourPlace
-from tourplace.serializers import TourplaceSerializer
+from tourplace.models import Venue
+from tourplace.serializers import VenueSerializer
 
 
 class CameraSerializer(serializers.ModelSerializer):
-    tourplace_details = TourplaceSerializer(source='tourplace', read_only=True)
+    venue_details = VenueSerializer(source='venue', read_only=True)
 
     class Meta:
         model = Camera
-        fields = ['id', 'camera_name', 'rtsp_url', 'output_url', 'tourplace',
-                  'tourplace_details', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'camera_name', 'rtsp_url', 'output_url', 'venue',
+                  'venue_details', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
     def validate(self, attrs):
@@ -25,12 +25,12 @@ class CameraSerializer(serializers.ModelSerializer):
 
 
 class CameraUpdateSerializer(serializers.ModelSerializer):
-    tourplace = serializers.SerializerMethodField()
+    venue = serializers.SerializerMethodField()
 
     class Meta:
         model = Camera
         fields = ['id', 'camera_name', 'rtsp_url', 'output_url',
-                  'tourplace', 'created_at', 'updated_at']
+                  'venue', 'created_at', 'updated_at']
 
     def validate(self, attrs):
         if self.instance:
@@ -41,10 +41,10 @@ class CameraUpdateSerializer(serializers.ModelSerializer):
                 "A camera with this url already exists.")
         return super().validate(attrs)
 
-    def get_tourplace(self, obj):
-        tourplace = obj.tourplace
-        tourplaces = TourPlace.objects.filter(id=tourplace.pk)
-        return TourplaceSerializer(tourplaces, many=True).data
+    def get_venue(self, obj):
+        venue = obj.venue
+        venues = Venue.objects.filter(id=venue.pk)
+        return VenueSerializer(venues, many=True).data
 
 # class CameraSerializer(serializers.ModelSerializer):
 #     # tourplace = serializers.SerializerMethodField()

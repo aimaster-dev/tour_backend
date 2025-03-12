@@ -8,7 +8,7 @@ import subprocess
 from django.conf import settings
 from videomgmt.models import Video, Header, Footer
 from user.models import User
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 import os
 import sys
 import django
@@ -428,7 +428,7 @@ if __name__ == "__main__":
     video_id = int(sys.argv[1])
     user_id = int(sys.argv[2])
     original_filename = sys.argv[3]
-    tourplace_id = int(sys.argv[4])
-    tourplace = TourPlace.objects.get(pk=tourplace_id)
+    venue_id = int(sys.argv[4])
+    venue = Venue.objects.get(pk=venue_id)
     logging.info(f"Starting Video Editing...")
-    process_video(video_id, user_id, original_filename, tourplace)
+    process_video(video_id, user_id, original_filename, venue)

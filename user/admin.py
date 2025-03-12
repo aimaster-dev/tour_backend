@@ -17,7 +17,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('email', 'username', 'password', 'phone_number')
         }),
         ('Role & Permissions', {
-            'fields': ('usertype', 'venue', 'isp', 'level', 'tourplace')
+            'fields': ('usertype', 'venue', 'isp', 'level')
         }),
         ('Status', {
             'fields': ('status', 'is_activate', 'is_invited')

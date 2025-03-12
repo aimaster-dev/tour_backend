@@ -779,10 +779,31 @@ class VenueISPListView(APIView):
             # Get the venue information for this ISP
             venue_data = []
             if isp.venue:
-                venue_data = [{
-                    'id': isp.venue.id,
-                    'name': isp.venue.venue_name
-                }]
+                # Check if venue is an object or an integer/list
+                if isinstance(isp.venue, Venue):
+                    # If venue is already a Venue object
+                    venue_data = [{
+                        'id': isp.venue.id,
+                        'name': isp.venue.venue_name
+                    }]
+                elif isinstance(isp.venue, int):
+                    # If venue is an integer ID
+                    try:
+                        venue_obj = Venue.objects.get(id=isp.venue)
+                        venue_data = [{
+                            'id': isp.venue,
+                            'name': venue_obj.venue_name
+                        }]
+                    except Venue.DoesNotExist:
+                        venue_data = [{'id': isp.venue, 'name': 'Unknown'}]
+                elif isinstance(isp.venue, list):
+                    # If venue is a list of IDs
+                    venue_ids = isp.venue
+                    venue_objs = Venue.objects.filter(id__in=venue_ids)
+                    venue_data = [
+                        {'id': venue.id, 'name': venue.venue_name}
+                        for venue in venue_objs
+                    ]
 
             isp_data = {
                 'id': isp.id,

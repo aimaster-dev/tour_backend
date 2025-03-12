@@ -45,9 +45,11 @@ class CustomUserAdmin(UserAdmin):
         if obj and 'isp' in form.base_fields:
             # Limit ISP choices to actual ISPs from the same venue
             if obj.venue:
+                venue_ids = obj.venue if isinstance(
+                    obj.venue, list) else [obj.venue]
                 form.base_fields['isp'].queryset = User.objects.filter(
                     usertype=2,
-                    venue=obj.venue,
+                    venue__in=venue_ids,
                     status=True
                 )
             else:
@@ -65,7 +67,28 @@ class CustomUserAdmin(UserAdmin):
 
     def venue_display(self, obj):
         if obj.venue:
-            return obj.venue.venue_name
+            # Check if venue is a list (JSONField)
+            if isinstance(obj.venue, list) and obj.venue:
+                # Get the first venue ID from the list
+                venue_id = obj.venue[0]
+                try:
+                    # Fetch the actual venue object
+                    from tourplace.models import Venue
+                    venue_obj = Venue.objects.get(id=venue_id)
+                    return venue_obj.venue_name
+                except Venue.DoesNotExist:
+                    return f'Unknown (ID: {venue_id})'
+            # Check if venue is a direct object
+            elif hasattr(obj.venue, 'venue_name'):
+                return obj.venue.venue_name
+            # If venue is just an integer ID
+            elif isinstance(obj.venue, int):
+                try:
+                    from tourplace.models import Venue
+                    venue_obj = Venue.objects.get(id=obj.venue)
+                    return venue_obj.venue_name
+                except Venue.DoesNotExist:
+                    return f'Unknown (ID: {obj.venue})'
         return '-'
     venue_display.short_description = 'Venue'
 

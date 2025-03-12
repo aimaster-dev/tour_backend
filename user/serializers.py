@@ -86,8 +86,8 @@ class UserLoginSerializer(serializers.Serializer):
                 'level': user.level,
                 'username': user.username,
                 'status': user.status,
-                'tourplace': user.tourplace,
                 'user': user,
+                'venue': user.venue,
                 'device_token': user.device_token
             }
         else:
@@ -149,8 +149,8 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
             'username': user.username,
             'status': user.status,
             'venue': {
-                'id': user.venue.id,
-                'name': user.venue.venue_name
+                'id': user.venue.id if hasattr(user.venue, 'id') else user.venue,
+                'name': user.venue.venue_name if hasattr(user.venue, 'venue_name') else Venue.objects.get(id=user.venue).venue_name if isinstance(user.venue, int) else None
             } if user.venue else None,
             'isp': {
                 'id': user.isp.id,
@@ -208,8 +208,27 @@ class ISPCreateSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['venue'] = {
-            'id': instance.venue.id,
-            'name': instance.venue.venue_name
-        } if instance.venue else None
+
+        if instance.venue:
+            if isinstance(instance.venue, Venue):
+                # If venue is already a Venue object
+                data['venue'] = {
+                    'id': instance.venue.id,
+                    'name': instance.venue.venue_name
+                }
+            elif isinstance(instance.venue, int):
+                # If venue is an integer ID
+                try:
+                    venue_obj = Venue.objects.get(id=instance.venue)
+                    data['venue'] = {
+                        'id': instance.venue,
+                        'name': venue_obj.venue_name
+                    }
+                except Venue.DoesNotExist:
+                    data['venue'] = {'id': instance.venue, 'name': 'Unknown'}
+            else:
+                data['venue'] = None
+        else:
+            data['venue'] = None
+
         return data

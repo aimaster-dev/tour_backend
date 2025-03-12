@@ -4,10 +4,10 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from user.permissions import IsAdmin, IsAdminOrISP
-from .models import TourPlace, Venue
+from .models import Venue
 from user.models import User
 from django.shortcuts import get_object_or_404
-from .serializers import TourplaceSerializer, VenueSerializer, ISPSerializer, PublicVenueSerializer, PublicISPSerializer
+from .serializers import VenueSerializer, ISPSerializer, PublicVenueSerializer, PublicISPSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from tourvideoproject.utils import LoggerHelper
@@ -23,12 +23,12 @@ class TourplaceAPIView(APIView):
     def get(self, request):
         user = request.user
         if user is not None and user.usertype == 2:
-            tourplace = user.tourplace
-            serializer = TourplaceSerializer(tourplace)
+            venue = user.venue
+            serializer = VenueSerializer(venue)
             return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
         elif user.usertype == 1:
-            tourplaces = TourPlace.objects.all()
-            serializer = TourplaceSerializer(tourplaces, many=True)
+            venues = Venue.objects.all()
+            serializer = VenueSerializer(venues, many=True)
             data = serializer.data
             return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
         return Response({'status': False, 'data': {'msg': 'You have to login.'}}, status=status.HTTP_401_UNAUTHORIZED)
@@ -37,54 +37,54 @@ class TourplaceAPIView(APIView):
         user = request.user
         if user.usertype == 1:
             data = request.data
-            serializer = TourplaceSerializer(data=data)
+            serializer = VenueSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
             return Response({'status': False, 'data': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'status': False, 'data': {'msg': 'You do not any permission to create the tourplace.'}})
+        return Response({'status': False, 'data': {'msg': 'You do not any have permission to create the venue.'}})
 
 
-class TourplaceUpdateAPIView(APIView):
+class VenueUpdateAPIView(APIView):
 
     permission_classes = [IsAdmin]
 
     def post(self, request):
         id = request.data["id"]
-        place = TourPlace.objects.get(id=id)
+        venue = Venue.objects.get(id=id)
         data = request.data
-        serializer = TourplaceSerializer(place, data=data)
+        serializer = VenueSerializer(venue, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
-        return Response({'status': False, 'data': {'msg': 'You do not any permission to create the tourplace.'}})
+        return Response({'status': False, 'data': {'msg': 'You do not any permission to create the venue.'}})
 
     def get(self, request, pk, format=None):
-        tourplace = get_object_or_404(TourPlace, pk=pk)
-        serializer = TourplaceSerializer(tourplace)
+        venue = get_object_or_404(Venue, pk=pk)
+        serializer = VenueSerializer(venue)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
 
 
-class TourplaceDeleteAPIView(APIView):
+class VenueDeleteAPIView(APIView):
 
     permission_classes = [IsAdmin]
 
     def post(self, request):
         id = request.data.get('id')
         if not id:
-            return Response({"status": False, "data": {"msg": "Tourplace ID is required."}}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"status": False, "data": {"msg": "Venue ID is required."}}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            tourplace = TourPlace.objects.get(id=id)
-            tourplace.delete()
+            venue = Venue.objects.get(id=id)
+            venue.delete()
             return Response({"status": True, "data": {"msg": "Successfully deleted."}}, status=status.HTTP_200_OK)
-        except tourplace.DoesNotExist:
-            return Response({"status": False, "data": {"msg": "Tourplace not found."}}, status=status.HTTP_404_NOT_FOUND)
+        except venue.DoesNotExist:
+            return Response({"status": False, "data": {"msg": "Venue not found."}}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TourplaceGetAllAPIView(APIView):
+class VenueGetAllAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -92,10 +92,10 @@ class TourplaceGetAllAPIView(APIView):
             # Log the request with user info if authenticated
             user_info = f"User: {request.user.email}" if request.user.is_authenticated else "Anonymous user"
             LoggerHelper.log_api_request(
-                logger, request, "Tour places request received")
+                logger, request, "Venues request received")
 
-            tourplaces = TourPlace.objects.all()
-            serializer = TourplaceSerializer(tourplaces, many=True)
+            venues = Venue.objects.all()
+            serializer = VenueSerializer(venues, many=True)
 
             # Log successful response
             LoggerHelper.log_api_response(
@@ -114,26 +114,26 @@ class TourplaceGetAllAPIView(APIView):
             return Response({"error": "Failed to retrieve tour places"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class TourplaceGetAllForISPAPIView(APIView):
+class VenueGetAllForISPAPIView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        tourplaces = TourPlace.objects.filter(isp=0)
-        serializer = TourplaceSerializer(tourplaces, many=True)
+        venues = Venue.objects.filter(isp=0)
+        serializer = VenueSerializer(venues, many=True)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
 
 
-class TourplaceGetAllForCamAPIView(APIView):
+class VenueGetAllForCamAPIView(APIView):
     permission_classes = [IsAdminOrISP]
 
     def get(self, request):
         user = request.user
-        tourplaces = []
+        venues = []
         if user.usertype == 1:
-            tourplaces = TourPlace.objects.all()
+            venues = Venue.objects.all()
         elif user.usertype == 2:
-            tourplaces = TourPlace.objects.filter(isp=user.pk)
-        serializer = TourplaceSerializer(tourplaces, many=True)
+            venues = Venue.objects.filter(isp=user.pk)
+        serializer = VenueSerializer(venues, many=True)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)
 
 

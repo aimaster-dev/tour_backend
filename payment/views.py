@@ -14,7 +14,7 @@ import json
 from rest_framework.permissions import IsAuthenticated
 from price.serializers import PriceSerializer
 from .models import PaymentLogs
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 from datetime import datetime, timedelta
 from django.db.models import Q
 # Create your views here.
@@ -160,13 +160,13 @@ class PaymentAPIView(APIView):
                     serializer.save()
                     data = serializer.data
                     print(data["amount"])
-                    tourplace = TourPlace.objects.get(id=price.tourplace.pk)
+                    venue = Venue.objects.get(id=price.venue.pk)
                     output_data = {
                         "price_id": price.pk,
                         "username": user.username,
                         "email": user.email,
                         "phonenumber": user.phone_number,
-                        "tourplace": tourplace.place_name,
+                        "venue": venue.venue_name,
                         "amount": price.price,
                         "date": data["updated_at"],
                         "status": data["status"],
@@ -196,23 +196,23 @@ class PaymentAPIView(APIView):
         PaymentLogs.objects.bulk_update(
             paylogs, ['status', 'comment', 'message'])
         if user.usertype == 1:
-            tourplace = TourPlace.objects.first()
-            if tourplace is None:
+            venue = Venue.objects.first()
+            if venue is None:
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
-            tourplace_id = request.query_params.get("tourplace", tourplace.id)
-            if tourplace_id is None:
+            venue_id = request.query_params.get("venue", venue.id)
+            if venue_id is None:
                 Response({"status": True, "data": []},
                          status=status.HTTP_200_OK)
             else:
-                tourplace = TourPlace.objects.get(id=tourplace_id)
+                venue = Venue.objects.get(id=venue_id)
         elif user.usertype == 2:
-            tourplace_id = request.query_params.get(
-                "tourplace", user.tourplace[0])
-            tourplace = TourPlace.objects.get(id=tourplace_id)
+            venue_id = request.query_params.get(
+                "venue", user.venue[0])
+            venue = Venue.objects.get(id=venue_id)
         else:
-            tourplace_id = user.tourplace[0]
-            tourplace = TourPlace.objects.get(id=tourplace_id)
-        prices = Price.objects.filter(tourplace_id=tourplace, price__gt=0)
+            venue_id = user.venue[0]
+            venue = Venue.objects.get(id=venue_id)
+        prices = Price.objects.filter(venue_id=venue, price__gt=0)
         price_ids = []
         for price in prices:
             price_ids.append(price.id)
@@ -276,23 +276,23 @@ class ValidStatusAPIView(APIView):
         PaymentLogs.objects.bulk_update(
             paylogs, ['status', 'comment', 'message'])
         if user.usertype == 1:
-            tourplace = TourPlace.objects.first()
-            if tourplace is None:
+            venue = Venue.objects.first()
+            if venue is None:
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
-            tourplace_id = request.query_params.get("tourplace", tourplace.id)
-            if tourplace_id is None:
+            venue_id = request.query_params.get("venue", venue.id)
+            if venue_id is None:
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
             else:
-                tourplace = TourPlace.objects.get(id=tourplace_id)
+                venue = Venue.objects.get(id=venue_id)
         elif user.usertype == 2:
-            tourplace_id = request.query_params.get(
-                "tourplace", user.tourplace[0])
-            tourplace = TourPlace.objects.get(id=tourplace_id)
+            venue_id = request.query_params.get(
+                "venue", user.venue[0])
+            venue = Venue.objects.get(id=venue_id)
         else:
-            tourplace_id = user.tourplace[0]
-            tourplace = TourPlace.objects.get(id=tourplace_id)
+            venue_id = user.venue[0]
+            venue = Venue.objects.get(id=venue_id)
 
-        prices = Price.objects.filter(tourplace_id=tourplace)
+        prices = Price.objects.filter(venue_id=venue)
 
         logs = []
         if user.usertype == 3:
@@ -313,7 +313,7 @@ class ValidStatusAPIView(APIView):
                 "username": client.username,
                 "email": client.email,
                 "phonenumber": client.phone_number,
-                "tourplace": tourplace.place_name,
+                "venue": venue.venue_name,
                 "amount": price.price,
                 "videoremain": log.videoremain,
                 "snapshotremain": log.snapshotremain,

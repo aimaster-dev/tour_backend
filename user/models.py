@@ -31,9 +31,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     usertype = models.IntegerField(default=3)
     phone_number = models.CharField(max_length=15)
     email = models.EmailField(unique=True)
-    tourplace = models.JSONField(blank=True, default=list)
-    venue = models.ForeignKey(
-        'tourplace.Venue', on_delete=models.SET_NULL, null=True, blank=True)
+    venue = models.JSONField(blank=True, default=list)
     isp = models.ForeignKey(
         'self',
         on_delete=models.SET_NULL,

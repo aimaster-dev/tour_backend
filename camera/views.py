@@ -12,7 +12,7 @@ from .utils import convert_rtsp_to_hls, get_output_dir, stop_stream
 import requests
 import json
 from user.models import User
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 from .camera import LiveWebCam
 from django.http.response import StreamingHttpResponse
 from tourvideoproject.utils import LoggerHelper
@@ -60,24 +60,24 @@ class CameraClientAPIView(APIView):
                 logger.info(
                     f"ISP user without specified tourplace, fetching first tourplace for ISP: {user.pk}")
                 try:
-                    tourplace = TourPlace.objects.filter(isp=user.pk).first()
-                    if not tourplace:
+                    venue = Venue.objects.filter(isp=user.pk).first()
+                    if not venue:
                         logger.warning(
-                            f"No tourplace found for ISP with ID: {user.pk}")
-                        return Response({'status': False, 'error': 'No tourplace found for this ISP'}, status=status.HTTP_404_NOT_FOUND)
+                            f"No venue found for ISP with ID: {user.pk}")
+                        return Response({'status': False, 'error': 'No venue found for this ISP'}, status=status.HTTP_404_NOT_FOUND)
 
                     logger.info(
-                        f"Found tourplace: {tourplace.place_name} (ID: {tourplace.pk})")
-                    cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                        f"Found venue: {venue.venue_name} (ID: {venue.pk})")
+                    cameras = Camera.objects.filter(venue=venue.pk)
                 except Exception as tp_error:
                     logger.error(
-                        f"Error finding tourplace for ISP: {str(tp_error)}")
-                    return Response({'status': False, 'error': f'Error finding tourplace: {str(tp_error)}'}, status=status.HTTP_400_BAD_REQUEST)
+                        f"Error finding venue for ISP: {str(tp_error)}")
+                    return Response({'status': False, 'error': f'Error finding venue: {str(tp_error)}'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 logger.info(
-                    f"Fetching cameras for specified tourplace: {tourplace}")
+                    f"Fetching cameras for specified venue: {venue}")
                 try:
-                    cameras = Camera.objects.filter(tourplace=tourplace)
+                    cameras = Camera.objects.filter(venue=venue)
                 except Exception as cam_error:
                     logger.error(f"Error filtering cameras: {str(cam_error)}")
                     return Response({'status': False, 'error': f'Error filtering cameras: {str(cam_error)}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -97,7 +97,7 @@ class CameraClientAPIView(APIView):
 
                 return Response({'status': True, 'data': serializer.data})
             else:
-                logger.warning("No cameras found for the specified tourplace")
+                logger.warning("No cameras found for the specified venue")
                 return Response({'status': False, 'error': 'There is no cameras now.'}, status=400)
 
         except Exception as e:

@@ -3,6 +3,9 @@ from django.utils import timezone
 
 
 class TourPlace(models.Model):
+    '''
+    IMPORTANT: This model is deprecated. It is replaced by Venue model.
+    '''
     place_name = models.CharField(max_length=255)
     status = models.BooleanField(default=True)
     isp = models.IntegerField(default=0)
@@ -21,6 +24,7 @@ class TourPlace(models.Model):
 class Venue(models.Model):
     venue_name = models.CharField(max_length=255)
     status = models.BooleanField(default=True)
+    isp = models.IntegerField(default=0)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

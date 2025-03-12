@@ -1,23 +1,28 @@
 from django.db import models
 from django.conf import settings
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 from user.models import User
 
-# Create your models here.
+
 class Camera(models.Model):
     camera_name = models.CharField(max_length=255, blank=True, default='')
     isp = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     rtsp_url = models.CharField(max_length=255)
     output_url = models.CharField(max_length=255)
-    tourplace = models.ForeignKey(TourPlace, on_delete=models.CASCADE)
+    venue = models.ForeignKey(
+        Venue, null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'camera_tbl'
         constraints = [
-            models.UniqueConstraint(fields=['rtsp_url'], name='unique_rtsl_url')
+            models.UniqueConstraint(
+                fields=['rtsp_url'], name='unique_rtsl_url')
         ]
+
+    def __str__(self):
+        return self.camera_name
 
 # class Camera(models.Model):
 #     camera_name = models.CharField(max_length=255, blank=True, default='')

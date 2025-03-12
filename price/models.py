@@ -1,5 +1,5 @@
 from django.db import models
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 
 
 class Price(models.Model):
@@ -11,7 +11,8 @@ class Price(models.Model):
     record_limit = models.IntegerField(default=0)
     snapshot_limit = models.IntegerField(default=0)
     features = models.JSONField(default=list, blank=True)
-    tourplace = models.ForeignKey(TourPlace, on_delete=models.CASCADE)
+    venue = models.ForeignKey(
+        Venue, null=True, blank=True, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

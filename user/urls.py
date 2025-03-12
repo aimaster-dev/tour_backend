@@ -1,11 +1,13 @@
 from django.urls import path
-from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView, ManageUnlimitedAccessView
+from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView, ManageUnlimitedAccessView, UserLoginWithVenueISPIdAPIView
 
 urlpatterns = [
     path('register', UserAPIView.as_view(), name='auth_register'),
     path('phone/register', PhoneRegisterView.as_view(),
          name='auth_phone_register'),
     path('login', UserLoginAPIView.as_view(), name='auth_login'),
+    path('login-with-venue-isp-id', UserLoginWithVenueISPIdAPIView.as_view(),
+         name='auth_login_with_venue_isp_id'),
     path('delete', UserDeleteAPIView.as_view(), name='user_delete'),
     path('update/<int:pk>', UserUpdateAPIView.as_view(), name='user-update'),
     path('isprange', ISPRangeListAPIView.as_view(), name='isp-range-list'),

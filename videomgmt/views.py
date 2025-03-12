@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 import subprocess
 from django.conf import settings
 import os
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 from django.http import Http404, FileResponse
 from datetime import datetime
 from user.models import User
@@ -30,16 +30,16 @@ class HeaderAPIView(APIView):
 
     def get_queryset(self):
         if self.request.user.usertype == 1:
-            tourplace = TourPlace.objects.first()
-            if tourplace:
-                return Header.objects.filter(tourplace=tourplace.pk)
+            venue = Venue.objects.first()
+            if venue:
+                return Header.objects.filter(venue=venue.pk)
             else:
                 return Header.objects.none()
         return Header.objects.filter(user=self.request.user)
 
     def get(self, request):
-        tourplace_id = request.query_params.get('tourplace')
-        if tourplace_id == None:
+        venue_id = request.query_params.get('venue')
+        if venue_id == None:
             headers = self.get_queryset()
             if headers.exists():
                 serializer = HeaderSerializer(headers, many=True)
@@ -47,8 +47,8 @@ class HeaderAPIView(APIView):
             else:
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
         else:
-            tourplace = TourPlace.objects.get(id=tourplace_id)
-            headers = Header.objects.filter(tourplace=tourplace.pk)
+            venue = Venue.objects.get(id=venue_id)
+            headers = Header.objects.filter(venue=venue.pk)
             if headers.exists():
                 serializer = HeaderSerializer(headers, many=True)
                 return Response({"status": True, "data": serializer.data}, status=status.HTTP_200_OK)
@@ -56,9 +56,9 @@ class HeaderAPIView(APIView):
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
 
     def post(self, request):
-        tourplace_id = request.data.get('tourplace')
+        venue_id = request.data.get('venue')
         data = request.data
-        data['tourplace'] = TourPlace.objects.get(id=tourplace_id).pk
+        data['venue'] = Venue.objects.get(id=venue_id).pk
         serializer = HeaderSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)

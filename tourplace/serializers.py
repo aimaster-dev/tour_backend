@@ -16,13 +16,11 @@ class ISPSerializer(serializers.ModelSerializer):
 
 
 class VenueSerializer(serializers.ModelSerializer):
-    venue_name = serializers.CharField(
-        source='venue.venue_name', read_only=True)
 
     class Meta:
         model = Venue
         fields = ["id", "venue_name", "status",
-                  "isp", "venue_name", "created_at", "updated_at"]
+                  "isp", "created_at", "updated_at"]
 
     def update(self, instance, validated_data):
         instance.place_name = validated_data.get(

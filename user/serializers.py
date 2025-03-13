@@ -111,25 +111,33 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
             pass
         elif user.usertype == 2:  # ISP
             # Only validate venue
-            if 'venue_id' in data and data['venue_id'] != user.venue_id:
-                raise serializers.ValidationError("Invalid venue for this ISP")
+            if 'venue_id' in data:
+                # Check if venue is in user's venues list
+                user_venues = user.venue if isinstance(
+                    user.venue, list) else [user.venue]
+                if data['venue_id'] not in user_venues:
+                    raise serializers.ValidationError(
+                        "Invalid venue for this ISP")
         elif user.usertype == 3:  # Customer
             # Validate both venue and ISP
-            if not user.venue_id and 'venue_id' not in data:
+            if not user.venue and 'venue_id' not in data:
                 raise serializers.ValidationError("Venue selection required")
             if not user.isp_id and 'isp_id' not in data:
                 raise serializers.ValidationError("ISP selection required")
 
             # For existing users without venue/ISP
-            if not user.venue_id and 'venue_id' in data:
-                user.venue_id = data['venue_id']
+            if not user.venue and 'venue_id' in data:
+                user.venue = [data['venue_id']]
             if not user.isp_id and 'isp_id' in data:
                 # Validate ISP belongs to venue
                 try:
+                    user_venues = user.venue if isinstance(
+                        user.venue, list) else [user.venue]
                     isp = User.objects.get(
                         id=data['isp_id'],
                         usertype=2,
-                        venue_id=user.venue_id,
+                        # Check if ISP's venue list contains user's venue
+                        venue__contains=[user_venues[0]],
                         status=True
                     )
                     user.isp_id = isp.id

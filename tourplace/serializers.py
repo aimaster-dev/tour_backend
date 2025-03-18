@@ -46,7 +46,16 @@ class PublicISPSerializer(serializers.ModelSerializer):
                   'phone_number', 'venue', 'status']
 
     def get_venue(self, obj):
-        venues = Venue.objects.filter(id=obj.venue)
+        if not obj.venue:
+            return []
+
+        # Handle both single value and list of venue IDs
+        if isinstance(obj.venue, list):
+            venue_ids = obj.venue
+        else:
+            venue_ids = [obj.venue]
+
+        venues = Venue.objects.filter(id__in=venue_ids)
 
         if venues.exists():
             return [

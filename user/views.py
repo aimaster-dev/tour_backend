@@ -1072,15 +1072,29 @@ class VenueSpecificISPListView(APIView):
 
     def get(self, request, venue_id):
         try:
+            # First verify the venue exists and is active
             venue = get_object_or_404(Venue, id=venue_id, status=True)
-            isps = User.objects.filter(usertype=2, venue=venue, status=True)
+
+            # Modified query: filter users who have this venue_id in their venue list
+            # Using contains lookup for JSONField that stores a list of venue IDs
+            isps = User.objects.filter(usertype=2, status=True)
+
+            # Filter ISPs that have this venue_id in their venue list
+            filtered_isps = []
+            for isp in isps:
+                # Handle different venue storage formats
+                if isinstance(isp.venue, list) and venue_id in isp.venue:
+                    filtered_isps.append(isp)
+                elif isinstance(isp.venue, int) and isp.venue == venue_id:
+                    filtered_isps.append(isp)
+                # Skip ISPs whose venue is not properly formatted
 
             isp_data = [{
                 'id': isp.id,
                 'name': isp.username,
                 'email': isp.email,
                 'phone_number': isp.phone_number
-            } for isp in isps]
+            } for isp in filtered_isps]
 
             response_data = {
                 'venue': {

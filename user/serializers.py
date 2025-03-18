@@ -219,14 +219,26 @@ class ISPCreateSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         if instance.venue:
-            if isinstance(instance.venue, Venue):
-                # If venue is already a Venue object
+            # Handle the case where venue is a list of IDs (our expected format)
+            if isinstance(instance.venue, list) and instance.venue:
+                try:
+                    venue_id = instance.venue[0]  # Get the first venue ID
+                    venue_obj = Venue.objects.get(id=venue_id)
+                    data['venue'] = {
+                        'id': venue_id,
+                        'name': venue_obj.venue_name
+                    }
+                except (Venue.DoesNotExist, IndexError):
+                    data['venue'] = {
+                        'id': venue_id if 'venue_id' in locals() else None, 'name': 'Unknown'}
+            # Handle the case where venue is a Venue object
+            elif isinstance(instance.venue, Venue):
                 data['venue'] = {
                     'id': instance.venue.id,
                     'name': instance.venue.venue_name
                 }
+            # Handle the case where venue is a single integer
             elif isinstance(instance.venue, int):
-                # If venue is an integer ID
                 try:
                     venue_obj = Venue.objects.get(id=instance.venue)
                     data['venue'] = {

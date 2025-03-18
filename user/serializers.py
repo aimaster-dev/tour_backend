@@ -208,9 +208,10 @@ class ISPCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         venue_id = validated_data.pop('venue_id')
-        venue = get_object_or_404(Venue, id=venue_id)
+        # Verify venue exists but don't store the object
+        get_object_or_404(Venue, id=venue_id)
         validated_data['usertype'] = 2  # ISP type
-        validated_data['venue'] = venue
+        validated_data['venue'] = [venue_id]  # Store as a list of venue IDs
         user = User.objects.create_user(**validated_data)
         return user
 

@@ -45,9 +45,13 @@ class PublicISPSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'phone_number', 'venue', 'status']
 
     def get_venue(self, obj):
-        if obj.venue:
+        # Find venues where the isp field matches this user's id
+        venues = Venue.objects.filter(isp=obj.id)
+        if venues.exists():
+            # Return the first venue or a list of venues
+            venue = venues.first()
             return {
-                'id': obj.venue.id,
-                'name': obj.venue.venue_name
+                'id': venue.id,
+                'name': venue.venue_name
             }
         return None

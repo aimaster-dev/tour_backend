@@ -325,8 +325,8 @@ class UserUpdateAPIView(APIView):
         try:
             user = get_object_or_404(User, id=user_id)
 
-            # Store original tourplaces for comparison
-            original_tourplaces = user.tourplace.copy() if user.tourplace else []
+            # Store original venues for comparison
+            original_venues = user.venue.copy() if user.venue else []
 
             # Validate and update user data
             serializer = UserRegUpdateSerializer(
@@ -340,52 +340,52 @@ class UserUpdateAPIView(APIView):
 
             # Use transaction to ensure data integrity
             with transaction.atomic():
-                # First, remove ISP assignment from original tourplaces if user is ISP
+                # First, remove ISP assignment from original venues if user is ISP
                 if user.usertype == 2:
-                    for tour_id in original_tourplaces:
+                    for venue_id in original_venues:
                         try:
-                            place = TourPlace.objects.get(id=tour_id)
+                            place = Venue.objects.get(id=venue_id)
                             if place.isp == user.id:  # Only reset if this user is the assigned ISP
                                 place.isp = 0
                                 place.save()
-                        except TourPlace.DoesNotExist:
-                            # Skip non-existent tourplaces
+                        except Venue.DoesNotExist:
+                            # Skip non-existent venues
                             continue
 
                 # Save user data
                 updated_user = serializer.save()
 
-                # Process tourplaces if present in the data
-                new_tourplaces = updated_user.tourplace
+                # Process venues if present in the data
+                new_venues = updated_user.venue
 
                 # Format response data
                 response_data = serializer.data.copy()
 
-                # Replace tourplace IDs with detailed information
-                if 'tourplace' in response_data:
-                    tourplace_ids = response_data['tourplace']
-                    tourplace_details = []
+                # Replace venue IDs with detailed information
+                if 'venue' in response_data:
+                    venue_ids = response_data['venue']
+                    venue_details = []
 
-                    for tourplace_id in tourplace_ids:
+                    for venue_id in venue_ids:
                         try:
-                            place = TourPlace.objects.get(id=tourplace_id)
-                            tourplace_details.append({
-                                'id': tourplace_id,
-                                'place_name': place.place_name
+                            place = Venue.objects.get(id=venue_id)
+                            venue_details.append({
+                                'id': venue_id,
+                                'name': place.venue_name
                             })
 
-                            # If user is ISP, assign them to the tourplace
+                            # If user is ISP, assign them to the venue
                             if updated_user.usertype == 2:
                                 place.isp = updated_user.id
                                 place.save()
-                        except TourPlace.DoesNotExist:
+                        except Venue.DoesNotExist:
                             # Include ID but mark as not found
-                            tourplace_details.append({
-                                'id': tourplace_id,
-                                'place_name': 'Not found'
+                            venue_details.append({
+                                'id': venue_id,
+                                'name': 'Not found'
                             })
 
-                    response_data['tourplace'] = tourplace_details
+                    response_data['venue'] = venue_details
 
                 return Response(
                     {"status": True, "data": response_data},

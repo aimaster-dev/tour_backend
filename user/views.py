@@ -431,19 +431,19 @@ class ClientRangeListAPIView(ListAPIView):
     permission_classes = [IsAdminOrISP]
 
     def get_queryset(self):
-        tourplace_id = self.request.query_params.get('tourplace', None)
-        tourplace = None
+        venue_id = self.request.query_params.get('venue', None)
+        venue = None
         user = self.request.user
-        if tourplace_id:
-            tourplace = TourPlace.objects.get(id=tourplace_id)
+        if venue_id:
+            venue = Venue.objects.get(id=venue_id)
         else:
             if user.usertype == 1:
-                tourplace = TourPlace.objects.all().first()
+                venue = Venue.objects.all().first()
             else:
-                tourplace = TourPlace.objects.filter(isp=user.pk).first()
-        if tourplace is None:
+                venue = Venue.objects.filter(isp=user.pk).first()
+        if venue is None:
             return []
-        prices = Price.objects.filter(tourplace=tourplace.pk)
+        prices = Price.objects.filter(venue=venue.pk)
         user_id_list = set()
         invoice_list = PaymentLogs.objects.filter(
             price__in=prices, amount__gt=0)

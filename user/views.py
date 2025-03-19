@@ -318,7 +318,7 @@ class UserUpdateAPIView(APIView):
     def put(self, request, *args, **kwargs):
         """
         Update user details by admin.
-        This endpoint allows admins to update user information including tourplace assignments.
+        This endpoint allows admins to update user information including venue assignments.
         """
         user_id = kwargs.get('pk')
 
@@ -326,7 +326,7 @@ class UserUpdateAPIView(APIView):
             user = get_object_or_404(User, id=user_id)
 
             # Store original venues for comparison
-            original_venues = user.venue.copy() if user.venue else []
+            original_venues = user.venue.copy() if isinstance(user.venue, list) else [user.venue] if user.venue else []
 
             # Validate and update user data
             serializer = UserRegUpdateSerializer(
@@ -356,14 +356,14 @@ class UserUpdateAPIView(APIView):
                 updated_user = serializer.save()
 
                 # Process venues if present in the data
-                new_venues = updated_user.venue
+                new_venues = updated_user.venue if isinstance(updated_user.venue, list) else [updated_user.venue] if updated_user.venue else []
 
                 # Format response data
                 response_data = serializer.data.copy()
 
                 # Replace venue IDs with detailed information
                 if 'venue' in response_data:
-                    venue_ids = response_data['venue']
+                    venue_ids = response_data['venue'] if isinstance(response_data['venue'], list) else [response_data['venue']]
                     venue_details = []
 
                     for venue_id in venue_ids:

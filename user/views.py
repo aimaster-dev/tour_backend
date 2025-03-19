@@ -174,10 +174,10 @@ class UserLoginAPIView(APIView):
 
     def post(self, request):
         try:
-            tourplace = request.data.get("tourplace")
+            venue = request.data.get("venue")
             device_token = request.data.get("device_token")
             login_data = request.data
-            login_data.pop("tourplace", None)
+            login_data.pop("venue", None)
             login_data.pop("device_token", None)
             serializer = UserLoginSerializer(data=login_data)
             if serializer.is_valid():
@@ -191,22 +191,22 @@ class UserLoginAPIView(APIView):
                     if user.usertype == 3:
                         if user.is_activate == False:
                             return Response({"status": False, "data": {"msg": "Please activate your account first.", "user_id": user.id}}, status=status.HTTP_406_NOT_ACCEPTABLE)
-                        if tourplace == 0:
-                            return Response({"status": False, "data": {"msg": "Please input tourplace."}}, status=status.HTTP_403_FORBIDDEN)
+                        if venue == 0:
+                            return Response({"status": False, "data": {"msg": "Please input venue."}}, status=status.HTTP_403_FORBIDDEN)
                         else:
-                            user.tourplace = [tourplace]
+                            user.venue = [venue]
                             user.device_token = device_token
                             user.save()
                             try:
-                                tourplace_field = Venue.objects.get(
-                                    id=tourplace)
+                                venue_field = Venue.objects.get(
+                                    id=venue)
                             except Venue.DoesNotExist:
-                                return Response({"status": False, "data": {"msg": "Tourplace not found."}}, status=status.HTTP_404_NOT_FOUND)
+                                return Response({"status": False, "data": {"msg": "Venue not found."}}, status=status.HTTP_404_NOT_FOUND)
                             userdata = serializer.validated_data
                             userdata["device_token"] = user.device_token
                             try:
                                 price = Price.objects.get(
-                                    tourplace=tourplace_field.pk, price=0)
+                                    venue=venue_field.pk, price=0)
                             except Price.DoesNotExist:
                                 return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                             invoice_info = PaymentLogs.objects.filter(

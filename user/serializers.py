@@ -21,7 +21,7 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'password', 'phone_number',
-                  'venue_id', 'isp_id', 'usertype', 'status', 'tourplace',
+                  'venue_id', 'isp_id', 'usertype', 'status', 'venue',
                   'level', 'is_activate', 'device_token')
         extra_kwargs = {'password': {'write_only': True}}
 
@@ -45,8 +45,8 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
         instance.phone_number = validated_data.get(
             'phone_number', instance.phone_number)
         instance.usertype = validated_data.get('usertype', instance.usertype)
-        instance.tourplace = validated_data.get(
-            'tourplace', instance.tourplace)
+        instance.venue = validated_data.get(
+            'venue', instance.venue)
         instance.level = validated_data.get('level', instance.level)
         instance.is_activate = validated_data.get(
             'is_activate', instance.is_activate)

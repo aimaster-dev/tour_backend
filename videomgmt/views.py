@@ -100,16 +100,16 @@ class FooterAPIView(APIView):
 
     def get_queryset(self):
         if self.request.user.usertype == 1:
-            tourplace = TourPlace.objects.first()
-            if tourplace:
-                return Header.objects.filter(tourplace=tourplace.pk)
+            venue = Venue.objects.first()
+            if venue:
+                return Header.objects.filter(venue=venue.pk)
             else:
                 return Footer.objects.none()
         return Footer.objects.filter(user=self.request.user)
 
     def get(self, request):
-        tourplace_id = request.query_params.get('tourplace')
-        if tourplace_id == None:
+        venue_id = request.query_params.get('venue')
+        if venue_id == None:
             footers = self.get_queryset()
             if footers.exists():
                 serializer = FooterSerializer(footers, many=True)
@@ -117,8 +117,8 @@ class FooterAPIView(APIView):
             else:
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
         else:
-            tourplace = TourPlace.objects.get(id=tourplace_id)
-            footers = Footer.objects.filter(tourplace=tourplace.pk)
+            venue = Venue.objects.get(id=venue_id)
+            footers = Footer.objects.filter(venue=venue.pk)
             if footers.exists():
                 serializer = FooterSerializer(footers, many=True)
                 return Response({"status": True, "data": serializer.data}, status=status.HTTP_200_OK)
@@ -126,9 +126,9 @@ class FooterAPIView(APIView):
                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
 
     def post(self, request):
-        tourplace_id = request.data.get('tourplace')
+        venue_id = request.data.get('venue')
         data = request.data
-        data['tourplace'] = TourPlace.objects.get(id=tourplace_id).pk
+        data['venue'] = Venue.objects.get(id=venue_id).pk
         serializer = FooterSerializer(data=data)
         if serializer.is_valid():
             serializer.save(user=request.user)
@@ -197,13 +197,13 @@ class VideoAddAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request):
-        tourplace_id = request.data.get('tourplace_id')
+        venue_id = request.data.get('venue_id')
         pricing_id = request.data.get('pricing_id')
 
         # Add logging for request details
         logging.info(
             f"Starting video upload process for user {request.user.username} (ID: {request.user.id})")
-        logging.info(f"Tourplace ID: {tourplace_id}, Pricing ID: {pricing_id}")
+        logging.info(f"Venue ID: {venue_id}, Pricing ID: {pricing_id}")
 
         # Check if video file is present in request
         if 'video_path' not in request.FILES:
@@ -215,12 +215,12 @@ class VideoAddAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            tourplace = TourPlace.objects.get(id=tourplace_id)
+            venue = Venue.objects.get(id=venue_id)
             logging.info(
-                f"Found tourplace: {tourplace.place_name} (ID: {tourplace.id})")
-        except TourPlace.DoesNotExist:
-            logging.error(f"Tourplace not found with ID: {tourplace_id}")
-            return Response({"status": False, "data": {"msg": "Tourplace not found."}}, status=status.HTTP_404_NOT_FOUND)
+                f"Found venue: {venue.venue_name} (ID: {venue.id})")
+        except Venue.DoesNotExist:
+            logging.error(f"Venue not found with ID: {venue_id}")
+            return Response({"status": False, "data": {"msg": "Venue not found."}}, status=status.HTTP_404_NOT_FOUND)
 
         # Create necessary directories
         os.makedirs(os.path.join(settings.MEDIA_ROOT, 'videos'), exist_ok=True)
@@ -230,12 +230,12 @@ class VideoAddAPIView(APIView):
         # Create a new dict with the data we need
         data = {
             'video_path': request.FILES['video_path'],
-            'tourplace': tourplace.pk
+            'venue': venue.pk
         }
 
         # Add any other fields from request.data that we need
         for key in request.data:
-            if key not in ['video_path', 'tourplace_id']:
+            if key not in ['video_path', 'venue_id']:
                 data[key] = request.data[key]
 
         serializer = VideoSerializer(data=data)
@@ -366,7 +366,7 @@ class VideoAddAPIView(APIView):
                         video.id,
                         request.user.id,
                         original_filename,
-                        tourplace
+                        venue
                     )
                     logging.info(
                         f"Successfully processed video ID: {video.id}")
@@ -423,53 +423,53 @@ class VideoAddAPIView(APIView):
 
     def get(self, request):
         user = request.user
-        tourplace_id = request.query_params.get("tourplace")
+        venue_id = request.query_params.get("venue")
         videos = []
         if user.usertype == 1:
-            if tourplace_id:
-                tourplace = TourPlace.objects.get(id=tourplace_id)
-                videos = Video.objects.filter(tourplace=tourplace.pk)
+            if venue_id:
+                venue = Venue.objects.get(id=venue_id)
+                videos = Video.objects.filter(venue=venue.pk)
             else:
-                tourplace = TourPlace.objects.all().first()
-                videos = Video.objects.filter(tourplace=tourplace.pk)
+                venue = Venue.objects.all().first()
+                videos = Video.objects.filter(venue=venue.pk)
             serializer = VideoSerializer(videos, many=True)
             data = serializer.data
             num_cli = len(data)
             for i in range(num_cli):
                 client = User.objects.get(id=data[i]["client"])
                 data[i]["client"] = client.username
-                data[i]["tourplace"] = tourplace.place_name
+                data[i]["venue"] = venue.venue_name
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         elif user.usertype == 2:
-            if tourplace_id:
-                tourplace = TourPlace.objects.get(id=tourplace_id)
-                if tourplace.isp == user.pk:
-                    videos = Video.objects.filter(tourplace=tourplace.pk)
+            if venue_id:
+                venue = Venue.objects.get(id=venue_id)
+                if venue.isp == user.pk:
+                    videos = Video.objects.filter(venue=venue.pk)
                 else:
                     Response(
-                        {"status": False, "data": "You don't have any permission for this tourplace."}, status=status.HTTP_200_OK)
+                        {"status": False, "data": "You don't have any permission for this venue."}, status=status.HTTP_200_OK)
             else:
-                tourplace = TourPlace.objects.filter(isp=user.pk).first()
-                videos = Video.objects.filter(tourplace=tourplace.pk)
+                venue = Venue.objects.filter(isp=user.pk).first()
+                videos = Video.objects.filter(venue=venue.pk)
             serializer = VideoSerializer(videos, many=True)
             data = serializer.data
             num_cli = len(data)
             for i in range(num_cli):
                 client = User.objects.get(id=data[i]["client"])
                 data[i]["client"] = client.username
-                data[i]["tourplace"] = tourplace.place_name
+                data[i]["venue"] = venue.venue_name
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         elif user.usertype == 3:
-            tourplace = TourPlace.objects.get(id=user.tourplace[0])
+            venue = Venue.objects.get(id=user.venue[0])
             videos = Video.objects.filter(
-                client=user.pk, tourplace=tourplace.pk)
+                client=user.pk, venue=venue.pk)
             serializer = VideoSerializer(videos, many=True)
             # data = serializer.data
             # num_cli = len(data)
             # for i in range(num_cli):
             #     client = User.objects.get(id = data[i]["client"])
             #     data[i]["client"] = client.username
-            #     data[i]["tourplace"] = tourplace.place_name
+            #     data[i]["venue"] = venue.venue_name
             return Response({"status": True, "data": serializer.data}, status=status.HTTP_200_OK)
 
 
@@ -478,17 +478,17 @@ class getHeaderandFooterAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        tourplaces = request.user.tourplace
-        if len(tourplaces) == 0:
+        venues = request.user.venue
+        if len(venues) == 0:
             return Response({"status": False, "data": "Admin or ISP can't use this api."}, status=status.HTTP_404_NOT_FOUND)
-        tourplace_id = request.user.tourplace[0]
-        tourplace = TourPlace.objects.get(id=tourplace_id)
+        venue_id = request.user.venue[0]
+        venue = Venue.objects.get(id=venue_id)
         header = Header.objects.filter(
-            tourplace=tourplace.pk).order_by('?').first()
+            venue=venue.pk).order_by('?').first()
         footer = Footer.objects.filter(
-            tourplace=tourplace.pk).order_by('?').first()
+            venue=venue.pk).order_by('?').first()
         if not header or not footer:
-            return Response({"status": False, "data": "Header or Footer of this tourplace aren't existed now."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"status": False, "data": "Header or Footer of this venue aren't existed now."}, status=status.HTTP_404_NOT_FOUND)
         header_path = header.video_path.path
         footer_path = footer.video_path.path
         base_url = "https://api.emmysvideos.com/"
@@ -522,9 +522,9 @@ class SnapShotAPIView(APIView):
         if client.usertype != 3:
             return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."}, status=status.HTTP_400_BAD_REQUEST)
 
-        tourplace_id = client.tourplace[0]
+        venue_id = client.venue[0]
         images = SnapShot.objects.filter(
-            tourplace_id=tourplace_id, client=client)
+            venue_id=venue_id, client=client)
         serializer = SnatShotSerializer(images, many=True)
         return Response({"status": True, "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -581,10 +581,10 @@ class SnapShotAddAPIView(APIView):
             return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        tourplace_id = client.tourplace[0]
+        venue_id = client.venue[0]
         images = request.FILES.getlist('image_path')
         if not images:
-            return Response({"status": False, "data": "Tourplace and images are required."},
+            return Response({"status": False, "data": "Venue and images are required."},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # Check if user has unlimited access
@@ -599,7 +599,7 @@ class SnapShotAddAPIView(APIView):
         snapshots = []
         for image in images:
             snapshot = SnapShot(
-                client=client, tourplace_id=tourplace_id, image_path=image)
+                client=client, venue_id=venue_id, image_path=image)
             snapshots.append(snapshot)
 
         SnapShot.objects.bulk_create(snapshots)

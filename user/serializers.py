@@ -55,7 +55,7 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
 
 
 class UserListSerializer(serializers.ModelSerializer):
-    tourplace = serializers.SerializerMethodField()
+    venue = serializers.SerializerMethodField()
 
     class Meta:
         model = User

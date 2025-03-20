@@ -179,7 +179,7 @@ class VenueISPListAPIView(APIView):
     def get(self, request, venue_id):
         isps = User.objects.filter(
             usertype=2,
-            tourplaces__venue_id=venue_id
+            venues__id=venue_id
         ).distinct()
         serializer = ISPSerializer(isps, many=True)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)

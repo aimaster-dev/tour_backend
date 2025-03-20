@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from .models import Header, Footer, Video, SnapShot
 
+
 class HeaderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Header
-        fields = ['id', 'video_path', 'tourplace', 'created_at', 'updated_at', 'thumbnail']
+        fields = ['id', 'video_path', 'venue',
+                  'created_at', 'updated_at', 'thumbnail']
         read_only_fields = ['thumbnail']  # Make 'thumbnail' field read-only
 
     def create(self, validated_data):
@@ -18,11 +20,13 @@ class HeaderSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
-    
+
+
 class FooterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Footer
-        fields = ['id', 'video_path', 'tourplace', 'created_at', 'updated_at', 'thumbnail']
+        fields = ['id', 'video_path', 'venue',
+                  'created_at', 'updated_at', 'thumbnail']
         read_only_fields = ['thumbnail']  # Make 'thumbnail' field read-only
 
     def create(self, validated_data):
@@ -36,11 +40,13 @@ class FooterSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
-    
+
+
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'tourplace', 'video_path', 'status', 'created_at', 'updated_at', 'thumbnail']
+        fields = ['id', 'venue', 'video_path', 'status',
+                  'created_at', 'updated_at', 'thumbnail']
         # read_only_fields = ['thumbnail']  # Make 'thumbnail' field read-only
 
     def create(self, validated_data):
@@ -54,7 +60,9 @@ class VideoSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
 class SnatShotSerializer(serializers.ModelSerializer):
     class Meta:
         model = SnapShot
-        fields = ['id', 'client', 'tourplace', 'image_path', 'created_at', 'updated_at']
+        fields = ['id', 'client', 'venue',
+                  'image_path', 'created_at', 'updated_at']

@@ -247,7 +247,7 @@ class PaymentAPIView(APIView):
                 "username": client.username,
                 "email": client.email,
                 "phonenumber": client.phone_number,
-                "tourplace": tourplace.place_name,
+                "venue": venue.venue_name,
                 "amount": price.price,
                 "videoremain": log.videoremain,
                 "snapshotremain": log.snapshotremain,
@@ -392,9 +392,9 @@ class PaymentDetailsAPIView(APIView):
             # Base query depending on user type
             if user.usertype == 1:  # Admin - can see all transactions
                 transactions = PaymentLogs.objects.all()
-            elif user.usertype == 2:  # ISP - can see transactions from their tourplaces
-                isp_tourplaces = TourPlace.objects.filter(isp=user.pk)
-                prices = Price.objects.filter(tourplace__in=isp_tourplaces)
+            elif user.usertype == 2:  # ISP - can see transactions from their venues
+                isp_venues = Venue.objects.filter(isp=user.pk)
+                prices = Price.objects.filter(venue__in=isp_venues)
                 transactions = PaymentLogs.objects.filter(price__in=prices)
             else:  # Client - can only see their own transactions
                 transactions = PaymentLogs.objects.filter(user=user.pk)
@@ -463,20 +463,19 @@ class PaymentDetailsAPIView(APIView):
                     # Add plan details
                     if transaction.price is None:
                         transaction_info.update({
-                            "tourplace": "N/A",
+                            "venue": "N/A",
                             "plan_name": "Free Trial",
                         })
                     else:
                         price = Price.objects.get(id=transaction.price.id)
-                        tourplace = TourPlace.objects.get(
-                            id=price.tourplace.pk)
+                        venue = Venue.objects.get(id=price.venue.pk)
                         transaction_info.update({
-                            "tourplace": tourplace.place_name,
+                            "venue": venue.venue_name,
                             "plan_name": price.title,
                         })
 
                     transaction_data.append(transaction_info)
-                except (User.DoesNotExist, Price.DoesNotExist, TourPlace.DoesNotExist):
+                except (User.DoesNotExist, Price.DoesNotExist, Venue.DoesNotExist):
                     continue
 
             return Response({

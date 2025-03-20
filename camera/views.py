@@ -50,15 +50,15 @@ class CameraClientAPIView(APIView):
             LoggerHelper.log_api_request(
                 logger, request, "Client camera list request received")
 
-            tourplace = request.data.get("tourplace")
+            venue = request.data.get("venue")
             user = request.user
 
             logger.info(
-                f"Request parameters: tourplace={tourplace}, user_type={user.usertype}")
+                f"Request parameters: venue={venue}, user_type={user.usertype}")
 
-            if tourplace is None and user.usertype == 2:
+            if venue is None and user.usertype == 2:
                 logger.info(
-                    f"ISP user without specified tourplace, fetching first tourplace for ISP: {user.pk}")
+                    f"ISP user without specified venue, fetching first venue for ISP: {user.pk}")
                 try:
                     venue = Venue.objects.filter(isp=user.pk).first()
                     if not venue:
@@ -119,51 +119,51 @@ class CameraAPIView(APIView):
                 logger, request, "Camera list request received")
 
             user = request.user
-            tourplace_id = request.query_params.get("tourplace")
+            venue_id = request.query_params.get("venue")
             cameras = []
 
             # Log request parameters
             logger.info(
-                f"Request parameters: tourplace_id={tourplace_id}, user_type={user.usertype}")
+                f"Request parameters: venue_id={venue_id}, user_type={user.usertype}")
 
-            if tourplace_id:
-                tourplace = TourPlace.objects.get(id=tourplace_id)
+            if venue_id:
+                venue = Venue.objects.get(id=venue_id)
                 logger.info(
-                    f"Filtering cameras by tourplace ID: {tourplace_id}")
-                cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                    f"Filtering cameras by venue ID: {venue_id}")
+                cameras = Camera.objects.filter(venue=venue.pk)
             else:
                 if user.usertype == 1:
                     logger.info(
-                        "Admin user: fetching cameras for first tourplace")
-                    tourplace = TourPlace.objects.all().first()
-                    if tourplace is None:
-                        logger.info("No tourplaces found in the system")
+                        "Admin user: fetching cameras for first venue")
+                    venue = Venue.objects.all().first()
+                    if venue is None:
+                        logger.info("No venues found in the system")
                         return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
                     else:
-                        cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                        cameras = Camera.objects.filter(venue=venue.pk)
                 elif user.usertype == 2:
                     logger.info(
-                        f"ISP user: fetching cameras for ISP's tourplace")
-                    tourplace = TourPlace.objects.filter(isp=user.pk).first()
-                    if tourplace:
-                        logger.info(f"Found tourplace with ID: {tourplace.pk}")
-                        cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                        f"ISP user: fetching cameras for ISP's venue")
+                    venue = Venue.objects.filter(isp=user.pk).first()
+                    if venue:
+                        logger.info(f"Found venue with ID: {venue.pk}")
+                        cameras = Camera.objects.filter(venue=venue.pk)
                     else:
                         logger.warning(
-                            f"No tourplace found for ISP with ID: {user.pk}")
+                            f"No venue found for ISP with ID: {user.pk}")
                         return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
                 elif user.usertype == 3:
                     logger.info(
-                        "Client user: fetching cameras for client's tourplace")
+                        "Client user: fetching cameras for client's venue")
                     try:
-                        tour_id = user.tourplace[0]
-                        logger.info(f"Client's tourplace ID: {tour_id}")
-                        tourplace = TourPlace.objects.get(id=tour_id)
-                        cameras = Camera.objects.filter(tourplace=tourplace.pk)
+                        venue_id = user.venue[0]
+                        logger.info(f"Client's venue ID: {venue_id}")
+                        venue = Venue.objects.get(id=venue_id)
+                        cameras = Camera.objects.filter(venue=venue.pk)
                     except (IndexError, AttributeError) as e:
                         logger.error(
-                            f"Error accessing client's tourplace: {str(e)}")
-                        return Response({'status': False, 'error': 'No tourplace assigned to this client'}, status=status.HTTP_400_BAD_REQUEST)
+                            f"Error accessing client's venue: {str(e)}")
+                        return Response({'status': False, 'error': 'No venue assigned to this client'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
                     logger.warning(f"Invalid user type: {user.usertype}")
                     return Response({'status': False, 'error': 'You have to login this site.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -219,31 +219,31 @@ class CameraAPIView(APIView):
                 "output_url": output_dir
             }
 
-            tourplace_id = data.get('tourplace')
-            if not tourplace_id:
-                logger.error("Missing required field: tourplace")
-                return Response({'status': False, 'error': 'Tourplace ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+            venue_id = data.get('venue')
+            if not venue_id:
+                logger.error("Missing required field: venue")
+                return Response({'status': False, 'error': 'Venue ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                tourplace = TourPlace.objects.get(id=tourplace_id)
+                venue = Venue.objects.get(id=venue_id)
                 logger.info(
-                    f"Found tourplace: {tourplace.place_name} (ID: {tourplace.pk})")
-            except TourPlace.DoesNotExist:
-                logger.error(f"Tourplace with ID {tourplace_id} not found")
-                return Response({'status': False, 'error': f'Tourplace with ID {tourplace_id} not found'}, status=status.HTTP_404_NOT_FOUND)
+                    f"Found venue: {venue.venue_name} (ID: {venue.pk})")
+            except Venue.DoesNotExist:
+                logger.error(f"Venue with ID {venue_id} not found")
+                return Response({'status': False, 'error': f'Venue with ID {venue_id} not found'}, status=status.HTTP_404_NOT_FOUND)
 
             serializer = CameraSerializer(data=camdata)
             if serializer.is_valid():
                 logger.info("Camera data validated successfully")
-                serializer.save(isp=request.user, tourplace=tourplace)
+                serializer.save(isp=request.user, venue=venue)
                 logger.info(
                     f"Camera saved with ID: {serializer.data.get('id', 'unknown')}")
 
                 # convert_rtsp_to_hls(rtsp_url, output_dir)
                 output = serializer.data
-                output['tourplace'] = [{
-                    'id': tourplace.pk,
-                    'place_name': tourplace.place_name
+                output['venue'] = [{
+                    'id': venue.pk,
+                    'venue_name': venue.venue_name
                 }]
 
                 # Log successful response
@@ -326,18 +326,18 @@ class CameraUpdateAPIView(APIView):
                 logger.error("Missing required field: id")
                 return Response({'status': False, 'error': 'Camera ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-            tourplace_id = request.data.get('tourplace')
-            if not tourplace_id:
-                logger.error("Missing required field: tourplace")
-                return Response({'status': False, 'error': 'Tourplace ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+            venue_id = request.data.get('venue')
+            if not venue_id:
+                logger.error("Missing required field: venue")
+                return Response({'status': False, 'error': 'Venue ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                tourplace = TourPlace.objects.get(id=tourplace_id)
+                venue = Venue.objects.get(id=venue_id)
                 logger.info(
-                    f"Found tourplace: {tourplace.place_name} (ID: {tourplace.pk})")
-            except TourPlace.DoesNotExist:
-                logger.error(f"Tourplace with ID {tourplace_id} not found")
-                return Response({'status': False, 'error': f'Tourplace with ID {tourplace_id} not found'}, status=status.HTTP_404_NOT_FOUND)
+                    f"Found venue: {venue.venue_name} (ID: {venue.pk})")
+            except Venue.DoesNotExist:
+                logger.error(f"Venue with ID {venue_id} not found")
+                return Response({'status': False, 'error': f'Venue with ID {venue_id} not found'}, status=status.HTTP_404_NOT_FOUND)
 
             try:
                 camera = Camera.objects.get(id=camera_id, isp=request.user)
@@ -376,7 +376,7 @@ class CameraUpdateAPIView(APIView):
                 camera, data=camdata, partial=True)
             if serializer.is_valid():
                 logger.info("Camera data validated successfully")
-                serializer.save(tourplace=tourplace)
+                serializer.save(venue=venue)
                 logger.info(f"Camera updated successfully")
 
                 # Log successful response
@@ -633,7 +633,7 @@ class CameraViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = CameraPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['tourplace']
+    filterset_fields = ['venue']
     search_fields = ['camera_name', 'rtsp_url']
     ordering_fields = ['created_at', 'camera_name']
 

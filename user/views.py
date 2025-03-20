@@ -126,9 +126,6 @@ class UserDeleteAPIView(APIView):
             return Response({"status": False, "data": {"msg": "User ID is required."}}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(id=user_id)
-            tourplace = user.tourplace
-            for tour in tourplace:
-                print(tour)
             user.delete()
             return Response({"status": True, "data": "The User Successfully deleted."}, status=status.HTTP_200_OK)
         except user.DoesNotExist:
@@ -326,7 +323,8 @@ class UserUpdateAPIView(APIView):
             user = get_object_or_404(User, id=user_id)
 
             # Store original venues for comparison
-            original_venues = user.venue.copy() if isinstance(user.venue, list) else [user.venue] if user.venue else []
+            original_venues = user.venue.copy() if isinstance(user.venue, list) else [
+                user.venue] if user.venue else []
 
             # Validate and update user data
             serializer = UserRegUpdateSerializer(
@@ -356,14 +354,16 @@ class UserUpdateAPIView(APIView):
                 updated_user = serializer.save()
 
                 # Process venues if present in the data
-                new_venues = updated_user.venue if isinstance(updated_user.venue, list) else [updated_user.venue] if updated_user.venue else []
+                new_venues = updated_user.venue if isinstance(updated_user.venue, list) else [
+                    updated_user.venue] if updated_user.venue else []
 
                 # Format response data
                 response_data = serializer.data.copy()
 
                 # Replace venue IDs with detailed information
                 if 'venue' in response_data:
-                    venue_ids = response_data['venue'] if isinstance(response_data['venue'], list) else [response_data['venue']]
+                    venue_ids = response_data['venue'] if isinstance(
+                        response_data['venue'], list) else [response_data['venue']]
                     venue_details = []
 
                     for venue_id in venue_ids:

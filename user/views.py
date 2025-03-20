@@ -100,15 +100,15 @@ class UserAPIView(APIView):
             user = User.objects.get(id=pk)
             serializer = UserDetailSerializer(user)
             data = serializer.data
-            tourpl = data['tourplace']
-            del data['tourplace']
-            data['tourplace'] = []
-            for tour in tourpl:
+            venue = data['venue']
+            del data['venue']
+            data['venue'] = []
+            for tour in venue:
                 tour_data = {
                     'id': tour,
-                    'place_name': TourPlace.objects.get(id=tour).place_name
+                    'place_name': Venue.objects.get(id=tour).venue_name
                 }
-                data['tourplace'].append(tour_data)
+                data['venue'].append(tour_data)
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
         except user.DoesNotExist:
             Response({"status": False, "data": {"msg": "User not found."}},
@@ -153,8 +153,8 @@ class SelfDeleteAPIView(APIView):
             return Response({"status": False, "data": {"msg": "User ID is required."}}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(id=user_id)
-            tourplace = user.tourplace
-            for tour in tourplace:
+            venue = user.venue
+            for tour in venue:
                 print(tour)
             user.status = False
             user.save()
@@ -520,13 +520,13 @@ class ResendActivationEmail(APIView):
 class InviteUserView(APIView):
     def post(self, request):
         email = request.data.get('email')
-        tourplace = request.data.get('tourplace')
+        venue = request.data.get('venue')
         token = get_random_string(50)
         if request.user.usertype != 1:
             return Response({"status": True, "data": {"msg": "You don't have any permission to create ISP account."}})
         invited_by = request.user
         Invitation.objects.create(
-            email=email, tourplace=tourplace, token=token, invited_by=invited_by)
+            email=email, venue=venue, token=token, invited_by=invited_by)
         invitation_link = f"https://emmysvideos.com/set_password/{token}"
         subject = 'Invitation to Join'
         message = render_to_string('isp_register.html', {
@@ -542,17 +542,17 @@ class SetPasswordView(APIView):
     def post(self, request, token):
         invitation = get_object_or_404(Invitation, token=token)
         userdata = request.data
-        userdata["tourplace"] = invitation.tourplace
+        userdata["venue"] = invitation.venue
         userdata["email"] = invitation.email
         userdata["usertype"] = 2
         serializer = UserRegUpdateSerializer(data=userdata)
         if serializer.is_valid():
             user = serializer.save()
-            tourplaces = invitation.tourplace
-            for tourplace in tourplaces:
-                tourplace_model = TourPlace.objects.get(pk=tourplace)
-                tourplace_model.isp = user.pk
-                tourplace_model.save()
+            venues = invitation.venue
+            for venue in venues:
+                venue_model = Venue.objects.get(pk=venue)
+                venue_model.isp = user.pk
+                venue_model.save()
             user.is_invited = True
             user.status = True
             user.is_activate = True
@@ -565,14 +565,14 @@ class SetPasswordView(APIView):
             email.send()
             user_serializer = UserDetailSerializer(user)
             data = user_serializer.data
-            del data['tourplace']
-            data['tourplace'] = []
-            for tourplace in tourplaces:
+            del data['venue']
+            data['venue'] = []
+            for venue in venues:
                 tourdata = {
-                    'id': tourplace,
-                    'place_name': TourPlace.objects.get(id=tourplace).place_name
+                    'id': venue,
+                    'place_name': Venue.objects.get(id=venue).venue_name
                 }
-                data['tourplace'].append(tourdata)
+                data['venue'].append(tourdata)
             return Response({"status": True, "data": data}, status=status.HTTP_201_CREATED)
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -692,16 +692,16 @@ class GetProfileAPIView(APIView):
             serializer = UserDetailSerializer(user)
             data = serializer.data
 
-            # Get tourplace data
-            tourpl = data['tourplace']
-            del data['tourplace']
-            data['tourplace'] = []
-            for tour in tourpl:
-                tour_data = {
-                    'id': tour,
-                    'place_name': TourPlace.objects.get(id=tour).place_name
+            # Get venue data
+            venue = data['venue']
+            del data['venue']
+            data['venue'] = []
+            for venue_id in venue:
+                venue_data = {
+                    'id': venue_id,
+                    'place_name': Venue.objects.get(id=venue_id).venue_name
                 }
-                data['tourplace'].append(tour_data)
+                data['venue'].append(venue_data)
 
             # Get the latest payment log for both paid and free plans
             payment_logs_query = PaymentLogs.objects.filter(user=user.id)
@@ -939,8 +939,7 @@ class CustomerManagementView(APIView):
 
             # Store original data for comparison if needed
             original_data = {
-                'venue': user.venue.id if user.venue else None,
-                'tourplace': user.tourplace.copy() if user.tourplace else []
+                'venue': user.venue.copy() if user.venue else []
             }
 
             data = request.data.copy()
@@ -996,26 +995,26 @@ class CustomerManagementView(APIView):
                             'name': updated_user.venue.venue_name
                         }
 
-                    # Replace tourplace IDs with detailed information if present
-                    if 'tourplace' in response_data and response_data['tourplace']:
-                        tourplace_ids = response_data['tourplace']
-                        tourplace_details = []
+                    # Replace venue IDs with detailed information if present
+                    if 'venue' in response_data and response_data['venue']:
+                        venue_ids = response_data['venue']
+                        venue_details = []
 
-                        for tourplace_id in tourplace_ids:
+                        for venue_id in venue_ids:
                             try:
-                                place = TourPlace.objects.get(id=tourplace_id)
-                                tourplace_details.append({
-                                    'id': tourplace_id,
-                                    'place_name': place.place_name
+                                place = Venue.objects.get(id=venue_id)
+                                venue_details.append({
+                                    'id': venue_id,
+                                    'place_name': place.venue_name
                                 })
-                            except TourPlace.DoesNotExist:
+                            except Venue.DoesNotExist:
                                 # Include ID but mark as not found
-                                tourplace_details.append({
-                                    'id': tourplace_id,
+                                venue_details.append({
+                                    'id': venue_id,
                                     'place_name': 'Not found'
                                 })
 
-                        response_data['tourplace'] = tourplace_details
+                        response_data['venue'] = venue_details
 
                     return Response({
                         "status": True,

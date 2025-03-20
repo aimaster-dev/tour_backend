@@ -1,5 +1,5 @@
 import logging
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 from user.models import User
 from videomgmt.models import Video, Header, Footer
 from django.conf import settings
@@ -128,17 +128,17 @@ def concatenate_videos_gpu(output_path, *input_paths):
     logging.info(f"Temporary concat list file {concat_list_filename} deleted.")
 
 
-def process_video(video_id, user_id, original_filename, tourplace):
+def process_video(video_id, user_id, original_filename, venue):
     video = Video.objects.get(pk=video_id)
     user = User.objects.get(pk=user_id)
 
     header = Header.objects.filter(
-        tourplace=tourplace.pk).order_by('?').first()
+        venue=venue.pk).order_by('?').first()
     footer = Footer.objects.filter(
-        tourplace=tourplace.pk).order_by('?').first()
+        venue=venue.pk).order_by('?').first()
 
     if not header or not footer:
-        logging.info(f"Header and Footer doesn't existed...: {tourplace.pk}")
+        logging.info(f"Header and Footer doesn't existed...: {venue.pk}")
         video.status = False
         video.save()
         video_url = "https://api.emmysvideos.com/media/" + \
@@ -193,13 +193,13 @@ def process_video(video_id, user_id, original_filename, tourplace):
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Usage: python video_processing.py <video_id> <user_id> <original_filename> <tourplace>")
+        print("Usage: python video_processing.py <video_id> <user_id> <original_filename> <venue_id>")
         sys.exit(1)
 
     video_id = int(sys.argv[1])
     user_id = int(sys.argv[2])
     original_filename = sys.argv[3]
-    tourplace_id = int(sys.argv[4])
-    tourplace = TourPlace.objects.get(pk=tourplace_id)
+    venue_id = int(sys.argv[4])
+    venue = Venue.objects.get(pk=venue_id)
     logging.info(f"Starting Video Editing...")
-    process_video(video_id, user_id, original_filename, tourplace)
+    process_video(video_id, user_id, original_filename, venue)

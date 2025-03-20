@@ -237,14 +237,14 @@ def concatenate_videos_gpu(output_path, *input_paths):
                 f"Temporary concat list file {concat_list_filename} deleted")
 
 
-def process_video(video_id, user_id, original_filename, tourplace):
+def process_video(video_id, user_id, original_filename, venue):
     try:
         # Log initial parameters
         logging.info(f"Starting video processing with parameters:")
         logging.info(f"- Video ID: {video_id}")
         logging.info(f"- User ID: {user_id}")
         logging.info(f"- Original filename: {original_filename}")
-        logging.info(f"- Tourplace ID: {tourplace.id}")
+        logging.info(f"- Venue ID: {venue.id}")
 
         # Get video object with error handling
         try:
@@ -273,18 +273,18 @@ def process_video(video_id, user_id, original_filename, tourplace):
         # Get header with error handling
         try:
             header = Header.objects.filter(
-                tourplace=tourplace.pk).order_by('?').first()
+                venue=venue.pk).order_by('?').first()
             if header:
                 logging.info(
-                    f"Found header for tourplace {tourplace.pk} (Header ID: {header.id})")
+                    f"Found header for venue {venue.pk} (Header ID: {header.id})")
             else:
-                logging.info(f"No header found for tourplace {tourplace.pk}")
+                logging.info(f"No header found for venue {venue.pk}")
         except Exception as e:
             logging.error(f"Error retrieving header: {str(e)}")
             raise
 
         if not header:
-            logging.info(f"Header doesn't exist for tourplace: {tourplace.pk}")
+            logging.info(f"Header doesn't exist for venue: {venue.pk}")
             video.status = False
             video.save()
             logging.info(f"Updated video status to False (ID: {video.id})")
@@ -422,7 +422,7 @@ def process_video(video_id, user_id, original_filename, tourplace):
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Usage: python video_processing.py <video_id> <user_id> <original_filename> <tourplace>")
+        print("Usage: python video_processing.py <video_id> <user_id> <original_filename> <venue>")
         sys.exit(1)
 
     video_id = int(sys.argv[1])

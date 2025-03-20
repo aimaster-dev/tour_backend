@@ -6,7 +6,7 @@ class PriceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Price
-        fields = ["id", "price", "level", "title", "tourplace", "record_time", "record_limit",
+        fields = ["id", "price", "level", "title", "venue", "record_time", "record_limit",
                   "snapshot_limit", "created_at", "updated_at", "features", "product_id"]
 
     def update(self, instance, validated_data):

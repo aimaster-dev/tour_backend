@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.conf import settings
 from videomgmt.models import Video, Header
 from user.models import User
-from tourplace.models import TourPlace
+from tourplace.models import Venue
 from videomgmt.video_processing import process_video
 import os
 import shutil
@@ -39,8 +39,8 @@ class VideoProcessingTest(TestCase):
             password='testpass123'
         )
 
-        # Create test tourplace
-        self.tourplace = TourPlace.objects.create()
+        # Create test venue
+        self.venue = Venue.objects.create()
 
         # Create test video files using FFmpeg
         self.header_path = os.path.join(
@@ -71,14 +71,14 @@ class VideoProcessingTest(TestCase):
         # Create Header object
         self.header = Header.objects.create(
             user=self.user,
-            tourplace=self.tourplace,
+            venue=self.venue,
             video_path='headers/test_header.mp4'
         )
 
         # Create Video object
         self.video = Video.objects.create(
             client=self.user,
-            tourplace=self.tourplace,
+            venue=self.venue,
             video_path='videos/test_sample.mp4',
             status=False
         )
@@ -136,7 +136,7 @@ class VideoProcessingTest(TestCase):
                 self.video.id,
                 self.user.id,
                 'test_output.mp4',
-                self.tourplace
+                self.venue
             )
             print("Video processing completed")
 

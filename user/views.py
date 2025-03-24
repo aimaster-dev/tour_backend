@@ -1038,6 +1038,55 @@ class CustomerManagementView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class CustomerDetailAPIView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, customer_id):
+        """Retrieve a single customer by ID"""
+        try:
+            customer = User.objects.get(id=customer_id, usertype=3)
+            serializer = UserListSerializer(customer)
+
+            return Response({
+                "status": True,
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": "Customer not found."}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CustomerDeleteAPIView(APIView):
+    permission_classes = [IsAdmin]
+
+    def delete(self, request, customer_id):
+        """Delete a customer by ID"""
+        try:
+            customer = User.objects.get(id=customer_id, usertype=3)
+            customer.delete()
+            return Response({
+                "status": True,
+                "data": {"msg": "Customer successfully deleted."}
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": "Customer not found."}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class DirectISPCreateView(APIView):
     permission_classes = [IsAdmin]
 

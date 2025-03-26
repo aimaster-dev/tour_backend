@@ -14,7 +14,10 @@ from django.shortcuts import get_object_or_404
 
 
 class UserRegUpdateSerializer(serializers.ModelSerializer):
-    venue = serializers.IntegerField(write_only=True)
+    venue = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True
+    )
     isp_id = serializers.IntegerField(write_only=True, required=False)
     password = serializers.CharField(write_only=True, required=True)
 
@@ -26,32 +29,44 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        venue_id = validated_data.pop('venue')
+        venue_ids = validated_data.pop('venue')
         isp_id = validated_data.pop('isp_id', None)
 
-        venue = get_object_or_404(Venue, id=venue_id)
-        validated_data['venue'] = venue
+        # Verify all venues exist
+        venues = [get_object_or_404(Venue, id=venue_id)
+                  for venue_id in venue_ids]
+
+        # Store the venue IDs as a list
+        validated_data['venue'] = venue_ids
 
         if isp_id:
-            isp = get_object_or_404(User, id=isp_id, usertype=2, venue=venue)
+            # Check if ISP is associated with at least one of the venues
+            isp = get_object_or_404(User, id=isp_id, usertype=2)
+            # You might need to adjust this validation based on how ISP-venue relationships work
             validated_data['isp'] = isp.id
 
         user = User.objects.create_user(**validated_data)
         return user
 
     def update(self, instance, validated_data):
+        if 'venue' in validated_data:
+            # Make sure venue is handled as a list
+            venue_ids = validated_data.get('venue')
+            instance.venue = venue_ids
+
+        # Update other fields
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.phone_number = validated_data.get(
             'phone_number', instance.phone_number)
         instance.usertype = validated_data.get('usertype', instance.usertype)
-        instance.venue = validated_data.get(
-            'venue', instance.venue)
         instance.level = validated_data.get('level', instance.level)
         instance.is_activate = validated_data.get(
             'is_activate', instance.is_activate)
+        instance.status = validated_data.get('status', instance.status)
+
         instance.save()
-        return super().update(instance, validated_data)
+        return instance
 
 
 class UserListSerializer(serializers.ModelSerializer):

@@ -926,7 +926,7 @@ class CustomerManagementView(APIView):
 
     def put(self, request):
         """Update existing customer"""
-        user_id = request.data.get('user_id')
+        user_id = request.data.get('id')
         if not user_id:
             return Response({
                 "status": False,
@@ -948,33 +948,49 @@ class CustomerManagementView(APIView):
             if 'usertype' in data:
                 del data['usertype']
 
-            # Handle venue_id if provided
-            venue_id = data.pop('venue', None)
-            if venue_id:
-                try:
-                    venue = get_object_or_404(Venue, id=venue_id)
-                    user.venue = venue
-                except Venue.DoesNotExist:
-                    return Response({
-                        "status": False,
-                        "data": f"Venue with ID {venue_id} not found"
-                    }, status=status.HTTP_404_NOT_FOUND)
+            # Handle venue as a list of IDs
+            venue_ids = data.pop('venue', None)
+            if venue_ids:
+                # Check if venue_ids is already a list
+                if not isinstance(venue_ids, list):
+                    # Convert to list if it's a single ID
+                    venue_ids = [venue_ids]
+
+                # Verify all venues exist
+                venues_to_assign = []
+                for v_id in venue_ids:
+                    try:
+                        venue = get_object_or_404(Venue, id=v_id)
+                        venues_to_assign.append(v_id)
+                    except:
+                        return Response({
+                            "status": False,
+                            "data": f"Venue with ID {v_id} not found"
+                        }, status=status.HTTP_404_NOT_FOUND)
+
+                # Assign validated venue IDs to user
+                user.venue = venues_to_assign
 
             # Handle ISP assignment if provided
             isp_id = data.pop('isp_id', None)
             if isp_id:
                 try:
-                    # Verify ISP exists and belongs to the same venue
-                    isp = get_object_or_404(
-                        User,
-                        id=isp_id,
-                        usertype=2,
-                        venue=user.venue
-                    )
+                    # Verify ISP exists and belongs to at least one of the user's venues
+                    # This logic may need adjustment based on your requirements
+                    isp = User.objects.get(id=isp_id, usertype=2)
+
+                    # Check if ISP has access to at least one of the user's venues
+                    if not any(v_id in isp.venue for v_id in user.venue):
+                        return Response({
+                            "status": False,
+                            "data": f"ISP with ID {isp_id} not associated with any of the customer's venues"
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                    user.isp_id = isp_id
                 except User.DoesNotExist:
                     return Response({
                         "status": False,
-                        "data": f"ISP with ID {isp_id} not found or not associated with the customer's venue"
+                        "data": f"ISP with ID {isp_id} not found"
                     }, status=status.HTTP_404_NOT_FOUND)
 
             # Use transaction to ensure data integrity
@@ -990,17 +1006,9 @@ class CustomerManagementView(APIView):
 
                     # Add venue information to response
                     if updated_user.venue:
-                        response_data['venue'] = {
-                            'id': updated_user.venue.id,
-                            'name': updated_user.venue.venue_name
-                        }
-
-                    # Replace venue IDs with detailed information if present
-                    if 'venue' in response_data and response_data['venue']:
-                        venue_ids = response_data['venue']
+                        # Handle venue as a list
                         venue_details = []
-
-                        for venue_id in venue_ids:
+                        for venue_id in updated_user.venue:
                             try:
                                 place = Venue.objects.get(id=venue_id)
                                 venue_details.append({
@@ -1008,7 +1016,6 @@ class CustomerManagementView(APIView):
                                     'place_name': place.venue_name
                                 })
                             except Venue.DoesNotExist:
-                                # Include ID but mark as not found
                                 venue_details.append({
                                     'id': venue_id,
                                     'place_name': 'Not found'

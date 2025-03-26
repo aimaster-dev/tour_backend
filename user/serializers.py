@@ -14,19 +14,19 @@ from django.shortcuts import get_object_or_404
 
 
 class UserRegUpdateSerializer(serializers.ModelSerializer):
-    venue_id = serializers.IntegerField(write_only=True)
+    venue = serializers.IntegerField(write_only=True)
     isp_id = serializers.IntegerField(write_only=True, required=False)
     password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'password', 'phone_number',
-                  'venue_id', 'isp_id', 'usertype', 'status', 'venue',
+                  'venue', 'isp_id', 'usertype', 'status', 'venue',
                   'level', 'is_activate', 'device_token')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        venue_id = validated_data.pop('venue_id')
+        venue_id = validated_data.pop('venue')
         isp_id = validated_data.pop('isp_id', None)
 
         venue = get_object_or_404(Venue, id=venue_id)

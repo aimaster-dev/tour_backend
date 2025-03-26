@@ -870,7 +870,7 @@ class CustomerManagementView(APIView):
         data['usertype'] = 3  # Force usertype to be customer
 
         # Validate venue and ISP
-        venue_id = data.get('venue_id')
+        venue_id = data.get('venue')
         isp_id = data.get('isp_id')
 
         if not venue_id:
@@ -949,7 +949,7 @@ class CustomerManagementView(APIView):
                 del data['usertype']
 
             # Handle venue_id if provided
-            venue_id = data.pop('venue_id', None)
+            venue_id = data.pop('venue', None)
             if venue_id:
                 try:
                     venue = get_object_or_404(Venue, id=venue_id)

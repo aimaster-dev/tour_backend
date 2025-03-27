@@ -81,7 +81,23 @@ class UserListSerializer(serializers.ModelSerializer):
     def get_venue(self, obj):
         venue_ids = obj.venue
         venues = Venue.objects.filter(id__in=venue_ids)
-        return VenueSerializer(venues, many=True).data
+        venue_data = VenueSerializer(venues, many=True).data
+
+        # Add ISP details to each venue
+        for venue in venue_data:
+            if venue.get('isp'):
+                try:
+                    isp_obj = User.objects.get(id=venue['isp'])
+                    venue['isp_details'] = {
+                        'id': isp_obj.id,
+                        'username': isp_obj.username,
+                        'email': isp_obj.email,
+                        'phone_number': isp_obj.phone_number
+                    }
+                except User.DoesNotExist:
+                    venue['isp_details'] = None
+
+        return venue_data
 
 
 class UserLoginSerializer(serializers.Serializer):

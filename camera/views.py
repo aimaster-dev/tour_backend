@@ -5,7 +5,7 @@ from rest_framework import status
 # from .models import Camera, Stream
 from .models import Camera
 from .serializers import CameraSerializer, CameraUpdateSerializer
-from user.permissions import IsAdminOrISP, IsISP, IsClient
+from user.permissions import IsAdmin, IsISP, IsClient
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from .utils import convert_rtsp_to_hls, get_output_dir, stop_stream
@@ -630,7 +630,7 @@ class CameraPagination(PageNumberPagination):
 
 class CameraViewSet(viewsets.ModelViewSet):
     serializer_class = CameraSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
     pagination_class = CameraPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['venue']
@@ -640,6 +640,23 @@ class CameraViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # ISP can only see their own cameras
         return Camera.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(isp=self.request.user)
+
+
+class CameraViewSetForISP(viewsets.ModelViewSet):
+    serializer_class = CameraSerializer
+    permission_classes = [IsISP]
+    pagination_class = CameraPagination
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['venue']
+    search_fields = ['camera_name', 'rtsp_url']
+    ordering_fields = ['created_at', 'camera_name']
+
+    def get_queryset(self):
+        # ISP can only see their own cameras
+        return Camera.objects.filter(isp=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(isp=self.request.user)

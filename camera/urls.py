@@ -1,10 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 # from .views import CameraAPIView, CameraUpdateAPIView, CameraDeleteAPIView, CameraCheckAPIView, CameraClientAPIView, CameraRestartAPIView, CameraStreamingAPIView
-from .views import CameraViewSet
+from .views import CameraViewSet, CameraViewSetForISP
 
 router = DefaultRouter()
 router.register(r'cameras', CameraViewSet, basename='camera')
+router.register(r'cameras-isp', CameraViewSetForISP, basename='camera-isp')
 
 urlpatterns = [
     path('', include(router.urls)),

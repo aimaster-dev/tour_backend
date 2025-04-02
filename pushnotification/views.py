@@ -114,11 +114,12 @@ class NotificationHistory(APIView):
 
     def get(self, request):
         notifications = Notification.objects.all()
-        page = self.pagination_class().paginate_queryset(notifications, request)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(notifications, request)
 
-        if page is not None:
-            serializer = NotificationSerializer(page, many=True)
-            return self.pagination_class().get_paginated_response(serializer.data)
+        if result_page is not None:
+            serializer = NotificationSerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
 
         serializer = NotificationSerializer(notifications, many=True)
         return Response({

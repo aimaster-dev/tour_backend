@@ -18,4 +18,4 @@ class Notification(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.title} - {self.created_at} sent by {self.sent_by.username}"
+        return f"{self.title} - {self.created_at} sent by {self.sent_by.email}"

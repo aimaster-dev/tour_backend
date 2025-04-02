@@ -7,40 +7,65 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 from rest_framework.response import Response
 from rest_framework import status
+from .models import Notification
+from .serializers import NotificationSerializer, SendNotificationSerializer
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 
-cred = credentials.Certificate("/var/www/htdocs/Video_Backend/emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
-firebase_admin.initialize_app(cred)
-# Create your views here.
+# Initialize Firebase Admin SDK
+try:
+    cred = credentials.Certificate(
+        "/var/www/htdocs/Video_Backend/emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
+    firebase_admin.initialize_app(cred)
+except Exception as e:
+    print(f"Firebase initialization error: {str(e)}")
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class PushNotification(APIView):
-
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Get parameters from the request body
-        userlist_id = request.data.get("ids")
-        title = request.data.get("title")
-        content = request.data.get("content")
-
-        # Check if required fields are provided
-        if not userlist_id or not title or not content:
+        serializer = SendNotificationSerializer(data=request.data)
+        if not serializer.is_valid():
             return Response(
-                {"status": False, "message": "Missing required parameters"},
+                {"status": False, "message": "Invalid data",
+                    "errors": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Iterate through the user IDs and send the notification
-        error_list = []
-        for user_id in userlist_id:
-            try:
-                user = User.objects.get(id=user_id)  # Corrected 'objects' instead of 'object'
-                token = user.device_token  # Assuming device_token is a field on the User model
+        user_ids = serializer.validated_data['user_ids']
+        title = serializer.validated_data['title']
+        content = serializer.validated_data['content']
 
-                if not token:  # Handle cases where the user does not have a device token
-                    print(f"{user_id}'s token doesn't exist.")
-                    error_list.append(user_id)
+        # Create notification record
+        notification = Notification.objects.create(
+            title=title,
+            content=content,
+            sent_by=request.user
+        )
+        notification.recipients.set(user_ids)
+
+        error_list = []
+        success_count = 0
+
+        for user_id in user_ids:
+            try:
+                user = User.objects.get(id=user_id)
+                token = user.device_token
+
+                if not token:
+                    error_list.append({
+                        'user_id': user_id,
+                        'error': 'Device token not found'
+                    })
                     continue
 
-                # Create the message
                 message = messaging.Message(
                     notification=messaging.Notification(
                         title=title,
@@ -49,29 +74,54 @@ class PushNotification(APIView):
                     token=token
                 )
 
-                # Send the message via Firebase Cloud Messaging
                 response = messaging.send(message)
-                
-                # Optionally log the response for debugging
+                success_count += 1
                 print(f"Notification sent to {user_id}: {response}")
 
             except User.DoesNotExist:
-                # Handle case where the user with the given ID does not exist
-                print(f"{user_id} doesn't exist.")
-                error_list.append(user_id)
-                continue  # Skip this ID if the user doesn't exist
+                error_list.append({
+                    'user_id': user_id,
+                    'error': 'User not found'
+                })
             except Exception as e:
-                error_list.append(user_id)
-                # Catch other exceptions and log them
-                print(f"Error sending notification to user {user_id}: {str(e)}")
-                continue
-        if len(error_list) == 0:
-            return Response(
-                {"status": True, "data": "Successfully sent the message"},
-                status=status.HTTP_200_OK
-            )
-        else:
-            return Response(
-                {"status": False, "data": {"errors": error_list}},
-                status=status.HTTP_200_OK
-            )
+                error_list.append({
+                    'user_id': user_id,
+                    'error': str(e)
+                })
+
+        # Update notification record with results
+        notification.success_count = success_count
+        notification.failure_count = len(error_list)
+        notification.failed_users = error_list
+        notification.save()
+
+        response_data = {
+            "status": True,
+            "message": "Notification processing completed",
+            "data": {
+                "success_count": success_count,
+                "failure_count": len(error_list),
+                "failed_users": error_list
+            }
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class NotificationHistory(APIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    def get(self, request):
+        notifications = Notification.objects.all()
+        page = self.pagination_class().paginate_queryset(notifications, request)
+
+        if page is not None:
+            serializer = NotificationSerializer(page, many=True)
+            return self.pagination_class().get_paginated_response(serializer.data)
+
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response({
+            "status": True,
+            "data": serializer.data
+        })

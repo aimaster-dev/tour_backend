@@ -1171,6 +1171,48 @@ class VenueSpecificISPListView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
 
+class VenueByISPListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, isp_id):
+        try:
+            # First verify the ISP exists and is active
+            isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
+
+            # Get all venues associated with this ISP
+            venue_ids = isp.venue if isinstance(isp.venue, list) else [
+                isp.venue] if isp.venue else []
+            venues = Venue.objects.filter(id__in=venue_ids, status=True)
+
+            venue_data = [{
+                'id': venue.id,
+                'name': venue.venue_name,
+                'description': venue.description,
+                'status': venue.status
+            } for venue in venues]
+
+            response_data = {
+                'isp': {
+                    'id': isp.id,
+                    'name': isp.username,
+                    'email': isp.email,
+                    'phone_number': isp.phone_number
+                },
+                'venues': venue_data
+            }
+
+            return Response({
+                'status': True,
+                'data': response_data
+            }, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({
+                'status': False,
+                'message': f'ISP with ID {isp_id} not found or inactive'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
 class ManageUnlimitedAccessView(APIView):
     permission_classes = [IsAdmin]
 

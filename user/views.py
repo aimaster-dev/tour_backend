@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import ListAPIView
-from .serializers import UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer, ISPCreateSerializer, UserLoginWithVenueISPIdSerializer
+from .serializers import UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer, ISPCreateSerializer, UserLoginWithVenueISPIdSerializer, CustomerByISPSerializer
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .models import User, Invitation, EmailOTP
@@ -1298,3 +1298,152 @@ class ManageUnlimitedAccessView(APIView):
                 {"status": False, "data": "User not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class CustomerByISPCreateView(APIView):
+    permission_classes = [IsAdminOrISP]
+    
+    def post(self, request, isp_id):
+        try:
+            # Verify the ISP exists and is active
+            isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
+            
+            # Add ISP ID to the request data
+            data = request.data.copy()
+            data['isp'] = isp_id
+            
+            # Serialize and validate the data
+            serializer = CustomerByISPSerializer(data=data)
+            if serializer.is_valid():
+                # Create the customer
+                customer = serializer.save()
+                
+                return Response({
+                    "status": True,
+                    "data": {
+                        "message": "Customer created successfully",
+                        "customer": CustomerByISPSerializer(customer).data
+                    }
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "status": False,
+                    "data": {"errors": serializer.errors}
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": f"ISP with ID {isp_id} not found or inactive"}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CustomerByISPUpdateView(APIView):
+    permission_classes = [IsAdminOrISP]
+    
+    def put(self, request, isp_id, customer_id):
+        try:
+            # Verify the ISP exists and is active
+            isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
+            
+            # Verify the customer exists and belongs to the ISP
+            customer = get_object_or_404(User, id=customer_id, isp=isp_id, usertype=3)
+            
+            # Serialize and validate the data
+            serializer = CustomerByISPSerializer(customer, data=request.data, partial=True)
+            if serializer.is_valid():
+                # Update the customer
+                updated_customer = serializer.save()
+                
+                return Response({
+                    "status": True,
+                    "data": {
+                        "message": "Customer updated successfully",
+                        "customer": CustomerByISPSerializer(updated_customer).data
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "status": False,
+                    "data": {"errors": serializer.errors}
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": f"ISP with ID {isp_id} or Customer with ID {customer_id} not found"}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CustomerByISPDeleteView(APIView):
+    permission_classes = [IsAdminOrISP]
+    
+    def delete(self, request, isp_id, customer_id):
+        try:
+            # Verify the ISP exists and is active
+            isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
+            
+            # Verify the customer exists and belongs to the ISP
+            customer = get_object_or_404(User, id=customer_id, isp=isp_id, usertype=3)
+            
+            # Delete the customer
+            customer.delete()
+            
+            return Response({
+                "status": True,
+                "data": {"message": "Customer deleted successfully"}
+            }, status=status.HTTP_200_OK)
+                
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": f"ISP with ID {isp_id} or Customer with ID {customer_id} not found"}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CustomerByISPDetailView(APIView):
+    permission_classes = [IsAdminOrISP]
+    
+    def get(self, request, isp_id, customer_id):
+        try:
+            # Verify the ISP exists and is active
+            isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
+            
+            # Verify the customer exists and belongs to the ISP
+            customer = get_object_or_404(User, id=customer_id, isp=isp_id, usertype=3)
+            
+            # Serialize the customer data
+            serializer = CustomerByISPSerializer(customer)
+            
+            return Response({
+                "status": True,
+                "data": {
+                    "customer": serializer.data
+                }
+            }, status=status.HTTP_200_OK)
+                
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": f"ISP with ID {isp_id} or Customer with ID {customer_id} not found"}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

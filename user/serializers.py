@@ -284,3 +284,64 @@ class ISPCreateSerializer(serializers.ModelSerializer):
             data['venue'] = None
 
         return data
+
+
+class CustomerByISPSerializer(serializers.ModelSerializer):
+    venue = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False
+    )
+    password = serializers.CharField(write_only=True, required=False)
+    
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'password', 'phone_number',
+                  'venue', 'usertype', 'status', 'level', 'is_activate', 
+                  'device_token', 'has_unlimited_access')
+        read_only_fields = ('id', 'usertype')
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'usertype': {'default': 3}  # Set default usertype to 3 (Customer)
+        }
+    
+    def create(self, validated_data):
+        venue_ids = validated_data.pop('venue', [])
+        password = validated_data.pop('password', None)
+        
+        # Set usertype to 3 (Customer)
+        validated_data['usertype'] = 3
+        
+        # Create user with password if provided
+        if password:
+            user = User.objects.create_user(**validated_data)
+            user.set_password(password)
+            user.save()
+        else:
+            user = User.objects.create(**validated_data)
+        
+        # Update venue if provided
+        if venue_ids:
+            user.venue = venue_ids
+            user.save()
+            
+        return user
+    
+    def update(self, instance, validated_data):
+        venue_ids = validated_data.pop('venue', None)
+        password = validated_data.pop('password', None)
+        
+        # Update password if provided
+        if password:
+            instance.set_password(password)
+        
+        # Update venue if provided
+        if venue_ids is not None:
+            instance.venue = venue_ids
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView, ManageUnlimitedAccessView, UserLoginWithVenueISPIdAPIView, CustomerDetailAPIView, CustomerDeleteAPIView, VenueByISPListView, CustomersByISPListView
+from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView, ManageUnlimitedAccessView, UserLoginWithVenueISPIdAPIView, CustomerDetailAPIView, CustomerDeleteAPIView, VenueByISPListView, CustomersByISPListView, CustomerByISPCreateView, CustomerByISPUpdateView, CustomerByISPDeleteView, CustomerByISPDetailView
 
 urlpatterns = [
     path('register', UserAPIView.as_view(), name='auth_register'),
@@ -43,4 +43,13 @@ urlpatterns = [
          name='customer-detail'),
     path('customer/<int:customer_id>/delete/', CustomerDeleteAPIView.as_view(),
          name='customer-delete'),
+    # New CRUD endpoints for customers by ISP ID
+    path('isp/<int:isp_id>/customer/create/', CustomerByISPCreateView.as_view(),
+         name='customer-by-isp-create'),
+    path('isp/<int:isp_id>/customer/<int:customer_id>/', CustomerByISPDetailView.as_view(),
+         name='customer-by-isp-detail'),
+    path('isp/<int:isp_id>/customer/<int:customer_id>/update/', CustomerByISPUpdateView.as_view(),
+         name='customer-by-isp-update'),
+    path('isp/<int:isp_id>/customer/<int:customer_id>/delete/', CustomerByISPDeleteView.as_view(),
+         name='customer-by-isp-delete'),
 ]

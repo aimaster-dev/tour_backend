@@ -302,7 +302,8 @@ class CustomerByISPSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'usertype')
         extra_kwargs = {
             'password': {'write_only': True},
-            'usertype': {'default': 3}  # Set default usertype to 3 (Customer)
+            'usertype': {'default': 3},  # Set default usertype to 3 (Customer)
+            'status': {'default': True}  # Set default status to True
         }
     
     def create(self, validated_data):
@@ -311,6 +312,7 @@ class CustomerByISPSerializer(serializers.ModelSerializer):
         
         # Set usertype to 3 (Customer)
         validated_data['usertype'] = 3
+        validated_data['status'] = True  # Ensure status is True
         
         # Create user with password if provided
         if password:

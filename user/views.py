@@ -1318,6 +1318,10 @@ class CustomerByISPCreateView(APIView):
                 # Create the customer
                 customer = serializer.save()
                 
+                # Ensure the customer is properly associated with the ISP
+                customer.isp = isp
+                customer.save()
+                
                 return Response({
                     "status": True,
                     "data": {

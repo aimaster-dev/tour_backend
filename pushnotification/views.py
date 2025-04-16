@@ -11,6 +11,10 @@ from .models import Notification
 from .serializers import NotificationSerializer, SendNotificationSerializer
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Initialize Firebase Admin SDK
 try:
@@ -18,14 +22,14 @@ try:
         "/var/www/htdocs/Video_Backend/emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
     if not firebase_admin._apps:  # Check if Firebase is not already initialized
         default_app = firebase_admin.initialize_app(cred)
-        print(
+        logger.info(
             f"Firebase initialized successfully with project ID: {default_app.project_id}")
     else:
-        print("Firebase already initialized")
+        logger.info("Firebase already initialized")
 except Exception as e:
-    print(f"Firebase initialization error: {str(e)}")
-    print(f"Error type: {type(e).__name__}")
-    print(
+    logger.error(f"Firebase initialization error: {str(e)}")
+    logger.error(f"Error type: {type(e).__name__}")
+    logger.error(
         f"Full error details: {e.__dict__ if hasattr(e, '__dict__') else 'No additional details'}")
 
 
@@ -85,9 +89,9 @@ class PushNotification(APIView):
                 try:
                     response = messaging.send(message)
                     success_count += 1
-                    print(
+                    logger.info(
                         f"Successfully sent notification to user {user_id} with token {token[:20]}...")
-                except messaging.ApiCallError as firebase_error:
+                except firebase_admin.exceptions.FirebaseError as firebase_error:
                     error_detail = {
                         'user_id': user_id,
                         'error': str(firebase_error),
@@ -96,7 +100,8 @@ class PushNotification(APIView):
                         'token_used': token[:20] + '...' if token else 'No token'
                     }
                     error_list.append(error_detail)
-                    print(f"Firebase error for user {user_id}: {error_detail}")
+                    logger.error(
+                        f"Firebase error for user {user_id}: {error_detail}")
                 except Exception as e:
                     error_detail = {
                         'user_id': user_id,
@@ -105,7 +110,8 @@ class PushNotification(APIView):
                         'token_used': token[:20] + '...' if token else 'No token'
                     }
                     error_list.append(error_detail)
-                    print(f"General error for user {user_id}: {error_detail}")
+                    logger.error(
+                        f"General error for user {user_id}: {error_detail}")
 
             except User.DoesNotExist:
                 error_list.append({

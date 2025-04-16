@@ -126,47 +126,38 @@ class CameraAPIView(APIView):
             logger.info(
                 f"Request parameters: venue_id={venue_id}, user_type={user.usertype}")
 
-            if venue_id:
-                venue = Venue.objects.get(id=venue_id)
-                logger.info(
-                    f"Filtering cameras by venue ID: {venue_id}")
-                cameras = Camera.objects.filter(venue=venue.pk)
-            else:
-                if user.usertype == 1:
-                    logger.info(
-                        "Admin user: fetching cameras for first venue")
-                    venue = Venue.objects.all().first()
-                    if venue is None:
-                        logger.info("No venues found in the system")
-                        return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
-                    else:
-                        cameras = Camera.objects.filter(venue=venue.pk)
-                elif user.usertype == 2:
-                    logger.info(
-                        f"ISP user: fetching cameras for ISP's venue")
-                    venue = Venue.objects.filter(isp=user.pk).first()
-                    if venue:
-                        logger.info(f"Found venue with ID: {venue.pk}")
-                        cameras = Camera.objects.filter(venue=venue.pk)
-                    else:
-                        logger.warning(
-                            f"No venue found for ISP with ID: {user.pk}")
-                        return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
-                elif user.usertype == 3:
-                    logger.info(
-                        "Client user: fetching cameras for client's venue")
-                    try:
-                        venue_id = user.venue[0]
-                        logger.info(f"Client's venue ID: {venue_id}")
-                        venue = Venue.objects.get(id=venue_id)
-                        cameras = Camera.objects.filter(venue=venue.pk)
-                    except (IndexError, AttributeError) as e:
-                        logger.error(
-                            f"Error accessing client's venue: {str(e)}")
-                        return Response({'status': False, 'error': 'No venue assigned to this client'}, status=status.HTTP_400_BAD_REQUEST)
+            if user.usertype == 1:  # Admin
+                logger.info("Admin user: fetching all cameras")
+                if venue_id:
+                    venue = Venue.objects.get(id=venue_id)
+                    cameras = Camera.objects.filter(venue=venue)
                 else:
-                    logger.warning(f"Invalid user type: {user.usertype}")
-                    return Response({'status': False, 'error': 'You have to login this site.'}, status=status.HTTP_400_BAD_REQUEST)
+                    cameras = Camera.objects.all()
+            elif user.usertype == 2:  # ISP
+                logger.info(f"ISP user: fetching cameras for ISP: {user.pk}")
+                if venue_id:
+                    venue = Venue.objects.get(id=venue_id, isp=user)
+                    cameras = Camera.objects.filter(venue=venue, isp=user)
+                else:
+                    cameras = Camera.objects.filter(isp=user)
+            elif user.usertype == 3:  # Customer
+                logger.info(
+                    f"Customer user: fetching cameras for customer: {user.pk}")
+                if venue_id:
+                    # Check if the venue belongs to the customer
+                    if venue_id not in user.venue:
+                        return Response({'status': False, 'error': 'You do not have access to this venue'},
+                                        status=status.HTTP_403_FORBIDDEN)
+                    venue = Venue.objects.get(id=venue_id)
+                    cameras = Camera.objects.filter(venue=venue)
+                else:
+                    # Get all cameras from customer's venues
+                    venue_ids = user.venue
+                    cameras = Camera.objects.filter(venue__id__in=venue_ids)
+            else:
+                logger.warning(f"Invalid user type: {user.usertype}")
+                return Response({'status': False, 'error': 'Invalid user type'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             logger.info(f"Found {len(cameras)} cameras")
             serializer = CameraUpdateSerializer(cameras, many=True)
@@ -181,6 +172,10 @@ class CameraAPIView(APIView):
 
             return Response({'status': True, 'data': serializer.data})
 
+        except Venue.DoesNotExist:
+            logger.error(f"Venue not found: {venue_id}")
+            return Response({'status': False, 'error': 'Venue not found'},
+                            status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             # Log the exception with full traceback
             LoggerHelper.log_exception(
@@ -195,19 +190,22 @@ class CameraAPIView(APIView):
                 logger, request, "Camera creation request received")
 
             data = request.data
-            isp = request.user
+            user = request.user
 
             logger.info(f"Request data: {data}")
-            logger.info(f"User type: {isp.usertype}")
+            logger.info(f"User type: {user.usertype}")
 
-            if isp.usertype == 1:
-                logger.warning("Admin user attempted to register a camera")
-                return Response({'status': False, 'error': 'You can not register your camera'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            if user.usertype != 2:  # Only ISP can create cameras
+                logger.warning(
+                    f"User type {user.usertype} attempted to create a camera")
+                return Response({'status': False, 'error': 'Only ISP users can create cameras'},
+                                status=status.HTTP_403_FORBIDDEN)
 
             rtsp_url = data.get("rtsp_url")
             if not rtsp_url:
                 logger.error("Missing required field: rtsp_url")
-                return Response({'status': False, 'error': 'RTSP URL is required'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'status': False, 'error': 'RTSP URL is required'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             logger.info(f"Processing RTSP URL: {rtsp_url}")
             output_dir = get_output_dir(rtsp_url)
@@ -222,24 +220,27 @@ class CameraAPIView(APIView):
             venue_id = data.get('venue')
             if not venue_id:
                 logger.error("Missing required field: venue")
-                return Response({'status': False, 'error': 'Venue ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'status': False, 'error': 'Venue ID is required'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                venue = Venue.objects.get(id=venue_id)
+                # Verify that the venue belongs to the ISP
+                venue = Venue.objects.get(id=venue_id, isp=user)
                 logger.info(
                     f"Found venue: {venue.venue_name} (ID: {venue.pk})")
             except Venue.DoesNotExist:
-                logger.error(f"Venue with ID {venue_id} not found")
-                return Response({'status': False, 'error': f'Venue with ID {venue_id} not found'}, status=status.HTTP_404_NOT_FOUND)
+                logger.error(
+                    f"Venue with ID {venue_id} not found or not owned by ISP")
+                return Response({'status': False, 'error': 'Venue not found or not owned by you'},
+                                status=status.HTTP_404_NOT_FOUND)
 
             serializer = CameraSerializer(data=camdata)
             if serializer.is_valid():
                 logger.info("Camera data validated successfully")
-                serializer.save(isp=request.user, venue=venue)
+                serializer.save(isp=user, venue=venue)
                 logger.info(
                     f"Camera saved with ID: {serializer.data.get('id', 'unknown')}")
 
-                # convert_rtsp_to_hls(rtsp_url, output_dir)
                 output = serializer.data
                 output['venue'] = [{
                     'id': venue.pk,
@@ -257,7 +258,8 @@ class CameraAPIView(APIView):
                 return Response({"status": True, "data": output}, status=status.HTTP_201_CREATED)
             else:
                 logger.error(f"Validation errors: {serializer.errors}")
-                return Response({"status": False, "data": {"msg": serializer.errors}}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"status": False, "data": {"msg": serializer.errors}},
+                                status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             # Log the exception with full traceback

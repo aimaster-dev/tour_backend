@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 # from .views import CameraAPIView, CameraUpdateAPIView, CameraDeleteAPIView, CameraCheckAPIView, CameraClientAPIView, CameraRestartAPIView, CameraStreamingAPIView
-from .views import CameraViewSet, CameraViewSetForISP
+from .views import CameraViewSet, CameraViewSetForISP, CameraAPIView
 
 router = DefaultRouter()
 router.register(r'cameras', CameraViewSet, basename='camera')
@@ -11,7 +11,8 @@ urlpatterns = [
     path('', include(router.urls)),
 
     # path('add', CameraAPIView.as_view(), name = 'camera_add'),
-    # path('getall', CameraAPIView.as_view(), name = 'get_all_camera_of_current_isp'),
+    path('getall', CameraAPIView.as_view(),
+         name='get_all_camera_of_current_isp'),
     # path('update', CameraUpdateAPIView.as_view(), name = 'update_camera'),
     # path('id/<int:pk>', CameraUpdateAPIView.as_view(), name = 'get_camera_by_id'),
     # path('tour', CameraClientAPIView.as_view(), name = 'get_camera_by_tourplace'),

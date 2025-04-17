@@ -17,6 +17,11 @@ from .models import PaymentLogs
 from tourplace.models import Venue
 from datetime import datetime, timedelta
 from django.db.models import Q
+import logging
+from django.shortcuts import render
+
+logger = logging.getLogger(__name__)
+
 # Create your views here.
 
 
@@ -393,9 +398,19 @@ class PaymentDetailsAPIView(APIView):
             if user.usertype == 1:  # Admin - can see all transactions
                 transactions = PaymentLogs.objects.all()
             elif user.usertype == 2:  # ISP - can see transactions from their venues
-                isp_venues = Venue.objects.filter(isp=user.pk)
-                prices = Price.objects.filter(venue__in=isp_venues)
-                transactions = PaymentLogs.objects.filter(price__in=prices)
+                try:
+                    isp_venues = Venue.objects.filter(isp=user.pk)
+                    # Safely handle empty venues list
+                    if isp_venues.exists():
+                        prices = Price.objects.filter(venue__in=isp_venues)
+                        transactions = PaymentLogs.objects.filter(
+                            price__in=prices)
+                    else:
+                        # No venues, so no transactions
+                        transactions = PaymentLogs.objects.none()
+                except Exception as e:
+                    logger.error(f"Error getting ISP venues: {str(e)}")
+                    transactions = PaymentLogs.objects.none()
             else:  # Client - can only see their own transactions
                 transactions = PaymentLogs.objects.filter(user=user.pk)
 
@@ -467,12 +482,26 @@ class PaymentDetailsAPIView(APIView):
                             "plan_name": "Free Trial",
                         })
                     else:
-                        price = Price.objects.get(id=transaction.price.id)
-                        venue = Venue.objects.get(id=price.venue.pk)
-                        transaction_info.update({
-                            "venue": venue.venue_name,
-                            "plan_name": price.title,
-                        })
+                        try:
+                            price = Price.objects.get(id=transaction.price.id)
+                            venue_name = "N/A"
+                            if price.venue is not None:
+                                try:
+                                    venue = Venue.objects.get(
+                                        id=price.venue.pk)
+                                    venue_name = venue.venue_name
+                                except Venue.DoesNotExist:
+                                    venue_name = "Venue not found"
+
+                            transaction_info.update({
+                                "venue": venue_name,
+                                "plan_name": price.title,
+                            })
+                        except Price.DoesNotExist:
+                            transaction_info.update({
+                                "venue": "N/A",
+                                "plan_name": "Unknown Plan",
+                            })
 
                     transaction_data.append(transaction_info)
                 except (User.DoesNotExist, Price.DoesNotExist, Venue.DoesNotExist):
@@ -719,6 +748,18 @@ class AdminTransactionListAPIView(APIView):
                         "snapshot": transaction.snapshotremain
                     }
                 }
+
+                # Add venue info if available
+                if transaction.price and hasattr(transaction.price, 'venue') and transaction.price.venue:
+                    try:
+                        venue = Venue.objects.get(
+                            id=transaction.price.venue.pk)
+                        transaction_info["venue"] = venue.venue_name
+                    except Venue.DoesNotExist:
+                        transaction_info["venue"] = "Venue not found"
+                else:
+                    transaction_info["venue"] = "N/A"
+
                 transaction_data.append(transaction_info)
 
             return Response({

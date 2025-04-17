@@ -775,3 +775,110 @@ class AdminTransactionListAPIView(APIView):
                 "status": False,
                 "message": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UserTransactionsAPIView(APIView):
+    # Only admin can view other users' transactions
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        try:
+            # Get query parameters for filtering
+            from_date = request.query_params.get('from_date')
+            to_date = request.query_params.get('to_date')
+            status_filter = request.query_params.get('status')
+
+            # Base query for the specified user's transactions
+            transactions = PaymentLogs.objects.filter(
+                user=user_id).order_by('-created_at')
+
+            # Apply date filters if provided
+            if from_date:
+                try:
+                    from_date = datetime.strptime(from_date, '%Y-%m-%d')
+                    transactions = transactions.filter(
+                        created_at__gte=from_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid from_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            if to_date:
+                try:
+                    to_date = datetime.strptime(to_date, '%Y-%m-%d')
+                    # Include the entire day
+                    to_date = to_date + timedelta(days=1)
+                    transactions = transactions.filter(created_at__lte=to_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid to_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Filter by status if provided
+            if status_filter:
+                transactions = transactions.filter(
+                    status=status_filter.upper())
+
+            # Prepare response data
+            transaction_data = []
+            for transaction in transactions:
+                try:
+                    transaction_info = {
+                        "transaction_id": transaction.transaction_id,
+                        "amount": transaction.amount,
+                        "status": transaction.status,
+                        "created_at": transaction.created_at,
+                        "updated_at": transaction.updated_at,
+                        "remaining_credits": {
+                            "video": transaction.videoremain,
+                            "snapshot": transaction.snapshotremain
+                        }
+                    }
+
+                    # Add plan details
+                    if transaction.price is None:
+                        transaction_info.update({
+                            "venue": "N/A",
+                            "plan_name": "Free Trial",
+                        })
+                    else:
+                        try:
+                            price = Price.objects.get(id=transaction.price.id)
+                            venue_name = "N/A"
+                            if price.venue is not None:
+                                try:
+                                    venue = Venue.objects.get(
+                                        id=price.venue.pk)
+                                    venue_name = venue.venue_name
+                                except Venue.DoesNotExist:
+                                    venue_name = "Venue not found"
+
+                            transaction_info.update({
+                                "venue": venue_name,
+                                "plan_name": price.title,
+                            })
+                        except Price.DoesNotExist:
+                            transaction_info.update({
+                                "venue": "N/A",
+                                "plan_name": "Unknown Plan",
+                            })
+
+                    transaction_data.append(transaction_info)
+                except (Price.DoesNotExist, Venue.DoesNotExist):
+                    continue
+
+            return Response({
+                "status": True,
+                "data": {
+                    "total_transactions": len(transaction_data),
+                    "transactions": transaction_data
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

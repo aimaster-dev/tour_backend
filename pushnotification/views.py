@@ -222,7 +222,8 @@ class LoggingTestAPIView(APIView):
             "status": True,
             "message": "Logging test completed",
             "data": {
-                "log_file": os.path.join(settings.BASE_DIR, 'logs', 'debug.log'),
-                "log_message": "Check your log file to see if messages were recorded"
+                "info_log_file": os.path.join(settings.BASE_DIR, 'logs/info.log'),
+                "error_log_file": os.path.join(settings.BASE_DIR, 'logs/error.log'),
+                "log_message": "Check your log files to see if messages were recorded"
             }
         }, status=status.HTTP_200_OK)

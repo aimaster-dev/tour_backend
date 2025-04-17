@@ -12,25 +12,51 @@ from .serializers import NotificationSerializer, SendNotificationSerializer
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 import logging
+from django.conf import settings
+import json
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Initialize Firebase Admin SDK
-try:
-    cred = credentials.Certificate(
-        "/var/www/htdocs/Video_Backend/emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
-    if not firebase_admin._apps:  # Check if Firebase is not already initialized
-        default_app = firebase_admin.initialize_app(cred)
-        logger.info(
-            f"Firebase initialized successfully with project ID: {default_app.project_id}")
-    else:
-        logger.info("Firebase already initialized")
-except Exception as e:
-    logger.error(f"Firebase initialization error: {str(e)}")
-    logger.error(f"Error type: {type(e).__name__}")
-    logger.error(
-        f"Full error details: {e.__dict__ if hasattr(e, '__dict__') else 'No additional details'}")
+
+def initialize_firebase():
+    """Initialize Firebase Admin SDK with proper error handling"""
+    try:
+        # Check if Firebase is already initialized
+        if not firebase_admin._apps:
+            cred_path = settings.FIREBASE_CREDENTIALS_PATH
+
+            # Log the credentials being used (excluding sensitive data)
+            with open(cred_path, 'r') as f:
+                cred_data = json.load(f)
+                logger.info(
+                    f"Initializing Firebase with project_id: {cred_data.get('project_id')}")
+
+            cred = credentials.Certificate(cred_path)
+            default_app = firebase_admin.initialize_app(
+                cred, name=settings.FIREBASE_APP_NAME)
+            logger.info(
+                f"Firebase initialized successfully with project ID: {default_app.project_id}")
+        else:
+            logger.info("Firebase already initialized")
+
+    except FileNotFoundError:
+        logger.error(
+            f"Firebase credentials file not found at {settings.FIREBASE_CREDENTIALS_PATH}")
+        raise
+    except json.JSONDecodeError:
+        logger.error("Firebase credentials file is not valid JSON")
+        raise
+    except Exception as e:
+        logger.error(f"Firebase initialization error: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        logger.error(
+            f"Full error details: {e.__dict__ if hasattr(e, '__dict__') else 'No additional details'}")
+        raise
+
+
+# Initialize Firebase when the module loads
+initialize_firebase()
 
 
 class StandardResultsSetPagination(PageNumberPagination):

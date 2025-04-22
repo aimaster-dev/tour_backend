@@ -68,6 +68,14 @@ except Exception as e:
         "Failed to initialize Firebase. Push notifications will not work.")
     logger.error(f"Initialization error: {str(e)}")
 
+# Create a default app instance for backward compatibility
+try:
+    app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo')
+    firebase_admin.get_app(app_name)
+except ValueError:
+    logger.warning(
+        "Default Firebase app not initialized. Push notifications may not work.")
+
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -103,7 +111,10 @@ class PushNotification(APIView):
         success_count = 0
 
         # Check if Firebase is properly initialized
-        if not firebase_admin._apps:
+        try:
+            app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo')
+            firebase_admin.get_app(app_name)
+        except ValueError:
             logger.error(
                 "Firebase is not initialized. Push notifications cannot be sent.")
             # Create error for all users
@@ -114,60 +125,74 @@ class PushNotification(APIView):
                     'error_type': 'ConfigurationError',
                     'details': 'The server is not properly configured for push notifications.'
                 })
-        else:
-            # Firebase is initialized, attempt to send notifications
-            for user_id in user_ids:
-                try:
-                    user = User.objects.get(id=user_id)
-                    token = user.device_token
+            # Update notification record with results
+            notification.success_count = success_count
+            notification.failure_count = len(error_list)
+            notification.failed_users = error_list
+            notification.save()
+            return Response({
+                "status": True,
+                "message": "Notification processing completed",
+                "data": {
+                    "success_count": success_count,
+                    "failure_count": len(error_list),
+                    "failed_users": error_list
+                }
+            }, status=status.HTTP_200_OK)
 
-                    if not token:
-                        error_list.append({
-                            'user_id': user_id,
-                            'error': 'Device token not found'
-                        })
-                        continue
+        # Firebase is initialized, attempt to send notifications
+        for user_id in user_ids:
+            try:
+                user = User.objects.get(id=user_id)
+                token = user.device_token
 
-                    message = messaging.Message(
-                        notification=messaging.Notification(
-                            title=title,
-                            body=content
-                        ),
-                        token=token
-                    )
-
-                    try:
-                        response = messaging.send(message)
-                        success_count += 1
-                        logger.info(
-                            f"Successfully sent notification to user {user_id} with token {token[:20]}...")
-                    except firebase_admin.exceptions.FirebaseError as firebase_error:
-                        error_detail = {
-                            'user_id': user_id,
-                            'error': str(firebase_error),
-                            'error_code': firebase_error.code if hasattr(firebase_error, 'code') else 'unknown',
-                            'error_details': firebase_error.detail if hasattr(firebase_error, 'detail') else 'no details',
-                            'token_used': token[:20] + '...' if token else 'No token'
-                        }
-                        error_list.append(error_detail)
-                        logger.error(
-                            f"Firebase error for user {user_id}: {error_detail}")
-                    except Exception as e:
-                        error_detail = {
-                            'user_id': user_id,
-                            'error': str(e),
-                            'error_type': type(e).__name__,
-                            'token_used': token[:20] + '...' if token else 'No token'
-                        }
-                        error_list.append(error_detail)
-                        logger.error(
-                            f"General error for user {user_id}: {error_detail}")
-
-                except User.DoesNotExist:
+                if not token:
                     error_list.append({
                         'user_id': user_id,
-                        'error': 'User not found'
+                        'error': 'Device token not found'
                     })
+                    continue
+
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=title,
+                        body=content
+                    ),
+                    token=token
+                )
+
+                try:
+                    response = messaging.send(message)
+                    success_count += 1
+                    logger.info(
+                        f"Successfully sent notification to user {user_id} with token {token[:20]}...")
+                except firebase_admin.exceptions.FirebaseError as firebase_error:
+                    error_detail = {
+                        'user_id': user_id,
+                        'error': str(firebase_error),
+                        'error_code': firebase_error.code if hasattr(firebase_error, 'code') else 'unknown',
+                        'error_details': firebase_error.detail if hasattr(firebase_error, 'detail') else 'no details',
+                        'token_used': token[:20] + '...' if token else 'No token'
+                    }
+                    error_list.append(error_detail)
+                    logger.error(
+                        f"Firebase error for user {user_id}: {error_detail}")
+                except Exception as e:
+                    error_detail = {
+                        'user_id': user_id,
+                        'error': str(e),
+                        'error_type': type(e).__name__,
+                        'token_used': token[:20] + '...' if token else 'No token'
+                    }
+                    error_list.append(error_detail)
+                    logger.error(
+                        f"General error for user {user_id}: {error_detail}")
+
+            except User.DoesNotExist:
+                error_list.append({
+                    'user_id': user_id,
+                    'error': 'User not found'
+                })
 
         # Update notification record with results
         notification.success_count = success_count

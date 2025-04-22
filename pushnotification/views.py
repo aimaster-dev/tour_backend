@@ -23,50 +23,50 @@ logger = logging.getLogger(__name__)
 def initialize_firebase():
     """Initialize Firebase Admin SDK with proper error handling"""
     try:
-        # Check if Firebase is already initialized
-        if not firebase_admin._apps:
-            # Get the credentials path from settings or use a default path
-            cred_path = getattr(settings, 'FIREBASE_CREDENTIALS_PATH',
-                                os.path.join(settings.BASE_DIR, 'firebase-credentials.json'))
+        # Get the credentials path from settings
+        cred_path = getattr(settings, 'FIREBASE_CREDENTIALS_PATH')
+        app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo')
 
-            # Check if file exists
-            if not os.path.exists(cred_path):
-                logger.error(
-                    f"Firebase credentials file not found at {cred_path}")
-                logger.warning(
-                    "Push notifications will not work without valid Firebase credentials")
-                # Create a placeholder to avoid errors on startup but log warnings on sending
-                return
+        # Check if file exists
+        if not os.path.exists(cred_path):
+            logger.error(f"Firebase credentials file not found at {cred_path}")
+            raise FileNotFoundError(
+                f"Firebase credentials file not found at {cred_path}")
 
-            # Log the credentials being used (excluding sensitive data)
+        # Try to initialize Firebase
+        try:
+            # Check if app with this name already exists
             try:
-                with open(cred_path, 'r') as f:
-                    cred_data = json.load(f)
-                    logger.info(
-                        f"Initializing Firebase with project_id: {cred_data.get('project_id')}")
+                firebase_admin.get_app(app_name)
+                logger.info(f"Firebase app '{app_name}' already initialized")
+                return
+            except ValueError:
+                # App doesn't exist, proceed with initialization
+                pass
 
-                cred = credentials.Certificate(cred_path)
-                app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo')
-                default_app = firebase_admin.initialize_app(
-                    cred, name=app_name)
-                logger.info(
-                    f"Firebase initialized successfully with project ID: {default_app.project_id}")
-            except json.JSONDecodeError:
-                logger.error("Firebase credentials file is not valid JSON")
-        else:
-            logger.info("Firebase already initialized")
+            # Initialize with the credentials
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred, name=app_name)
+            logger.info(
+                f"Firebase initialized successfully with app name: {app_name}")
+
+        except Exception as e:
+            logger.error(f"Error initializing Firebase: {str(e)}")
+            raise
 
     except Exception as e:
         logger.error(f"Firebase initialization error: {str(e)}")
         logger.error(f"Error type: {type(e).__name__}")
-        logger.error(
-            f"Full error details: {e.__dict__ if hasattr(e, '__dict__') else 'No additional details'}")
-        logger.warning(
-            "Push notifications will not work until this issue is resolved")
+        raise
 
 
 # Initialize Firebase when the module loads
-initialize_firebase()
+try:
+    initialize_firebase()
+except Exception as e:
+    logger.error(
+        "Failed to initialize Firebase. Push notifications will not work.")
+    logger.error(f"Initialization error: {str(e)}")
 
 
 class StandardResultsSetPagination(PageNumberPagination):

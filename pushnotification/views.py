@@ -25,7 +25,7 @@ def initialize_firebase():
     try:
         # Get the credentials path from settings
         cred_path = getattr(settings, 'FIREBASE_CREDENTIALS_PATH')
-        app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo')
+        app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo-fb564')
 
         # Check if file exists
         if not os.path.exists(cred_path):
@@ -70,11 +70,13 @@ except Exception as e:
 
 # Create a default app instance for backward compatibility
 try:
-    app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo')
-    firebase_admin.get_app(app_name)
+    app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo-fb564')
+    app = firebase_admin.get_app(app_name)
+    if not app:
+        raise ValueError("Firebase app not found")
 except ValueError:
     logger.warning(
-        "Default Firebase app not initialized. Push notifications may not work.")
+        f"Firebase app '{app_name}' not initialized. Push notifications may not work.")
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -112,7 +114,8 @@ class PushNotification(APIView):
 
         # Check if Firebase is properly initialized
         try:
-            app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo')
+            app_name = getattr(
+                settings, 'FIREBASE_APP_NAME', 'emmysvideo-fb564')
             firebase_admin.get_app(app_name)
         except ValueError:
             logger.error(
@@ -162,7 +165,10 @@ class PushNotification(APIView):
                 )
 
                 try:
-                    response = messaging.send(message)
+                    app = firebase_admin.get_app(app_name)
+                    if not app:
+                        raise ValueError("Firebase app not found")
+                    response = messaging.send(message, app=app)
                     success_count += 1
                     logger.info(
                         f"Successfully sent notification to user {user_id} with token {token[:20]}...")

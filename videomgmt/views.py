@@ -28,8 +28,7 @@ class HeaderAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def get_queryset(self):
-        data = HeaderSerializer(Header.objects.all(), many=True)
-        return data
+        return Header.objects.all()
 
     def get(self, request):
         venue_id = request.query_params.get('venue')

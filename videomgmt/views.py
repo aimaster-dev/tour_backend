@@ -25,17 +25,11 @@ import sys
 
 
 class HeaderAPIView(APIView):
-    permission_classes = [IsAdmin]
     parser_classes = (MultiPartParser, FormParser)
 
     def get_queryset(self):
-        if self.request.user.usertype == 1:
-            venue = Venue.objects.first()
-            if venue:
-                return Header.objects.filter(venue=venue.pk)
-            else:
-                return Header.objects.none()
-        return Header.objects.filter(user=self.request.user)
+        data = HeaderSerializer(Header.objects.all(), many=True)
+        return data
 
     def get(self, request):
         venue_id = request.query_params.get('venue')
@@ -61,9 +55,51 @@ class HeaderAPIView(APIView):
         data['venue'] = Venue.objects.get(id=venue_id).pk
         serializer = HeaderSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            serializer.save()
             return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+# Backup
+# class HeaderAPIView(APIView):
+#     permission_classes = [IsAdmin]
+#     parser_classes = (MultiPartParser, FormParser)
+
+#     def get_queryset(self):
+#         if self.request.user.usertype == 1:
+#             venue = Venue.objects.first()
+#             if venue:
+#                 return Header.objects.filter(venue=venue.pk)
+#             else:
+#                 return Header.objects.none()
+#         return Header.objects.filter(user=self.request.user)
+
+#     def get(self, request):
+#         venue_id = request.query_params.get('venue')
+#         if venue_id == None:
+#             headers = self.get_queryset()
+#             if headers.exists():
+#                 serializer = HeaderSerializer(headers, many=True)
+#                 return Response({"status": True, "data": serializer.data}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
+#         else:
+#             venue = Venue.objects.get(id=venue_id)
+#             headers = Header.objects.filter(venue=venue.pk)
+#             if headers.exists():
+#                 serializer = HeaderSerializer(headers, many=True)
+#                 return Response({"status": True, "data": serializer.data}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"status": True, "data": []}, status=status.HTTP_200_OK)
+
+#     def post(self, request):
+#         venue_id = request.data.get('venue')
+#         data = request.data
+#         data['venue'] = Venue.objects.get(id=venue_id).pk
+#         serializer = HeaderSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(user=request.user)
+#             return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
+#         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class HeaderDeleteAPIView(APIView):

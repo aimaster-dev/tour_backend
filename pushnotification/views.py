@@ -27,6 +27,10 @@ def initialize_firebase():
         cred_path = getattr(settings, 'FIREBASE_CREDENTIALS_PATH')
         app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo-fb564')
 
+        logger.info(
+            f"Attempting to initialize Firebase with credentials from: {cred_path}")
+        logger.info(f"Using app name: {app_name}")
+
         # Check if file exists
         if not os.path.exists(cred_path):
             logger.error(f"Firebase credentials file not found at {cred_path}")
@@ -37,21 +41,27 @@ def initialize_firebase():
         try:
             # Check if app with this name already exists
             try:
-                firebase_admin.get_app(app_name)
+                app = firebase_admin.get_app(app_name)
                 logger.info(f"Firebase app '{app_name}' already initialized")
-                return
+                return app
             except ValueError:
                 # App doesn't exist, proceed with initialization
                 pass
 
             # Initialize with the credentials
+            logger.info("Loading Firebase credentials...")
             cred = credentials.Certificate(cred_path)
-            firebase_admin.initialize_app(cred, name=app_name)
+            logger.info("Credentials loaded successfully")
+
+            logger.info(f"Initializing Firebase app with name: {app_name}")
+            app = firebase_admin.initialize_app(cred, name=app_name)
             logger.info(
                 f"Firebase initialized successfully with app name: {app_name}")
+            return app
 
         except Exception as e:
             logger.error(f"Error initializing Firebase: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
             raise
 
     except Exception as e:
@@ -61,8 +71,10 @@ def initialize_firebase():
 
 
 # Initialize Firebase when the module loads
+firebase_app = None
 try:
-    initialize_firebase()
+    firebase_app = initialize_firebase()
+    logger.info("Firebase initialization completed successfully")
 except Exception as e:
     logger.error(
         "Failed to initialize Firebase. Push notifications will not work.")
@@ -113,11 +125,7 @@ class PushNotification(APIView):
         success_count = 0
 
         # Check if Firebase is properly initialized
-        try:
-            app_name = getattr(
-                settings, 'FIREBASE_APP_NAME', 'emmysvideo-fb564')
-            firebase_admin.get_app(app_name)
-        except ValueError:
+        if not firebase_app:
             logger.error(
                 "Firebase is not initialized. Push notifications cannot be sent.")
             # Create error for all users
@@ -165,10 +173,7 @@ class PushNotification(APIView):
                 )
 
                 try:
-                    app = firebase_admin.get_app(app_name)
-                    if not app:
-                        raise ValueError("Firebase app not found")
-                    response = messaging.send(message, app=app)
+                    response = messaging.send(message, app=firebase_app)
                     success_count += 1
                     logger.info(
                         f"Successfully sent notification to user {user_id} with token {token[:20]}...")

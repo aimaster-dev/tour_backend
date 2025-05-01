@@ -591,69 +591,106 @@ class SnapShotAddAPIView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def send_snapshot_email(self, user, snapshots, remaining_snapshots):
-        subject = 'Your Snapshots Have Been Created'
+        try:
+            logging.info(
+                f"Starting email sending process for user {user.email}")
+            subject = 'Your Snapshots Have Been Created'
 
-        # Prepare snapshot URLs
-        snapshot_data = []
-        for snapshot in snapshots:
-            snapshot_data.append({
-                'image_url': f"https://api.emmysvideos.com/media/{snapshot.image_path}"
+            # Prepare snapshot URLs
+            snapshot_data = []
+            for snapshot in snapshots:
+                snapshot_data.append({
+                    'image_url': f"https://api.emmysvideos.com/media/{snapshot.image_path}"
+                })
+            logging.info(
+                f"Prepared {len(snapshot_data)} snapshot URLs for email")
+
+            message = render_to_string('snapshot_success_email.html', {
+                'user': user,
+                'snapshots': snapshot_data,
+                'remaining_snapshots': remaining_snapshots
             })
+            logging.info("Email template rendered successfully")
 
-        message = render_to_string('snapshot_success_email.html', {
-            'user': user,
-            'snapshots': snapshot_data,
-            'remaining_snapshots': remaining_snapshots
-        })
-
-        email = EmailMessage(subject, message, to=[user.email])
-        email.content_subtype = "html"
-        email.send()
+            email = EmailMessage(subject, message, to=[user.email])
+            email.content_subtype = "html"
+            email.send()
+            logging.info(f"Successfully sent email to {user.email}")
+        except Exception as e:
+            logging.error(
+                f"Failed to send snapshot email to {user.email}: {str(e)}")
+            logging.error(
+                f"Email error details: {type(e).__name__}", exc_info=True)
+            # Continue with the snapshot upload process
 
     def post(self, request):
         try:
+            logging.info(
+                f"Starting snapshot upload process for user {request.user.username}")
             client = request.user
             if client.usertype != 3:
+                logging.warning(
+                    f"Unauthorized access attempt by user {client.username} (type {client.usertype})")
                 return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             venue_id = client.venue[0]
+            logging.info(f"Processing snapshots for venue ID: {venue_id}")
+
             images = request.FILES.getlist('image_path')
             if not images:
+                logging.warning(
+                    f"No images provided by user {client.username}")
                 return Response({"status": False, "data": "Venue and images are required."},
                                 status=status.HTTP_400_BAD_REQUEST)
+            logging.info(f"Received {len(images)} images for processing")
 
             # Check if user has unlimited access
             if not client.has_free_recording_access():
+                logging.info(
+                    f"Checking snapshot limits for user {client.username}")
                 # Check the user's remaining snapshot count
                 payment_log = PaymentLogs.objects.filter(
                     user=client.id).order_by('-created_at').first()
                 if not payment_log or payment_log.snapshotremain <= 0:
+                    logging.warning(
+                        f"User {client.username} has no remaining snapshots")
                     return Response({"status": False, "data": "You don't have any remaining snapshots."},
                                     status=status.HTTP_400_BAD_REQUEST)
+                logging.info(
+                    f"User {client.username} has {payment_log.snapshotremain} snapshots remaining")
 
             snapshots = []
             for image in images:
+                logging.info(f"Processing image: {image.name}")
                 snapshot = SnapShot(
                     client=client, venue_id=venue_id, image_path=image)
                 snapshots.append(snapshot)
 
+            logging.info(f"Creating {len(snapshots)} snapshot records")
             SnapShot.objects.bulk_create(snapshots)
+            logging.info("Snapshot records created successfully")
 
             # Decrement the snapshot count only if user doesn't have unlimited access
             if not client.has_free_recording_access():
                 payment_log.snapshotremain -= len(images)
                 payment_log.save()
                 remaining_snapshots = payment_log.snapshotremain
+                logging.info(
+                    f"Updated remaining snapshots count to {remaining_snapshots}")
             else:
                 remaining_snapshots = "Unlimited"
+                logging.info("User has unlimited snapshot access")
 
             # Send email with snapshots
             self.send_snapshot_email(client, snapshots, remaining_snapshots)
 
             serializer = SnatShotSerializer(snapshots, many=True)
+            logging.info(
+                f"Successfully completed snapshot upload for user {client.username}")
             return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             logging.error(f"Error in SnapShotAddAPIView: {str(e)}")
+            logging.error(f"Error type: {type(e).__name__}", exc_info=True)
             return Response({"status": False, "data": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -611,44 +611,49 @@ class SnapShotAddAPIView(APIView):
         email.send()
 
     def post(self, request):
-        client = request.user
-        if client.usertype != 3:
-            return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        venue_id = client.venue[0]
-        images = request.FILES.getlist('image_path')
-        if not images:
-            return Response({"status": False, "data": "Venue and images are required."},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        # Check if user has unlimited access
-        if not client.has_free_recording_access():
-            # Check the user's remaining snapshot count
-            payment_log = PaymentLogs.objects.filter(
-                user=client.id).order_by('-created_at').first()
-            if not payment_log or payment_log.snapshotremain <= 0:
-                return Response({"status": False, "data": "You don't have any remaining snapshots."},
+        try:
+            client = request.user
+            if client.usertype != 3:
+                return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-        snapshots = []
-        for image in images:
-            snapshot = SnapShot(
-                client=client, venue_id=venue_id, image_path=image)
-            snapshots.append(snapshot)
+            venue_id = client.venue[0]
+            images = request.FILES.getlist('image_path')
+            if not images:
+                return Response({"status": False, "data": "Venue and images are required."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-        SnapShot.objects.bulk_create(snapshots)
+            # Check if user has unlimited access
+            if not client.has_free_recording_access():
+                # Check the user's remaining snapshot count
+                payment_log = PaymentLogs.objects.filter(
+                    user=client.id).order_by('-created_at').first()
+                if not payment_log or payment_log.snapshotremain <= 0:
+                    return Response({"status": False, "data": "You don't have any remaining snapshots."},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
-        # Decrement the snapshot count only if user doesn't have unlimited access
-        if not client.has_free_recording_access():
-            payment_log.snapshotremain -= len(images)
-            payment_log.save()
-            remaining_snapshots = payment_log.snapshotremain
-        else:
-            remaining_snapshots = "Unlimited"
+            snapshots = []
+            for image in images:
+                snapshot = SnapShot(
+                    client=client, venue_id=venue_id, image_path=image)
+                snapshots.append(snapshot)
 
-        # Send email with snapshots
-        self.send_snapshot_email(client, snapshots, remaining_snapshots)
+            SnapShot.objects.bulk_create(snapshots)
 
-        serializer = SnatShotSerializer(snapshots, many=True)
-        return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
+            # Decrement the snapshot count only if user doesn't have unlimited access
+            if not client.has_free_recording_access():
+                payment_log.snapshotremain -= len(images)
+                payment_log.save()
+                remaining_snapshots = payment_log.snapshotremain
+            else:
+                remaining_snapshots = "Unlimited"
+
+            # Send email with snapshots
+            self.send_snapshot_email(client, snapshots, remaining_snapshots)
+
+            serializer = SnatShotSerializer(snapshots, many=True)
+            return Response({"status": True, "data": serializer.data}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logging.error(f"Error in SnapShotAddAPIView: {str(e)}")
+            return Response({"status": False, "data": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

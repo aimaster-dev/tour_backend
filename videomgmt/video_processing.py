@@ -288,7 +288,7 @@ def process_video(video_id, user_id, original_filename, venue):
             video.status = False
             video.save()
             logging.info(f"Updated video status to False (ID: {video.id})")
-            video_url = "https://api.emmysvideos.com/media/" + \
+            video_url = "https://api.dwareapps.com/media/" + \
                 str(video.video_path)
             send_notification_email(user, video_url, '')
             return
@@ -372,7 +372,7 @@ def process_video(video_id, user_id, original_filename, venue):
             video.save()
 
             # Send notification
-            video_url = "https://api.emmysvideos.com/media/" + final_video_relative_path
+            video_url = "https://api.dwareapps.com/media/" + final_video_relative_path
             send_notification_email(user, video_url, final_video_name)
             logging.info("Video processing completed successfully")
 

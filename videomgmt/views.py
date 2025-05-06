@@ -526,7 +526,7 @@ class getHeaderandFooterAPIView(APIView):
             return Response({"status": False, "data": "Header or Footer of this venue aren't existed now."}, status=status.HTTP_404_NOT_FOUND)
         header_path = header.video_path.path
         footer_path = footer.video_path.path
-        base_url = "https://api.emmysvideos.com/"
+        base_url = "https://api.dwareapps.com/"
         header_path = header_path.replace(
             "/var/www/htdocs/Video_Backend/", base_url)
         footer_path = footer_path.replace(
@@ -539,7 +539,7 @@ def download_video(request):
     if not video_url:
         raise Http404("Video URL not provided")
     video_path = os.path.join(settings.MEDIA_ROOT, video_url.replace(
-        'https://api.emmysvideos.com/media/', '').replace('/', os.sep))
+        'https://api.dwareapps.com/media/', '').replace('/', os.sep))
     print(video_path)
     if not os.path.exists(video_path):
         raise Http404(f"Video not found: {video_path}")
@@ -600,7 +600,7 @@ class SnapShotAddAPIView(APIView):
             snapshot_data = []
             for snapshot in snapshots:
                 snapshot_data.append({
-                    'image_url': f"https://api.emmysvideos.com/media/{snapshot.image_path}"
+                    'image_url': f"https://api.dwareapps.com/media/{snapshot.image_path}"
                 })
             logging.info(
                 f"Prepared {len(snapshot_data)} snapshot URLs for email")

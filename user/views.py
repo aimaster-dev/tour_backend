@@ -77,7 +77,7 @@ class UserAPIView(APIView):
                 # Send verification email
                 token = account_activation_token.make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
-                activation_url = f"https://emmysvideos.com/email_verify?uid={uid}&token={token}"
+                activation_url = f"https://dwareapps.com/email_verify?uid={uid}&token={token}"
                 mail_subject = 'Activate your account'
                 message = render_to_string('acc_active_email.html', {
                     'user': user,
@@ -502,7 +502,7 @@ class ResendActivationEmail(APIView):
                 mail_subject = 'Activate your account.'
                 token = account_activation_token.make_token(user)
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
-                activation_url = f"https://emmysvideos.com/email_verify?uid={uid}&token={token}"
+                activation_url = f"https://dwareapps.com/email_verify?uid={uid}&token={token}"
                 message = render_to_string('acc_active_email.html', {
                     'user': user,
                     'activation_url': activation_url,
@@ -527,7 +527,7 @@ class InviteUserView(APIView):
         invited_by = request.user
         Invitation.objects.create(
             email=email, venue=venue, token=token, invited_by=invited_by)
-        invitation_link = f"https://emmysvideos.com/set_password/{token}"
+        invitation_link = f"https://dwareapps.com/set_password/{token}"
         subject = 'Invitation to Join'
         message = render_to_string('isp_register.html', {
             'invitation_link': invitation_link
@@ -623,7 +623,7 @@ class PhoneRegisterView(APIView):
                 message = f"""
                     <html>
                     <body>
-                        <p>Your OTP code for <strong>emmysvideos.com</strong> is <strong>{otp}</strong></p>
+                        <p>Your OTP code for <strong>dwareapps.com</strong> is <strong>{otp}</strong></p>
                     </body>
                     </html>
                 """
@@ -1222,7 +1222,8 @@ class CustomersByISPListView(APIView):
             isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
 
             # Get all customers associated with this ISP
-            customers = User.objects.filter(isp=isp_id, usertype=3, status=True).order_by('-created_at')
+            customers = User.objects.filter(
+                isp=isp_id, usertype=3, status=True).order_by('-created_at')
 
             # Get query parameters for filtering
             search_term = request.query_params.get('search')
@@ -1302,26 +1303,26 @@ class ManageUnlimitedAccessView(APIView):
 
 class CustomerByISPCreateView(APIView):
     permission_classes = [IsAdminOrISP]
-    
+
     def post(self, request, isp_id):
         try:
             # Verify the ISP exists and is active
             isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
-            
+
             # Add ISP ID to the request data
             data = request.data.copy()
             data['isp'] = isp_id
-            
+
             # Serialize and validate the data
             serializer = CustomerByISPSerializer(data=data)
             if serializer.is_valid():
                 # Create the customer
                 customer = serializer.save()
-                
+
                 # Ensure the customer is properly associated with the ISP
                 customer.isp = isp
                 customer.save()
-                
+
                 return Response({
                     "status": True,
                     "data": {
@@ -1334,7 +1335,7 @@ class CustomerByISPCreateView(APIView):
                     "status": False,
                     "data": {"errors": serializer.errors}
                 }, status=status.HTTP_400_BAD_REQUEST)
-                
+
         except User.DoesNotExist:
             return Response({
                 "status": False,
@@ -1349,21 +1350,23 @@ class CustomerByISPCreateView(APIView):
 
 class CustomerByISPUpdateView(APIView):
     permission_classes = [IsAdminOrISP]
-    
+
     def put(self, request, isp_id, customer_id):
         try:
             # Verify the ISP exists and is active
             isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
-            
+
             # Verify the customer exists and belongs to the ISP
-            customer = get_object_or_404(User, id=customer_id, isp=isp_id, usertype=3)
-            
+            customer = get_object_or_404(
+                User, id=customer_id, isp=isp_id, usertype=3)
+
             # Serialize and validate the data
-            serializer = CustomerByISPSerializer(customer, data=request.data, partial=True)
+            serializer = CustomerByISPSerializer(
+                customer, data=request.data, partial=True)
             if serializer.is_valid():
                 # Update the customer
                 updated_customer = serializer.save()
-                
+
                 return Response({
                     "status": True,
                     "data": {
@@ -1376,7 +1379,7 @@ class CustomerByISPUpdateView(APIView):
                     "status": False,
                     "data": {"errors": serializer.errors}
                 }, status=status.HTTP_400_BAD_REQUEST)
-                
+
         except User.DoesNotExist:
             return Response({
                 "status": False,
@@ -1391,23 +1394,24 @@ class CustomerByISPUpdateView(APIView):
 
 class CustomerByISPDeleteView(APIView):
     permission_classes = [IsAdminOrISP]
-    
+
     def delete(self, request, isp_id, customer_id):
         try:
             # Verify the ISP exists and is active
             isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
-            
+
             # Verify the customer exists and belongs to the ISP
-            customer = get_object_or_404(User, id=customer_id, isp=isp_id, usertype=3)
-            
+            customer = get_object_or_404(
+                User, id=customer_id, isp=isp_id, usertype=3)
+
             # Delete the customer
             customer.delete()
-            
+
             return Response({
                 "status": True,
                 "data": {"message": "Customer deleted successfully"}
             }, status=status.HTTP_200_OK)
-                
+
         except User.DoesNotExist:
             return Response({
                 "status": False,
@@ -1422,25 +1426,26 @@ class CustomerByISPDeleteView(APIView):
 
 class CustomerByISPDetailView(APIView):
     permission_classes = [IsAdminOrISP]
-    
+
     def get(self, request, isp_id, customer_id):
         try:
             # Verify the ISP exists and is active
             isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
-            
+
             # Verify the customer exists and belongs to the ISP
-            customer = get_object_or_404(User, id=customer_id, isp=isp_id, usertype=3)
-            
+            customer = get_object_or_404(
+                User, id=customer_id, isp=isp_id, usertype=3)
+
             # Serialize the customer data
             serializer = CustomerByISPSerializer(customer)
-            
+
             return Response({
                 "status": True,
                 "data": {
                     "customer": serializer.data
                 }
             }, status=status.HTTP_200_OK)
-                
+
         except User.DoesNotExist:
             return Response({
                 "status": False,

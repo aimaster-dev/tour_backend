@@ -669,7 +669,7 @@ class ResendActivationCode(APIView):
             message = f"""
                             <html>
                             <body>
-                                <p>Your OTP code for <strong>emmysvideos.com</strong> is <strong>{otp}</strong></p>
+                                <p>Your OTP code for <strong>dwareapps.com</strong> is <strong>{otp}</strong></p>
                             </body>
                             </html>
                         """

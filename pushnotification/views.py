@@ -7,38 +7,163 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 from rest_framework.response import Response
 from rest_framework import status
+from .models import Notification
+from .serializers import NotificationSerializer, SendNotificationSerializer
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
+import logging
+from django.conf import settings
+import json
+import os
 
-cred = credentials.Certificate(
-    "/var/www/htdocs/Video_Backend/emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json")
-firebase_admin.initialize_app(cred)
+# Configure logging
+logger = logging.getLogger(__name__)
 
-# Create your views here.
+
+def initialize_firebase():
+    """Initialize Firebase Admin SDK with proper error handling"""
+    try:
+        # Get the credentials path from settings
+        cred_path = getattr(settings, 'FIREBASE_CREDENTIALS_PATH')
+        app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo-fb564')
+
+        logger.info(
+            f"Attempting to initialize Firebase with credentials from: {cred_path}")
+        logger.info(f"Using app name: {app_name}")
+
+        # Check if file exists
+        if not os.path.exists(cred_path):
+            logger.error(f"Firebase credentials file not found at {cred_path}")
+            raise FileNotFoundError(
+                f"Firebase credentials file not found at {cred_path}")
+
+        # Try to initialize Firebase
+        try:
+            # Check if app with this name already exists
+            try:
+                app = firebase_admin.get_app(app_name)
+                logger.info(f"Firebase app '{app_name}' already initialized")
+                return app
+            except ValueError:
+                # App doesn't exist, proceed with initialization
+                pass
+
+            # Initialize with the credentials
+            logger.info("Loading Firebase credentials...")
+            cred = credentials.Certificate(cred_path)
+            logger.info("Credentials loaded successfully")
+
+            logger.info(f"Initializing Firebase app with name: {app_name}")
+            app = firebase_admin.initialize_app(cred, name=app_name)
+            logger.info(
+                f"Firebase initialized successfully with app name: {app_name}")
+            return app
+
+        except Exception as e:
+            logger.error(f"Error initializing Firebase: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            raise
+
+    except Exception as e:
+        logger.error(f"Firebase initialization error: {str(e)}")
+        logger.error(f"Error type: {type(e).__name__}")
+        raise
+
+
+# Initialize Firebase when the module loads
+firebase_app = None
+try:
+    firebase_app = initialize_firebase()
+    logger.info("Firebase initialization completed successfully")
+except Exception as e:
+    logger.error(
+        "Failed to initialize Firebase. Push notifications will not work.")
+    logger.error(f"Initialization error: {str(e)}")
+
+# Create a default app instance for backward compatibility
+try:
+    app_name = getattr(settings, 'FIREBASE_APP_NAME', 'emmysvideo-fb564')
+    app = firebase_admin.get_app(app_name)
+    if not app:
+        raise ValueError("Firebase app not found")
+except ValueError:
+    logger.warning(
+        f"Firebase app '{app_name}' not initialized. Push notifications may not work.")
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 class PushNotification(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Get parameters from the request body
-        userlist_id = request.data.get("ids")
-        title = request.data.get("title")
-        content = request.data.get("content")
-        # Check if required fields are provided
-        if not userlist_id or not title or not content:
+        serializer = SendNotificationSerializer(data=request.data)
+        if not serializer.is_valid():
             return Response(
-                {"status": False, "message": "Missing required parameters"},
+                {"status": False, "message": "Invalid data",
+                    "errors": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Iterate through the user IDs and send the notification
-        for user_id in userlist_id:
+        user_ids = serializer.validated_data['user_ids']
+        title = serializer.validated_data['title']
+        content = serializer.validated_data['content']
+
+        # Create notification record
+        notification = Notification.objects.create(
+            title=title,
+            content=content,
+            sent_by=request.user
+        )
+        notification.recipients.set(user_ids)
+
+        error_list = []
+        success_count = 0
+
+        # Check if Firebase is properly initialized
+        if not firebase_app:
+            logger.error(
+                "Firebase is not initialized. Push notifications cannot be sent.")
+            # Create error for all users
+            for user_id in user_ids:
+                error_list.append({
+                    'user_id': user_id,
+                    'error': 'Firebase not initialized',
+                    'error_type': 'ConfigurationError',
+                    'details': 'The server is not properly configured for push notifications.'
+                })
+            # Update notification record with results
+            notification.success_count = success_count
+            notification.failure_count = len(error_list)
+            notification.failed_users = error_list
+            notification.save()
+            return Response({
+                "status": True,
+                "message": "Notification processing completed",
+                "data": {
+                    "success_count": success_count,
+                    "failure_count": len(error_list),
+                    "failed_users": error_list
+                }
+            }, status=status.HTTP_200_OK)
+
+        # Firebase is initialized, attempt to send notifications
+        for user_id in user_ids:
             try:
-                # Corrected 'objects' instead of 'object'
                 user = User.objects.get(id=user_id)
-                token = user.device_token  # Assuming device_token is a field on the User model
-                if not token:  # Handle cases where the user does not have a device token
+                token = user.device_token
+
+                if not token:
+                    error_list.append({
+                        'user_id': user_id,
+                        'error': 'Device token not found'
+                    })
                     continue
-                # Create the message
+
                 message = messaging.Message(
                     notification=messaging.Notification(
                         title=title,
@@ -46,20 +171,95 @@ class PushNotification(APIView):
                     ),
                     token=token
                 )
-                # Send the message via Firebase Cloud Messaging
-                response = messaging.send(message)
-                # Optionally log the response for debugging
-                print(f"Notification sent to {user_id}: {response}")
+
+                try:
+                    response = messaging.send(message, app=firebase_app)
+                    success_count += 1
+                    logger.info(
+                        f"Successfully sent notification to user {user_id} with token {token[:20]}...")
+                except firebase_admin.exceptions.FirebaseError as firebase_error:
+                    error_detail = {
+                        'user_id': user_id,
+                        'error': str(firebase_error),
+                        'error_code': firebase_error.code if hasattr(firebase_error, 'code') else 'unknown',
+                        'error_details': firebase_error.detail if hasattr(firebase_error, 'detail') else 'no details',
+                        'token_used': token[:20] + '...' if token else 'No token'
+                    }
+                    error_list.append(error_detail)
+                    logger.error(
+                        f"Firebase error for user {user_id}: {error_detail}")
+                except Exception as e:
+                    error_detail = {
+                        'user_id': user_id,
+                        'error': str(e),
+                        'error_type': type(e).__name__,
+                        'token_used': token[:20] + '...' if token else 'No token'
+                    }
+                    error_list.append(error_detail)
+                    logger.error(
+                        f"General error for user {user_id}: {error_detail}")
+
             except User.DoesNotExist:
-                # Handle case where the user with the given ID does not exist
-                print(f"{user_id} doesn't exist.")
-                continue  # Skip this ID if the user doesn't exist
-            except Exception as e:
-                # Catch other exceptions and log them
-                print(
-                    f"Error sending notification to user {user_id}: {str(e)}")
-                continue
-            return Response(
-                {"status": True, "data": "Successfully sent the message"},
-                status=status.HTTP_200_OK
-            )
+                error_list.append({
+                    'user_id': user_id,
+                    'error': 'User not found'
+                })
+
+        # Update notification record with results
+        notification.success_count = success_count
+        notification.failure_count = len(error_list)
+        notification.failed_users = error_list
+        notification.save()
+
+        response_data = {
+            "status": True,
+            "message": "Notification processing completed",
+            "data": {
+                "success_count": success_count,
+                "failure_count": len(error_list),
+                "failed_users": error_list
+            }
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class NotificationHistory(APIView):
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+
+    def get(self, request):
+        notifications = Notification.objects.all()
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(notifications, request)
+
+        if result_page is not None:
+            serializer = NotificationSerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response({
+            "status": True,
+            "data": serializer.data
+        })
+
+
+class LoggingTestAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Test endpoint to verify logging is working correctly"""
+        logger.debug("This is a DEBUG test message")
+        logger.info("This is an INFO test message")
+        logger.warning("This is a WARNING test message")
+        logger.error("This is an ERROR test message")
+
+        return Response({
+            "status": True,
+            "message": "Logging test completed",
+            "data": {
+                "info_log_file": os.path.join(settings.BASE_DIR, 'logs/info.log'),
+                "error_log_file": os.path.join(settings.BASE_DIR, 'logs/error.log'),
+                "log_message": "Check your log files to see if messages were recorded"
+            }
+        }, status=status.HTTP_200_OK)

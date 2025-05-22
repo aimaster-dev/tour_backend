@@ -62,7 +62,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         user_types = {
             1: 'Admin',
             2: 'ISP',
-            3: 'Customer'
+            3: 'Customer',
+            4: 'Client'
         }
         return user_types.get(self.usertype, 'Unknown')
 

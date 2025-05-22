@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView, ManageUnlimitedAccessView, UserLoginWithVenueISPIdAPIView, CustomerDetailAPIView, CustomerDeleteAPIView, VenueByISPListView, CustomersByISPListView, CustomerByISPCreateView, CustomerByISPUpdateView, CustomerByISPDeleteView, CustomerByISPDetailView
+from .views import UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeListAPIView, ClientRangeListAPIView, UserUpdateAPIView, ActivateAccount, ResendActivationEmail, InviteUserView, SetPasswordView, PhoneRegisterView, ResendActivationCode, SelfDeleteAPIView, GetProfileAPIView, ISPManagementView, VenueISPListView, AdminCustomerListAPIView, CustomerManagementView, DirectISPCreateView, VenueSpecificISPListView, ManageUnlimitedAccessView, UserLoginWithVenueISPIdAPIView, CustomerDetailAPIView, CustomerDeleteAPIView, VenueByISPListView, CustomersByISPListView, CustomerByISPCreateView, CustomerByISPUpdateView, CustomerByISPDeleteView, CustomerByISPDetailView, ClientUserListAPIView
 
 urlpatterns = [
     path('register', UserAPIView.as_view(), name='auth_register'),
@@ -24,6 +24,10 @@ urlpatterns = [
     # path('invite', InviteUserView.as_view(), name='invite_user'),
     path('set_password/<token>', SetPasswordView.as_view(), name='accept_invite'),
     path('deleteaccount', SelfDeleteAPIView.as_view(), name='deactivate-acccount'),
+    
+    #clients
+     path('client-list/', ClientUserListAPIView.as_view(), name='client-user-list'),
+
     path('isp/manage/', ISPManagementView.as_view(), name='isp-management'),
     path('venue/isps/', VenueISPListView.as_view(), name='venue-isp-list'),
     path('admin/customers/', AdminCustomerListAPIView.as_view(),
@@ -53,3 +57,5 @@ urlpatterns = [
     path('isp/<int:isp_id>/customer/<int:customer_id>/delete/', CustomerByISPDeleteView.as_view(),
          name='customer-by-isp-delete'),
 ]
+
+print("*****************************")

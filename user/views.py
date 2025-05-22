@@ -592,7 +592,7 @@ class PhoneRegisterView(APIView):
 
         if serializer.is_valid():
             with transaction.atomic():
-                user = serializer.save()
+                user = serializer.save(usertype=4) #assigned role "client" to the appusers
                 serializer.is_activate = False
                 user.save()
 
@@ -736,6 +736,21 @@ class GetProfileAPIView(APIView):
         except Exception as e:
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ClientUserListAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        clients = User.objects.filter(usertype=4)
+        serializer = UserListSerializer(clients, many=True)
+        
+        return Response(
+            {
+            'status': True,
+            'data': serializer.data
+            }
+            , status=status.HTTP_200_OK
+        )
 
 class ISPManagementView(APIView):
     permission_classes = [IsAdmin]

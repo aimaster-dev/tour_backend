@@ -662,3 +662,44 @@ class CameraViewSetForISP(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(isp=self.request.user)
+
+
+class CamerasByCustomerAPIView(APIView):
+    def get(self, request, customer_id):
+        venue_id = request.query_params.get('venue_id')
+
+        try:
+            user = User.objects.get(pk=customer_id)
+        except User.DoesNotExist:
+            logger.warning(f"User with ID {customer_id} does not exist")
+            return Response({'status': False, 'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.usertype != 3:  # Ensure user is a customer
+            logger.warning(f"User ID {customer_id} is not a customer")
+            return Response({'status': False, 'error': 'Not a customer user'}, status=status.HTTP_403_FORBIDDEN)
+
+        logger.info(f"Customer user: fetching cameras for customer ID: {user.pk}")
+
+        if venue_id:
+            logger.info(f"Checking access to venue ID: {venue_id}")
+            try:
+                venue_id = int(venue_id)
+            except ValueError:
+                return Response({'status': False, 'error': 'Invalid venue_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if venue_id not in user.venue:
+                logger.warning(f"User ID {user.pk} attempted access to unauthorized venue {venue_id}")
+                return Response({'status': False, 'error': 'You do not have access to this venue'}, status=status.HTTP_403_FORBIDDEN)
+
+            venue = Venue.objects.filter(id=venue_id).first()
+            if not venue:
+                return Response({'status': False, 'error': 'Venue not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            cameras = Camera.objects.filter(venue=venue)
+        else:
+            venue_ids = user.venue
+            cameras = Camera.objects.filter(venue__id__in=venue_ids)
+
+        serializer = CameraSerializer(cameras, many=True)
+        logger.info(f"Found {len(serializer.data)} cameras for customer ID: {user.pk}")
+        return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)

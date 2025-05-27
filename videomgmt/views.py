@@ -594,7 +594,7 @@ class SnapShotAddAPIView(APIView):
         try:
             logging.info(
                 f"Starting email sending process for user {user.email}")
-            subject = 'Your Snapshots Have Been Created'
+            subject = 'Your Snapshot Have Been Created'
 
             # Prepare snapshot URLs
             snapshot_data = []

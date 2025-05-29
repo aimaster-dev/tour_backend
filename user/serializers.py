@@ -24,7 +24,7 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'password', 'phone_number',
-                  'venue', 'isp_id', 'usertype', 'status', 'venue',
+                  'venue', 'isp_id', 'usertype', 'status',
                   'level', 'is_activate', 'device_token')
         extra_kwargs = {'password': {'write_only': True}}
 

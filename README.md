@@ -48,3 +48,50 @@ This project automates the creation of personalized tour videos for tourists in 
 ```bash
 git clone https://github.com/yourusername/1880town-video-generator.git
 cd 1880town-video-generator
+````
+
+### 2. Backend Setup (Django)
+
+```bash
+cd backend
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+### 3. Frontend Setup (React)
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+### 4. Configure Environment Variables
+
+* SMTP/IMAP Credentials
+* Square API Keys
+* Reolink API Configs
+* Stable Diffusion Video API
+
+---
+
+## 📌 Notes
+
+* Ensure Reolink cameras are network-accessible.
+* FFMpeg must be installed and added to PATH.
+* PDF generation is triggered based on email content (animal interaction logic).
+
+---
+
+## 📜 License
+
+MIT License. See `LICENSE` file for details.
+
+---
+
+## 📖 Reference
+
+* Stable Diffusion API
+* Reolink API Docs
+* Square API Documentation

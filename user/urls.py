@@ -57,5 +57,3 @@ urlpatterns = [
     path('isp/<int:isp_id>/customer/<int:customer_id>/delete/', CustomerByISPDeleteView.as_view(),
          name='customer-by-isp-delete'),
 ]
-
-print("*****************************")

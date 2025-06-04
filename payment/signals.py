@@ -10,6 +10,7 @@ def reset_video_and_snapshot_limit(sender, instance, created, **kwargs):
         # Reset the video and snapshot limit for the user
         if instance.videoremain == 0:
             instance.videoremain = 20
+            instance.save()
         if instance.snapshotremain == 0:
             instance.snapshotremain = 20
-        instance.save()
+            instance.save()

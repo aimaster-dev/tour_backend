@@ -313,6 +313,7 @@ class CustomerByISPSerializer(serializers.ModelSerializer):
         # Set usertype to 3 (Customer)
         validated_data['usertype'] = 3
         validated_data['status'] = True  # Ensure status is True
+        validated_data['is_activate'] = True
         
         # Create user with password if provided
         if password:

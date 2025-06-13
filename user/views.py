@@ -647,6 +647,7 @@ class PhoneRegisterView(APIView):
             email_otp = EmailOTP.objects.get(otp=otp)
             user = email_otp.user
             user.is_activate = True
+            user.status = True
             user.save()
             email_otp.delete()
             return Response({"status": True, "data": "Your account has been successfully activated."}, status=status.HTTP_201_CREATED)

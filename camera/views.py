@@ -140,7 +140,7 @@ class CameraAPIView(APIView):
                     cameras = Camera.objects.filter(venue=venue, isp=user)
                 else:
                     cameras = Camera.objects.filter(isp=user)
-            elif user.usertype == 3:  # Customer
+            elif user.usertype == 3 or user.usertype == 4:  # Customer or client
                 logger.info(
                     f"Customer user: fetching cameras for customer: {user.pk}")
                 if venue_id:

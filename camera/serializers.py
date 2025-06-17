@@ -22,6 +22,20 @@ class CameraSerializer(serializers.ModelSerializer):
                 "rtsp_url": "A camera with this URL already exists."
             })
         return attrs
+    
+    def create(self, validated_data):
+        # If no venue is provided, fallback to user's venues
+        request = self.context.get('request')
+        if not validated_data.get('venue') and request:
+            user = request.user
+            if hasattr(user, 'venue') and user.venue:
+                # If user.venue is a single object
+                if isinstance(user.venue, int):  # or some other identifier
+                    validated_data['venue'] = user.venue
+                # If user.venue is a list or queryset
+                elif hasattr(user.venue, 'all') or isinstance(user.venue, list):
+                    validated_data['venue'] = user.venue[0]  # use first venue or handle multiple
+        return super().create(validated_data)
 
 
 class CameraUpdateSerializer(serializers.ModelSerializer):

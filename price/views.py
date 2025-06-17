@@ -17,7 +17,7 @@ class PriceAPIView(APIView):
 
     def post(self, request):
         user = request.user
-        if user.usertype == 2:
+        if user.usertype == 1 or user.usertype == 2:
             venue_id = request.data.get('venue')
             data = request.data.copy()
             data["venue"] = Venue.objects.get(id=venue_id).pk

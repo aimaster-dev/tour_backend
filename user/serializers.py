@@ -29,24 +29,13 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        venue_ids = validated_data.pop('venue')
-        isp_id = validated_data.pop('isp_id', None)
-
-        # Verify all venues exist
-        venues = [get_object_or_404(Venue, id=venue_id)
-                  for venue_id in venue_ids]
-
-        # Store the venue IDs as a list
-        validated_data['venue'] = venue_ids
-
-        if isp_id:
-            # Check if ISP is associated with at least one of the venues
-            isp = get_object_or_404(User, id=isp_id, usertype=2)
-            # You might need to adjust this validation based on how ISP-venue relationships work
-            validated_data['isp'] = isp.id
-
-        user = User.objects.create_user(**validated_data)
-        return user
+        request = self.context.get('request')
+        if request:
+            user = request.user
+            user_venues = getattr(user, 'venue', [])
+            if not validated_data.get('venue') and isinstance(user_venues, list) and user_venues:
+                validated_data['venue'] = user_venues[0]  # pick the first venue ID
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
         if 'venue' in validated_data:

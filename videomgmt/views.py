@@ -283,7 +283,7 @@ class VideoAddAPIView(APIView):
                     f"Created video record with ID: {video.id}, filename: {original_filename}")
 
                 # If user is type 3, handle subscription and payment logic
-                if request.user.usertype == 3:
+                if request.user.usertype in [3, 4]:
                     logging.info(
                         f"Processing payment for type 3 user: {request.user.username}")
 

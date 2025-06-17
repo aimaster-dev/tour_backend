@@ -92,7 +92,7 @@ class PriceGetAllAPIView(APIView):
             elif user.usertype == 2:
                 venue = Venue.objects.filter(isp=user.pk).first()
                 Prices = Price.objects.filter(venue=venue.pk)
-            elif user.usertype == 3:
+            elif user.usertype == 3 or user.usertype == 4:
                 venue_id = user.venue[0]
                 venue = Venue.objects.get(id=venue_id)
                 Prices = Price.objects.filter(venue=venue.pk)

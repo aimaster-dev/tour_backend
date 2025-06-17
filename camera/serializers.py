@@ -34,7 +34,11 @@ class CameraSerializer(serializers.ModelSerializer):
                     validated_data['venue'] = user.venue
                 # If user.venue is a list or queryset
                 elif hasattr(user.venue, 'all') or isinstance(user.venue, list):
-                    validated_data['venue'] = user.venue[0]  # use first venue or handle multiple
+                    try:
+                        venue = Venue.objects.get(id = user.venue[0])# use first venue or handle multiple
+                    except:
+                        venue = None
+                    validated_data['venue'] = venue
         return super().create(validated_data)
 
 

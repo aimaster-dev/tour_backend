@@ -1,4 +1,6 @@
 from datetime import timezone
+from django.db.models import Q
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -153,7 +155,10 @@ class CameraAPIView(APIView):
                 else:
                     # Get all cameras from customer's venues
                     venue_ids = user.venue
-                    cameras = Camera.objects.filter(venue__id__in=venue_ids)
+                    isp = user.isp
+                    cameras = Camera.objects.filter(
+                                Q(venue__id__in=venue_ids) | Q(isp=isp)
+                            )
             else:
                 logger.warning(f"Invalid user type: {user.usertype}")
                 return Response({'status': False, 'error': 'Invalid user type'},

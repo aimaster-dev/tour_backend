@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from user.permissions import IsAdmin, IsISP
+from user.permissions import IsAdmin, IsISP, IsAdminOrISP
 from .models import Price
 from django.shortcuts import get_object_or_404
 from .serializers import PriceSerializer
@@ -37,7 +37,7 @@ class PriceAPIView(APIView):
 
 class PriceUpdateAPIView(APIView):
 
-    permission_classes = [IsISP, IsAdmin]
+    permission_classes = [IsAdminOrISP]
 
     def post(self, request):
         id = request.data["id"]
@@ -55,7 +55,7 @@ class PriceUpdateAPIView(APIView):
 
 class PriceDeleteAPIView(APIView):
 
-    permission_classes = [IsISP, IsAdmin]
+    permission_classes = [IsAdminOrISP]
 
     def post(self, request):
         id = request.data.get('id')

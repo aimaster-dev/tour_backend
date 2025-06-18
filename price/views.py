@@ -84,11 +84,11 @@ class PriceGetAllAPIView(APIView):
             Prices = Price.objects.filter(venue=venue.pk)
         else:
             if user.usertype == 1:
-                venue = Venue.objects.all().first()
-                if venue is None:
+                venue_ids = Venue.objects.all().values_list('id')
+                if venue_ids is None:
                     return Response({'status': True, 'data': []}, status=status.HTTP_200_OK)
                 else:
-                    Prices = Price.objects.filter(venue=venue.pk)
+                    Prices = Price.objects.filter(venue__in=venue_ids)
             elif user.usertype == 2:
                 venue = Venue.objects.filter(isp=user.pk).first()
                 Prices = Price.objects.filter(venue=venue.pk)

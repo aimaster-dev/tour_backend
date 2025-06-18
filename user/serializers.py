@@ -118,7 +118,7 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
     venue_id = serializers.IntegerField(required=False)
-    isp_id = serializers.IntegerField(required=False)
+    isp_id = serializers.IntegerField(required=True)
 
     def validate(self, data):
         user = authenticate(email=data['email'], password=data['password'])

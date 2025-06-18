@@ -156,9 +156,7 @@ class CameraAPIView(APIView):
                     # Get all cameras from customer's venues
                     venue_ids = user.venue
                     isp = user.isp
-                    cameras = Camera.objects.filter(
-                                Q(venue__id__in=venue_ids) | Q(isp=isp)
-                            )
+                    cameras = Camera.objects.filter(isp=isp)
             else:
                 logger.warning(f"Invalid user type: {user.usertype}")
                 return Response({'status': False, 'error': 'Invalid user type'},

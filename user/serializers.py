@@ -163,9 +163,9 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
                     user_venue = user_venues[0]
 
                     if not isp.venue or user_venue not in isp.venue:
-                        raise serializers.ValidationError({
+                        raise serializers.ValidationError(
                             f"ISP {isp.id} is not associated with venue {user_venue}."
-                        })
+                        )
                     user.isp_id = isp.id
                     user.save()
                 except User.DoesNotExist:

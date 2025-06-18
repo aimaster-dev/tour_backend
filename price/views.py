@@ -37,7 +37,7 @@ class PriceAPIView(APIView):
 
 class PriceUpdateAPIView(APIView):
 
-    permission_classes = [IsISP]
+    permission_classes = [IsISP, IsAdmin]
 
     def post(self, request):
         id = request.data["id"]
@@ -55,7 +55,7 @@ class PriceUpdateAPIView(APIView):
 
 class PriceDeleteAPIView(APIView):
 
-    permission_classes = [IsISP]
+    permission_classes = [IsISP, IsAdmin]
 
     def post(self, request):
         id = request.data.get('id')

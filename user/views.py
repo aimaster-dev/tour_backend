@@ -303,7 +303,8 @@ class UserLoginWithVenueISPIdAPIView(APIView):
                                 return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                     else:
                         return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
-            return Response({"status": False, "data": {"msg": serializer.errors}}, status=status.HTTP_404_NOT_FOUND)
+            first_error = next(iter(serializer.errors.values()))[0]  # Get first error message string
+            return Response({"status": False, "data": {"msg": first_error}}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             print(e)
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)

@@ -257,7 +257,7 @@ class UserLoginWithVenueISPIdAPIView(APIView):
                     user = validated_data.pop('user')
                     if user.status == False:
                         return Response({"status": False, "data": {"msg": "Your account is deleted."}}, status=status.HTTP_403_FORBIDDEN)
-                    if user.usertype == 3:
+                    if user.usertype in [3, 4]:  # Assuming 3 is for clients and 4 for app users
                         if user.is_activate == False:
                             return Response({"status": False, "data": {"msg": "Please activate your account first.", "user_id": user.id}}, status=status.HTTP_406_NOT_ACCEPTABLE)
                         if venue == 0:

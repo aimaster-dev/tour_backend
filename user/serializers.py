@@ -138,7 +138,7 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
                 if data['venue_id'] not in user_venues:
                     raise serializers.ValidationError(
                         "Invalid venue for this ISP")
-        elif user.usertype == 3:  # Customer
+        elif user.usertype in [3,4]:  # Customer
             # Validate both venue and ISP
             if not user.venue and 'venue_id' not in data:
                 raise serializers.ValidationError("Venue selection required")
@@ -146,9 +146,9 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
                 raise serializers.ValidationError("ISP selection required")
 
             # For existing users without venue/ISP
-            if not user.venue and 'venue_id' in data:
+            if 'venue_id' in data:
                 user.venue = [data['venue_id']]
-            if not user.isp_id and 'isp_id' in data:
+            if 'isp_id' in data:
                 # Validate ISP belongs to venue
                 try:
                     user_venues = user.venue if isinstance(
@@ -157,9 +157,15 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
                         id=data['isp_id'],
                         usertype=2,
                         # Check if ISP's venue list contains user's venue
-                        venue__contains=[user_venues[0]],
                         status=True
                     )
+                    # Now check if the ISP’s venue list contains the user’s venue
+                    user_venue = user_venues[0]
+
+                    if not isp.venue or user_venue not in isp.venue:
+                        raise serializers.ValidationError({
+                            f"ISP {isp.id} is not associated with venue {user_venue}."
+                        })
                     user.isp_id = isp.id
                     user.save()
                 except User.DoesNotExist:

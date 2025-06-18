@@ -243,10 +243,9 @@ class UserLoginWithVenueISPIdAPIView(APIView):
 
     def post(self, request):
         try:
-            venue = request.data.get("venue")
+            venue = request.data.get("venue_id")
             device_token = request.data.get("device_token")
             login_data = request.data
-            login_data.get("venue_id", None)
             login_data.pop("device_token", None)
             serializer = UserLoginWithVenueISPIdSerializer(data=login_data)
             if serializer.is_valid():

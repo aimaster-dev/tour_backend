@@ -6,7 +6,7 @@ from .models import PaymentLogs
 @receiver(post_save, sender=PaymentLogs)
 def reset_video_and_snapshot_limit(sender, instance, created, **kwargs):
     
-    if not created and instance.user.user_type != 4:
+    if not created and instance.user.usertype != 4:
         # Reset the video and snapshot limit for the user
         if instance.videoremain == 0:
             instance.videoremain = 20

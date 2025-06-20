@@ -198,11 +198,21 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
+    isp = serializers.SerializerMethodField()
     class Meta:
         model = User
         exclude = ('password',)  # Exclude password from the serialized data
 
-
+    def get_isp(self, obj):
+        if obj.isp:
+            return {
+                'id': obj.isp.id,
+                'username': obj.isp.username,
+                'email': obj.isp.email,
+                'phone_number': obj.isp.phone_number,
+                'customer_name': obj.isp.customer_name  
+            }
+        return None
 class InvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invitation

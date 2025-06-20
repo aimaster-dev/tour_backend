@@ -25,7 +25,7 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'password', 'phone_number',
                   'venue', 'isp_id', 'usertype', 'status',
-                  'level', 'is_activate', 'device_token')
+                  'level', 'is_activate', 'device_token', 'customer_name')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

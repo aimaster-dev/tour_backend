@@ -53,6 +53,8 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
         instance.is_activate = validated_data.get(
             'is_activate', instance.is_activate)
         instance.status = validated_data.get('status', instance.status)
+        instance.customer_name = validated_data.get(
+            'customer_name', instance.customer_name)
 
         instance.save()
         return instance

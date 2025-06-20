@@ -96,5 +96,8 @@ class PriceGetAllAPIView(APIView):
                 venue_id = user.venue[0]
                 venue = Venue.objects.get(id=venue_id)
                 Prices = Price.objects.filter(venue=venue.pk)
+        
+        if Prices:
+            Prices = Prices.order_by('level')
         serializer = PriceSerializer(Prices, many=True)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)

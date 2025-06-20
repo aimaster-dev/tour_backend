@@ -43,7 +43,8 @@ class PublicISPSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'phone_number', 'venue', 'status']
+                  'phone_number', 'venue', 'status',
+                  'customer_name']
 
     def get_venue(self, obj):
         if not obj.venue:

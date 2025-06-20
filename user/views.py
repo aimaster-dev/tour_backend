@@ -825,6 +825,7 @@ class VenueISPListView(APIView):
                 'id': isp.id,
                 'name': isp.username,
                 'email': isp.email,
+                'customer_name': isp.customer_name,
                 'venue_name': venue_data
             }
             data.append(isp_data)

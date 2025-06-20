@@ -40,6 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name='customers',
         limit_choices_to={'usertype': 2}
     )
+    customer_name = models.CharField(max_length=150, null=True, blank=True)
     status = models.BooleanField(default=False)
     has_unlimited_access = models.BooleanField(default=False)
     level = models.IntegerField(default=0)

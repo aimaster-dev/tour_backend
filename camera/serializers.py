@@ -14,17 +14,28 @@ class CameraSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def validate(self, attrs):
-        if self.instance:
-            return attrs
-        # Validate RTSP URL uniqueness
-        rtsp_url = attrs.get('rtsp_url')
-        
-        # Get the request and user from the context
         request = self.context.get('request')
         user = request.user if request else None
-        
-        if Camera.objects.filter(rtsp_url=rtsp_url, isp=user).exists():
-            raise serializers.ValidationError("A camera with this URL already exists for this ISP.")
+        rtsp_url = attrs.get('rtsp_url')
+
+        if not rtsp_url or not user:
+            return attrs  # let DRF handle missing fields/user errors
+
+        # Create case
+        if not self.instance:
+            if Camera.objects.filter(rtsp_url=rtsp_url, isp=user).exists():
+                raise serializers.ValidationError({
+                    'rtsp_url': 'A camera with this RTSP URL already exists for your account.'
+                })
+        # Update case
+        else:
+            if Camera.objects.filter(
+                rtsp_url=rtsp_url, isp=user
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({
+                    'rtsp_url': 'Another camera with this RTSP URL already exists for your account.'
+                })
+
         return attrs
     
     def create(self, validated_data):
@@ -57,16 +68,27 @@ class CameraUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request = self.context.get('request')
         user = request.user if request else None
-
-        if self.instance:
-            return attrs
-
         rtsp_url = attrs.get('rtsp_url')
 
-        if Camera.objects.filter(rtsp_url=rtsp_url, isp=user).exists():
-            raise serializers.ValidationError("A camera with this URL already exists for this ISP.")
+        if not rtsp_url or not user:
+            return attrs  # let DRF handle missing fields/user errors
 
-        return super().validate(attrs)
+        # Create case
+        if not self.instance:
+            if Camera.objects.filter(rtsp_url=rtsp_url, isp=user).exists():
+                raise serializers.ValidationError({
+                    'rtsp_url': 'A camera with this RTSP URL already exists for your account.'
+                })
+        # Update case
+        else:
+            if Camera.objects.filter(
+                rtsp_url=rtsp_url, isp=user
+            ).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError({
+                    'rtsp_url': 'Another camera with this RTSP URL already exists for your account.'
+                })
+
+        return attrs
 
     def get_venue(self, obj):
         venue = obj.venue

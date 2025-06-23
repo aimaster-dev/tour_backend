@@ -16,11 +16,15 @@ class CameraSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if self.instance:
             return attrs
+        # Validate RTSP URL uniqueness
         rtsp_url = attrs.get('rtsp_url')
-        if Camera.objects.filter(rtsp_url=rtsp_url).exists():
-            raise serializers.ValidationError({
-                "rtsp_url": "A camera with this URL already exists."
-            })
+        
+        # Get the request and user from the context
+        request = self.context.get('request')
+        user = request.user if request else None
+        
+        if Camera.objects.filter(rtsp_url=rtsp_url, isp=user).exists():
+            raise serializers.ValidationError("A camera with this URL already exists for this ISP.")
         return attrs
     
     def create(self, validated_data):
@@ -51,12 +55,17 @@ class CameraUpdateSerializer(serializers.ModelSerializer):
                   'venue', 'created_at', 'updated_at']
 
     def validate(self, attrs):
+        request = self.context.get('request')
+        user = request.user if request else None
+
         if self.instance:
             return attrs
+
         rtsp_url = attrs.get('rtsp_url')
-        if Camera.objects.filter(rtsp_url=rtsp_url).exists():
-            raise serializers.ValidationError(
-                "A camera with this url already exists.")
+
+        if Camera.objects.filter(rtsp_url=rtsp_url, isp=user).exists():
+            raise serializers.ValidationError("A camera with this URL already exists for this ISP.")
+
         return super().validate(attrs)
 
     def get_venue(self, obj):

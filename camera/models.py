@@ -18,7 +18,8 @@ class Camera(models.Model):
         db_table = 'camera_tbl'
         constraints = [
             models.UniqueConstraint(
-                fields=['rtsp_url'], name='unique_rtsl_url')
+                fields=['rtsp_url', 'isp'], name='unique_rtsp_url_per_isp'
+            )
         ]
 
     def __str__(self):

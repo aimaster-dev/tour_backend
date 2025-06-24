@@ -22,7 +22,7 @@ class PriceListSerializer(serializers.ModelSerializer):
         fields = ["id", "price", "level", "title", "venue", "record_time", "record_limit",
                   "snapshot_limit", "created_at", "updated_at", "features", "product_id"]
 
-    def get_attribute(self, instance):
+    def get_venue(self, instance):
         return {
             "venue_id": instance.venue.id if instance.venue else None,
             "venue_name": instance.venue.name if instance.venue else None

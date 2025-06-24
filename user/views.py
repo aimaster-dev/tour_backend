@@ -1473,3 +1473,216 @@ class CustomerByISPDetailView(APIView):
                 "status": False,
                 "data": {"msg": str(e)}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ClientList(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        queryset = User.objects.filter(usertype=4)
+
+        # Serialize the customer data
+        serializer = UserListSerializer(queryset)
+
+        return Response({
+            "status": True,
+            "data": {
+                "clients": serializer.data
+            }
+        }, status=status.HTTP_200_OK)
+        
+
+class ClientManagementView(APIView):
+    permission_classes = [IsAdmin]
+    
+    def get(self, request, client_id):
+        """Retrieve a single Client by ID"""
+        try:
+            customer = User.objects.get(id=client_id, usertype=4)
+            serializer = UserListSerializer(customer)
+
+            return Response({
+                "status": True,
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": "Client not found."}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+    def put(self, request, client_id):
+        """Update existing Client"""
+        
+        if not client_id:
+            return Response({
+                "status": False,
+                "data": "User ID is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Ensure we're updating a client (usertype=4)
+            user = get_object_or_404(User, id=client_id, usertype=4)
+
+            # Store original data for comparison if needed
+            original_data = {
+                'venue': user.venue.copy() if user.venue else []
+            }
+
+            data = request.data.copy()
+
+            # Prevent changing usertype
+            if 'usertype' in data:
+                del data['usertype']
+
+            # Handle venue as a list of IDs
+            venue_ids = data.pop('venue', None)
+            if venue_ids:
+                # Check if venue_ids is already a list
+                if not isinstance(venue_ids, list):
+                    # Convert to list if it's a single ID
+                    venue_ids = [venue_ids]
+
+                # Verify all venues exist
+                venues_to_assign = []
+                for v_id in venue_ids:
+                    try:
+                        venue = get_object_or_404(Venue, id=v_id)
+                        venues_to_assign.append(v_id)
+                    except:
+                        return Response({
+                            "status": False,
+                            "data": f"Venue with ID {v_id} not found"
+                        }, status=status.HTTP_404_NOT_FOUND)
+
+                # Assign validated venue IDs to user
+                user.venue = venues_to_assign
+
+            # Handle ISP assignment if provided
+            isp_id = data.pop('isp_id', None)
+            if isp_id:
+                try:
+                    # Verify ISP exists and belongs to at least one of the user's venues
+                    # This logic may need adjustment based on your requirements
+                    isp = User.objects.get(id=isp_id, usertype=2)
+
+                    # Check if ISP has access to at least one of the user's venues
+                    if not any(v_id in isp.venue for v_id in user.venue):
+                        return Response({
+                            "status": False,
+                            "data": f"ISP with ID {isp_id} not associated with any of the customer's venues"
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                    user.isp_id = isp_id
+                except User.DoesNotExist:
+                    return Response({
+                        "status": False,
+                        "data": f"ISP with ID {isp_id} not found"
+                    }, status=status.HTTP_404_NOT_FOUND)
+
+            # Use transaction to ensure data integrity
+            with transaction.atomic():
+                serializer = UserRegUpdateSerializer(
+                    user, data=data, partial=True)
+
+                if serializer.is_valid():
+                    updated_user = serializer.save()
+
+                    # Format response data
+                    response_data = serializer.data.copy()
+
+                    # Add venue information to response
+                    if updated_user.venue:
+                        # Handle venue as a list
+                        venue_details = []
+                        for venue_id in updated_user.venue:
+                            try:
+                                place = Venue.objects.get(id=venue_id)
+                                venue_details.append({
+                                    'id': venue_id,
+                                    'place_name': place.venue_name
+                                })
+                            except Venue.DoesNotExist:
+                                venue_details.append({
+                                    'id': venue_id,
+                                    'place_name': 'Not found'
+                                })
+
+                        response_data['venue'] = venue_details
+
+                    return Response({
+                        "status": True,
+                        "data": response_data
+                    }, status=status.HTTP_200_OK)
+
+                return Response({
+                    "status": False,
+                    "data": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": "Client not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    def delete(self, request, client_id):
+        """Delete a client by ID"""
+        try:
+            client = User.objects.get(id=client_id, usertype=4)
+            client.delete()
+            return Response({
+                "status": True,
+                "data": {"msg": "Client successfully deleted."}
+            }, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": "Client not found."}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+class ClientTestUserView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, client_id):
+        """Create a new client test user"""
+        if not client_id:
+            return Response({
+                "status": False,
+                "data": "User ID is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+
+        client = User.objests.get(id=client_id, usertype=4)
+        if client.has_unlimited_access:
+            # If the client already has unlimited access, return back to no access
+            
+            client.has_unlimited_access = False
+            client.save()
+            return Response({
+                "status": True,
+                "data": "Client's unlimited access has been revoked"
+            }, status=status.HTTP_200_OK)
+        else:
+           client.has_unlimited_access = True
+           client.save()    
+           return Response({
+                "status": True,
+                "data": "Client's unlimited access has been granted"
+            }, status=status.HTTP_200_OK)

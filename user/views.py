@@ -1660,7 +1660,7 @@ class ClientManagementView(APIView):
 class ClientTestUserView(APIView):
     permission_classes = [IsAdmin]
 
-    def Patch(self, request, client_id):
+    def patch(self, request, client_id):
         """Create a new client test user"""
         if not client_id:
             return Response({

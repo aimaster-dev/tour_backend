@@ -38,7 +38,7 @@ urlpatterns = [
      path('client-list/', ClientUserListAPIView.as_view(), name='client-user-list'),
      path('client/manage/<int:client_id>', ClientManagementView.as_view(),
                name='client-management'),
-     path('client/test-user/', ClientTestUserView.as_view(), name='client-test-user'),
+     path('client/test-user/<int:client_id>', ClientTestUserView.as_view(), name='client-test-user'),
 
      path('isp/manage/', ISPManagementView.as_view(), name='isp-management'),
      path('venue/isps/', VenueISPListView.as_view(), name='venue-isp-list'),

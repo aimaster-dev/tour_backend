@@ -14,3 +14,16 @@ class PriceSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+    
+class PriceListSerializer(serializers.ModelSerializer):
+    venue = serializers.SerializerMethodField()
+    class Meta:
+        model = Price
+        fields = ["id", "price", "level", "title", "venue", "record_time", "record_limit",
+                  "snapshot_limit", "created_at", "updated_at", "features", "product_id"]
+
+    def get_attribute(self, instance):
+        return {
+            "venue_id": instance.venue.id if instance.venue else None,
+            "venue_name": instance.venue.name if instance.venue else None
+        }

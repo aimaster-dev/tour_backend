@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from user.permissions import IsAdmin, IsISP, IsAdminOrISP
 from .models import Price
 from django.shortcuts import get_object_or_404
-from .serializers import PriceSerializer
+from .serializers import PriceSerializer, PriceListSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from tourplace.models import Venue
@@ -99,5 +99,5 @@ class PriceGetAllAPIView(APIView):
         
         if Prices:
             Prices = Prices.order_by('level')
-        serializer = PriceSerializer(Prices, many=True)
+        serializer = PriceListSerializer(Prices, many=True)
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)

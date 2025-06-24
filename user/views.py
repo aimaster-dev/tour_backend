@@ -1660,7 +1660,7 @@ class ClientManagementView(APIView):
 class ClientTestUserView(APIView):
     permission_classes = [IsAdmin]
 
-    def post(self, request, client_id):
+    def Patch(self, request, client_id):
         """Create a new client test user"""
         if not client_id:
             return Response({
@@ -1669,7 +1669,7 @@ class ClientTestUserView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
             
 
-        client = User.objests.get(id=client_id, usertype=4)
+        client = User.objects.get(id=client_id, usertype=4)
         if client.has_unlimited_access:
             # If the client already has unlimited access, return back to no access
             

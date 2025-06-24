@@ -25,5 +25,5 @@ class PriceListSerializer(serializers.ModelSerializer):
     def get_venue(self, instance):
         return {
             "venue_id": instance.venue.id if instance.venue else None,
-            "venue_name": instance.venue.name if instance.venue else None
+            "venue_name": instance.venue.venue_name if instance.venue else None
         }

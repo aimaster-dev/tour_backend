@@ -20,7 +20,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('usertype', 'venue', 'isp', 'level')
         }),
         ('Status', {
-            'fields': ('status', 'is_activate', 'is_invited')
+            'fields': ('status', 'is_activate', 'is_invited', 'has_unlimited_access')
         }),
         ('System Fields', {
             'fields': ('is_staff', 'is_superuser', 'device_token'),

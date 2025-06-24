@@ -66,7 +66,8 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'phone_number', 'usertype',
-                  'status', 'venue', 'level', 'is_activate', 'device_token']
+                  'status', 'venue', 'level', 'is_activate', 'device_token',
+                  'has_unlimited_access']
         read_only_fields = fields
 
     def get_venue(self, obj):

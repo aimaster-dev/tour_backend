@@ -1686,3 +1686,54 @@ class ClientTestUserView(APIView):
                 "status": True,
                 "data": "Client's unlimited access has been granted"
             }, status=status.HTTP_200_OK)
+           
+
+class ClientsByISPListView(APIView):
+    permission_classes = [IsAdminOrISP]
+
+    def get(self, request, isp_id):
+        try:
+            # First verify the ISP exists and is active
+            isp = get_object_or_404(User, id=isp_id, usertype=2, status=True)
+
+            # Get all customers associated with this ISP
+            clients = User.objects.filter(
+                isp=isp_id, usertype=4, status=True).order_by('-created_at')
+
+            # Get query parameters for filtering
+            search_term = request.query_params.get('search')
+            status_filter = request.query_params.get('status')
+
+            # Apply filters
+            if search_term:
+                clients = clients.filter(
+                    Q(username__icontains=search_term) |
+                    Q(email__icontains=search_term) |
+                    Q(phone_number__icontains=search_term)
+                )
+
+            # Only override default status=True if explicitly set to false
+            if status_filter and status_filter.lower() == 'false':
+                clients = clients.filter(status=False)
+
+            # Serialize the data
+            serializer = UserListSerializer(clients, many=True)
+
+            return Response({
+                "status": True,
+                "data": {
+                    "total_clients": clients.count(),
+                    "clients": serializer.data
+                }
+            }, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": f"ISP with ID {isp_id} not found or inactive"}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

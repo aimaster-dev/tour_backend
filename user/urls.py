@@ -8,7 +8,7 @@ from .views import (UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeLi
                     CustomerDetailAPIView, CustomerDeleteAPIView, VenueByISPListView, CustomersByISPListView,
                     CustomerByISPCreateView, CustomerByISPUpdateView, CustomerByISPDeleteView,
                     CustomerByISPDetailView, ClientUserListAPIView, ClientManagementView,
-                    ClientTestUserView)
+                    ClientTestUserView, ClientsByISPListView)
 
 urlpatterns = [
      path('register', UserAPIView.as_view(), name='auth_register'),
@@ -39,6 +39,8 @@ urlpatterns = [
      path('client/manage/<int:client_id>', ClientManagementView.as_view(),
                name='client-management'),
      path('client/test-user/<int:client_id>', ClientTestUserView.as_view(), name='client-test-user'),
+     path('isp/<int:isp_id>/clients/', ClientsByISPListView.as_view(),
+          name='clients-by-isp-list'),
 
      path('isp/manage/', ISPManagementView.as_view(), name='isp-management'),
      path('venue/isps/', VenueISPListView.as_view(), name='venue-isp-list'),

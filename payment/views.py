@@ -2,7 +2,7 @@ from user.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from user.permissions import IsClient, IsAdmin
+from user.permissions import IsClient, IsAdmin, IsISP
 from django.core.files.storage import default_storage
 from rest_framework.parsers import MultiPartParser, FormParser
 from square.client import Client
@@ -688,6 +688,7 @@ class AdminTransactionListAPIView(APIView):
             from_date = request.query_params.get('from_date')
             to_date = request.query_params.get('to_date')
             status_filter = request.query_params.get('status')
+            isp_filter = request.query_params.get('isp')
             search_term = request.query_params.get(
                 'search')  # For searching username/email
 
@@ -719,6 +720,11 @@ class AdminTransactionListAPIView(APIView):
             if status_filter:
                 transactions = transactions.filter(
                     status=status_filter.upper())
+                
+            if isp_filter:
+                transactions = transactions.filter(
+                    isp__username__icontains=isp_filter
+                )
 
             if search_term:
                 transactions = transactions.filter(
@@ -737,7 +743,8 @@ class AdminTransactionListAPIView(APIView):
                     "user_details": {
                         "username": user.username,
                         "email": user.email,
-                        "phone_number": user.phone_number
+                        "phone_number": user.phone_number,
+                        "isp": user.isp.username if user.isp else "N/A"
                     },
                     "amount": transaction.amount,
                     "status": transaction.status,
@@ -868,6 +875,104 @@ class UserTransactionsAPIView(APIView):
                     transaction_data.append(transaction_info)
                 except (Price.DoesNotExist, Venue.DoesNotExist):
                     continue
+
+            return Response({
+                "status": True,
+                "data": {
+                    "total_transactions": len(transaction_data),
+                    "transactions": transaction_data
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ISPTransactionListAPIView(APIView):
+    permission_classes = [IsISP]  # Ensure only ISP users can access
+
+    def get(self, request):
+        try:
+            # Get query parameters for filtering
+            from_date = request.query_params.get('from_date')
+            to_date = request.query_params.get('to_date')
+            status_filter = request.query_params.get('status')
+            search_term = request.query_params.get('search')  # username/email
+
+            # Get all users under this ISP
+            users_under_isp = User.objects.filter(isp=request.user)
+
+            # Base query: transactions from users under this ISP
+            transactions = PaymentLogs.objects.filter(user__in=users_under_isp).order_by('-created_at')
+
+            # Apply filters
+            if from_date:
+                try:
+                    from_date = datetime.strptime(from_date, '%Y-%m-%d')
+                    transactions = transactions.filter(created_at__gte=from_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid from_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            if to_date:
+                try:
+                    to_date = datetime.strptime(to_date, '%Y-%m-%d')
+                    transactions = transactions.filter(created_at__lte=to_date)
+                except ValueError:
+                    return Response({
+                        "status": False,
+                        "message": "Invalid to_date format. Use YYYY-MM-DD"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            if status_filter:
+                transactions = transactions.filter(status=status_filter.upper())
+
+            if search_term:
+                transactions = transactions.filter(
+                    Q(user__username__icontains=search_term) |
+                    Q(user__email__icontains=search_term)
+                )
+
+            # Prepare response data
+            transaction_data = []
+            for transaction in transactions:
+                user = transaction.user
+
+                transaction_info = {
+                    "transaction_id": transaction.transaction_id,
+                    "plan_name": transaction.price.title if transaction.price else "Free Trial",
+                    "user_details": {
+                        "username": user.username,
+                        "email": user.email,
+                        "phone_number": user.phone_number,
+                        "isp": user.isp.username if user.isp else "N/A"
+                    },
+                    "amount": transaction.amount,
+                    "status": transaction.status,
+                    "created_at": transaction.created_at,
+                    "updated_at": transaction.updated_at,
+                    "remaining_credits": {
+                        "video": transaction.videoremain,
+                        "snapshot": transaction.snapshotremain
+                    }
+                }
+
+                # Add venue info if available
+                if transaction.price and hasattr(transaction.price, 'venue') and transaction.price.venue:
+                    try:
+                        venue = Venue.objects.get(id=transaction.price.venue.pk)
+                        transaction_info["venue"] = venue.venue_name
+                    except Venue.DoesNotExist:
+                        transaction_info["venue"] = "Venue not found"
+                else:
+                    transaction_info["venue"] = "N/A"
+
+                transaction_data.append(transaction_info)
 
             return Response({
                 "status": True,

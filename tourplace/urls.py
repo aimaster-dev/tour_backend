@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (VenueAPIView, VenueDetailAPIView,
                     PublicVenueListAPIView, PublicVenueDetailAPIView, PublicISPDetailAPIView,
                     VenueGetAllAPIView, VenueUpdateAPIView, VenueDeleteAPIView,
-                    VenueGetAllForISPAPIView, VenueGetAllForCamAPIView)
+                    VenueGetAllForISPAPIView, VenueGetAllForCamAPIView,
+                    VenueTestView)
 
 urlpatterns = [
     path('add', VenueAPIView.as_view(), name='venue_add'),
@@ -25,4 +26,7 @@ urlpatterns = [
          PublicVenueDetailAPIView.as_view(), name='public-venue-detail'),
     path('isps/public/<int:isp_id>/',
          PublicISPDetailAPIView.as_view(), name='public-isp-detail'),
+    
+     path('test-venue/<int:venue_id>', VenueTestView.as_view(), name='venue-test'),
+
 ]

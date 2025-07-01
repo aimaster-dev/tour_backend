@@ -20,14 +20,14 @@ class VenueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Venue
         fields = ["id", "venue_name", "status",
-                  "isp", "created_at", "updated_at"]
+                  "isp", "created_at", "updated_at", "is_test"]
 
     def update(self, instance, validated_data):
         instance.venue_name = validated_data.get(
             'venue_name', instance.venue_name)
         instance.status = validated_data.get('status', instance.status)
         instance.isp = validated_data.get('isp', instance.isp)
-        instance.save()
+        instance.save()     
         return instance
 
 

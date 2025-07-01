@@ -288,7 +288,7 @@ class VideoAddAPIView(APIView):
                         f"Processing payment for type 3 user: {request.user.username}")
 
                     # Check if user has unlimited access
-                    if request.user.has_free_recording_access():
+                    if request.user.has_free_recording_access() or venue.is_test:
                         logging.info(
                             f"User {request.user.username} has unlimited access - no decrement needed")
                     else:
@@ -636,7 +636,15 @@ class SnapShotAddAPIView(APIView):
 
             venue_id = client.venue[0]
             logging.info(f"Processing snapshots for venue ID: {venue_id}")
-
+            
+            try:
+                venue = Venue.objects.get(id=venue_id)
+                logging.info(
+                    f"Found venue: {venue.venue_name} (ID: {venue.id})")
+            except Venue.DoesNotExist:
+                logging.error(f"Venue not found with ID: {venue_id}")
+                venue = None
+                
             images = request.FILES.getlist('image_path')
             if not images:
                 logging.warning(
@@ -646,7 +654,7 @@ class SnapShotAddAPIView(APIView):
             logging.info(f"Received {len(images)} images for processing")
 
             # Check if user has unlimited access
-            if not client.has_free_recording_access():
+            if not client.has_free_recording_access() or (venue and not venue.is_test):
                 logging.info(
                     f"Checking snapshot limits for user {client.username}")
                 # Check the user's remaining snapshot count
@@ -672,7 +680,7 @@ class SnapShotAddAPIView(APIView):
             logging.info("Snapshot records created successfully")
 
             # Decrement the snapshot count only if user doesn't have unlimited access
-            if not client.has_free_recording_access():
+            if not client.has_free_recording_access() or (venue and not venue.is_test):
                 payment_log.snapshotremain -= len(images)
                 payment_log.save()
                 remaining_snapshots = payment_log.snapshotremain

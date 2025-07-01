@@ -1737,34 +1737,3 @@ class ClientsByISPListView(APIView):
                 "status": False,
                 "data": {"msg": str(e)}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-            
-class VenueTestView(APIView):
-    permission_classes = [IsAdmin]
-
-    def patch(self, request, venue_id=None):
-        """Create a venue test venue"""
-        if not venue_id:
-            return Response({
-                "status": False,
-                "data": "Venue ID is required"
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-
-        venue = Venue.objects.get(id=venue_id)
-        if venue.is_test:
-            # If the venue already has is_test, return back to no access
-            
-            venue.is_test = False
-            venue.save()
-            return Response({
-                "status": True,
-                "data": "Venue's test access has been revoked"
-            }, status=status.HTTP_200_OK)
-        else:
-           venue.is_test = True
-           venue.save()    
-           return Response({
-                "status": True,
-                "data": "Venue's test access has been granted"
-            }, status=status.HTTP_200_OK)

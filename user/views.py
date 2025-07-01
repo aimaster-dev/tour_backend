@@ -1145,7 +1145,7 @@ class VenueSpecificISPListView(APIView):
     def get(self, request, venue_id):
         try:
             # First verify the venue exists and is active
-            venue = get_object_or_404(Venue, id=venue_id, status=True)
+            venue = get_object_or_404(Venue, id=venue_id)
 
             # Modified query: filter users who have this venue_id in their venue list
             # Using contains lookup for JSONField that stores a list of venue IDs

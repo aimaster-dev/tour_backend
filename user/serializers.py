@@ -96,7 +96,7 @@ class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
     venue = serializers.IntegerField(required=False)
-    isp = serializers.IntegerField(required=True)
+    isp = serializers.IntegerField(required=False)
 
     def validate(self, data):
         user = authenticate(email=data['email'], password=data['password'])
@@ -110,13 +110,14 @@ class UserLoginSerializer(serializers.Serializer):
             pass
         elif user.usertype == 2:  # ISP
             # Only validate venue
-            if 'venue' in data:
-                # Check if venue is in user's venues list
-                user_venues = user.venue if isinstance(
-                    user.venue, list) else [user.venue]
-                if data['venue'] not in user_venues:
-                    raise serializers.ValidationError(
-                        "Invalid venue for this ISP")
+            # if 'venue' in data:
+            #     # Check if venue is in user's venues list
+            #     user_venues = user.venue if isinstance(
+            #         user.venue, list) else [user.venue]
+            #     if data['venue'] not in user_venues:
+            #         raise serializers.ValidationError(
+            #             "Invalid venue for this ISP")
+            pass
         elif user.usertype in [3,4]:  # Customer
             # Validate both venue and ISP
             if not user.venue and 'venue' not in data:

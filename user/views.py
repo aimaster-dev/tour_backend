@@ -183,6 +183,8 @@ class UserLoginAPIView(APIView):
                     return Response({"status": False, "data": {"msg": "Please wait until admin allows you"}}, status=status.HTTP_423_LOCKED)
                 else:
                     user = validated_data.pop('user')
+                    if user.usertype not in [1,2,3]:
+                        return Response({"status": False, "data": {"msg": "You are not allowed to login in admin panel."}}, status=status.HTTP_403_FORBIDDEN)
                     if user.status == False:
                         return Response({"status": False, "data": {"msg": "Your account is deleted."}}, status=status.HTTP_403_FORBIDDEN)
                     if user.usertype == 3:

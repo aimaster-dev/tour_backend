@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (PaymentAPIView, ValidStatusAPIView, VideoSnapshotCountAPIView,
                     PaymentDetailsAPIView, InAppPurchaseAPIView, AdminTransactionListAPIView,
-                    UserTransactionsAPIView, ISPTransactionListAPIView)
+                    UserTransactionsAPIView, ISPTransactionListAPIView, CustomerClientTransactionListAPIView)
 
 urlpatterns = [
      path('pay', PaymentAPIView.as_view(), name='process_payment'),
@@ -18,5 +18,6 @@ urlpatterns = [
      path('user/<int:user_id>/transactions', UserTransactionsAPIView.as_view(),
           name='user_transactions'),
      path('isp/transactions/', ISPTransactionListAPIView.as_view(), name='isp-transactions'),
+     path('customer/transactions/', CustomerClientTransactionListAPIView.as_view(), name='customer-transactions'),
 
 ]

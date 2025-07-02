@@ -8,7 +8,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .models import User, Invitation, EmailOTP
 from tourplace.models import Venue
-from .permissions import IsAdmin, IsAdminOrISP
+from .permissions import IsAdmin, IsAdminOrISP, IsClient
 from .tokens import account_activation_token
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
@@ -174,9 +174,9 @@ class UserLoginAPIView(APIView):
             venue = request.data.get("venue")
             device_token = request.data.get("device_token")
             login_data = request.data
-            login_data.pop("venue", None)
+            # login_data.pop("venue", None)
             login_data.pop("device_token", None)
-            serializer = UserLoginSerializer(data=login_data)
+            serializer = UserLoginWithVenueISPIdSerializer(data=login_data)
             if serializer.is_valid():
                 validated_data = serializer.validated_data
                 if validated_data['status'] == False and validated_data['usertype'] == 2:
@@ -1731,6 +1731,63 @@ class ClientsByISPListView(APIView):
             return Response({
                 "status": False,
                 "data": {"msg": f"ISP with ID {isp_id} not found or inactive"}
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": {"msg": str(e)}
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+
+class ClientsByCustomerListView(APIView):
+    permission_classes = [IsClient]
+
+    def get(self, request, customer_id):
+        try:
+            # First verify the customer exists and is active
+            customer = get_object_or_404(User, id=customer_id, usertype=3, status=True)
+
+            if customer and customer.isp:
+                # Get all customers associated with this ISP
+                clients = User.objects.filter(
+                    isp= customer.isp, usertype=4, status=True).order_by('-created_at')
+
+                # Get query parameters for filtering
+                search_term = request.query_params.get('search')
+                status_filter = request.query_params.get('status')
+
+                # Apply filters
+                if search_term:
+                    clients = clients.filter(
+                        Q(username__icontains=search_term) |
+                        Q(email__icontains=search_term) |
+                        Q(phone_number__icontains=search_term)
+                    )
+
+                # Only override default status=True if explicitly set to false
+                if status_filter and status_filter.lower() == 'false':
+                    clients = clients.filter(status=False)
+
+                # Serialize the data
+                serializer = UserListSerializer(clients, many=True)
+
+                return Response({
+                    "status": True,
+                    "data": {
+                        "total_clients": clients.count(),
+                        "clients": serializer.data
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "status": False,
+                    "data": {"msg": f"Customer with ID {customer_id} does not have an associated ISP or is inactive"}
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": {"msg": f"Customer with ID {customer_id} not found or inactive"}
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({

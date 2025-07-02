@@ -174,9 +174,9 @@ class UserLoginAPIView(APIView):
             venue = request.data.get("venue")
             device_token = request.data.get("device_token")
             login_data = request.data
-            login_data.pop("venue", None)
+            # login_data.pop("venue", None)
             login_data.pop("device_token", None)
-            serializer = UserLoginSerializer(data=login_data)
+            serializer = UserLoginWithVenueISPIdSerializer(data=login_data)
             if serializer.is_valid():
                 validated_data = serializer.validated_data
                 if validated_data['status'] == False and validated_data['usertype'] == 2:

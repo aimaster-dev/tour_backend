@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import ListAPIView
-from .serializers import UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer, ISPCreateSerializer, UserLoginWithVenueISPIdSerializer, CustomerByISPSerializer
+from .serializers import ClientListSerializer, UserRegUpdateSerializer, UserListSerializer, UserLoginSerializer, UserDetailSerializer, ISPCreateSerializer, UserLoginWithVenueISPIdSerializer, CustomerByISPSerializer
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from .models import User, Invitation, EmailOTP
@@ -1719,7 +1719,7 @@ class ClientsByISPListView(APIView):
                 clients = clients.filter(status=False)
 
             # Serialize the data
-            serializer = UserListSerializer(clients, many=True)
+            serializer = ClientListSerializer(clients, many=True)
 
             return Response({
                 "status": True,
@@ -1771,7 +1771,7 @@ class ClientsByCustomerListView(APIView):
                     clients = clients.filter(status=False)
 
                 # Serialize the data
-                serializer = UserListSerializer(clients, many=True)
+                serializer = ClientListSerializer(clients, many=True)
 
                 return Response({
                     "status": True,

@@ -368,7 +368,8 @@ class VideoSnapshotCountAPIView(APIView):
                     "video_remaining": total_video_remaining,
                     "snapshot_remaining": total_snapshot_remaining,
                     "is_free_plan": not latest_payment,  # True if no valid paid plan exists
-                    "record_time": active_plan.price.record_time if active_plan and active_plan.price else 10
+                    "record_time": active_plan.price.record_time if active_plan and active_plan.price else 10,
+                    "has_unlimited_access": user.has_unlimited_access
                 }
             }
 

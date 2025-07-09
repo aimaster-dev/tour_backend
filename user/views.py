@@ -750,7 +750,7 @@ class ClientUserListAPIView(APIView):
         return Response(
             {
             'status': True,
-            'data': serializer.data
+            'data': {"clients":serializer.data}
             }
             , status=status.HTTP_200_OK
         )

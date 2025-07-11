@@ -2413,3 +2413,350 @@ Error opening input files: Invalid data found when processing input
 2024-12-24 16:16:19,211 - INFO - Finalizing...
 2024-12-24 16:16:19,212 - INFO - Cleaning up temporary files...
 2024-12-24 16:16:19,217 - INFO - Finalizing Cleaning...
+2025-07-11 17:05:09,259 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:05:09,261 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:05:09,262 - INFO - Loading Firebase credentials...
+2025-07-11 17:05:09,333 - INFO - Credentials loaded successfully
+2025-07-11 17:05:09,335 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:05:09,337 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:05:09,339 - INFO - Firebase initialization completed successfully
+2025-07-11 17:05:24,399 - INFO - "GET /admin HTTP/1.1" 301 0
+2025-07-11 17:05:24,490 - INFO - "GET /admin/ HTTP/1.1" 302 0
+2025-07-11 17:05:24,795 - INFO - "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4155
+2025-07-11 17:05:25,338 - INFO - "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2682
+2025-07-11 17:05:25,371 - INFO - "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+2025-07-11 17:05:25,389 - INFO - "GET /static/admin/css/login.css HTTP/1.1" 200 958
+2025-07-11 17:05:25,403 - INFO - "GET /static/admin/css/base.css HTTP/1.1" 200 21544
+2025-07-11 17:05:25,431 - INFO - "GET /static/admin/css/responsive.css HTTP/1.1" 200 17905
+2025-07-11 17:05:25,548 - INFO - "GET /static/admin/js/theme.js HTTP/1.1" 200 1943
+2025-07-11 17:05:25,591 - INFO - "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+2025-07-11 17:05:25,699 - WARNING - "GET /favicon.ico HTTP/1.1" 404 3050
+2025-07-11 17:05:30,944 - ERROR - "POST /admin/login/?next=/admin/ HTTP/1.1" 500 259795
+2025-07-11 17:05:44,678 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:05:44,679 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:05:44,680 - INFO - Loading Firebase credentials...
+2025-07-11 17:05:44,759 - INFO - Credentials loaded successfully
+2025-07-11 17:05:44,760 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:05:44,761 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:05:44,762 - INFO - Firebase initialization completed successfully
+2025-07-11 17:05:54,015 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:05:54,016 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:05:54,017 - INFO - Loading Firebase credentials...
+2025-07-11 17:05:54,087 - INFO - Credentials loaded successfully
+2025-07-11 17:05:54,088 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:05:54,089 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:05:54,090 - INFO - Firebase initialization completed successfully
+2025-07-11 17:06:01,056 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:06:01,058 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:06:01,059 - INFO - Loading Firebase credentials...
+2025-07-11 17:06:01,135 - INFO - Credentials loaded successfully
+2025-07-11 17:06:01,136 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:06:01,137 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:06:01,138 - INFO - Firebase initialization completed successfully
+2025-07-11 17:06:05,904 - INFO - "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4155
+2025-07-11 17:06:10,613 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4323
+2025-07-11 17:06:13,157 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4323
+2025-07-11 17:06:24,524 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:06:24,526 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:06:24,528 - INFO - Loading Firebase credentials...
+2025-07-11 17:06:24,592 - INFO - Credentials loaded successfully
+2025-07-11 17:06:24,593 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:06:24,594 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:06:24,595 - INFO - Firebase initialization completed successfully
+2025-07-11 17:06:42,306 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:06:42,308 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:06:42,309 - INFO - Loading Firebase credentials...
+2025-07-11 17:06:42,380 - INFO - Credentials loaded successfully
+2025-07-11 17:06:42,382 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:06:42,384 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:06:42,384 - INFO - Firebase initialization completed successfully
+2025-07-11 17:06:45,556 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+2025-07-11 17:06:46,181 - INFO - "GET /admin/ HTTP/1.1" 200 14901
+2025-07-11 17:06:46,500 - INFO - "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+2025-07-11 17:06:46,530 - INFO - "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+2025-07-11 17:06:46,531 - INFO - "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+2025-07-11 17:06:53,862 - INFO - "GET /admin/videomgmt/video/ HTTP/1.1" 200 14120
+2025-07-11 17:06:53,942 - INFO - "GET /static/admin/css/changelists.css HTTP/1.1" 200 6811
+2025-07-11 17:06:53,990 - INFO - "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+2025-07-11 17:06:54,026 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:06:54,073 - INFO - "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9042
+2025-07-11 17:06:54,099 - INFO - "GET /static/admin/js/actions.js HTTP/1.1" 200 8067
+2025-07-11 17:06:54,110 - INFO - "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+2025-07-11 17:06:54,142 - INFO - "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+2025-07-11 17:06:54,158 - INFO - "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+2025-07-11 17:06:54,207 - INFO - "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+2025-07-11 17:06:54,270 - INFO - "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+2025-07-11 17:06:54,395 - INFO - "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+2025-07-11 17:06:54,466 - INFO - "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+2025-07-11 17:07:08,092 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 19495
+2025-07-11 17:07:08,147 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:07:08,170 - INFO - "GET /static/admin/img/icon-no.svg HTTP/1.1" 200 560
+2025-07-11 17:07:08,171 - INFO - "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+2025-07-11 17:07:08,239 - INFO - "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+2025-07-11 17:07:08,243 - INFO - "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+2025-07-11 17:07:10,046 - INFO - "GET /admin/user/user/add/ HTTP/1.1" 200 17036
+2025-07-11 17:07:10,117 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:07:10,117 - INFO - "GET /static/admin/css/forms.css HTTP/1.1" 200 9090
+2025-07-11 17:07:10,142 - INFO - "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+2025-07-11 17:07:10,153 - INFO - "GET /static/admin/css/widgets.css HTTP/1.1" 200 11800
+2025-07-11 17:07:10,199 - INFO - "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+2025-07-11 17:07:24,882 - INFO - "POST /admin/user/user/add/ HTTP/1.1" 200 17234
+2025-07-11 17:07:24,946 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:07:34,018 - INFO - "POST /admin/user/user/add/ HTTP/1.1" 200 17434
+2025-07-11 17:07:34,073 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:07:45,260 - INFO - "POST /admin/user/user/add/ HTTP/1.1" 200 17293
+2025-07-11 17:07:45,319 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:07:58,305 - INFO - "POST /admin/user/user/add/ HTTP/1.1" 302 0
+2025-07-11 17:07:58,471 - INFO - "GET /admin/user/user/2/change/ HTTP/1.1" 200 26878
+2025-07-11 17:07:58,523 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:07:58,551 - INFO - "GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 200 392
+2025-07-11 17:07:58,561 - INFO - "GET /static/admin/js/collapse.js HTTP/1.1" 200 1803
+2025-07-11 17:07:58,626 - INFO - "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+2025-07-11 17:08:23,731 - INFO - "POST /admin/user/user/2/change/ HTTP/1.1" 200 26940
+2025-07-11 17:08:23,785 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:08:28,898 - INFO - "POST /admin/user/user/2/change/ HTTP/1.1" 302 0
+2025-07-11 17:08:28,977 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 20552
+2025-07-11 17:08:29,046 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:08:41,686 - INFO - "GET /admin/user/user/add/ HTTP/1.1" 200 17036
+2025-07-11 17:08:41,737 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:08:54,238 - INFO - "POST /admin/user/user/add/ HTTP/1.1" 302 0
+2025-07-11 17:08:54,311 - INFO - "GET /admin/user/user/3/change/ HTTP/1.1" 200 26876
+2025-07-11 17:08:54,364 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:17,843 - INFO - "POST /admin/user/user/3/change/ HTTP/1.1" 302 0
+2025-07-11 17:09:17,905 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 21317
+2025-07-11 17:09:17,963 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:28,809 - INFO - "GET /admin/tourplace/venue/ HTTP/1.1" 200 14120
+2025-07-11 17:09:28,869 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:30,695 - INFO - "GET /admin/tourplace/venue/add/ HTTP/1.1" 200 17181
+2025-07-11 17:09:30,749 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:42,660 - INFO - "POST /admin/tourplace/venue/add/ HTTP/1.1" 302 0
+2025-07-11 17:09:42,711 - INFO - "GET /admin/tourplace/venue/ HTTP/1.1" 200 15600
+2025-07-11 17:09:42,765 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:45,172 - INFO - "GET /admin/tourplace/venue/1/change/ HTTP/1.1" 200 17426
+2025-07-11 17:09:45,221 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:47,252 - INFO - "POST /admin/tourplace/venue/1/change/ HTTP/1.1" 302 0
+2025-07-11 17:09:47,307 - INFO - "GET /admin/tourplace/venue/ HTTP/1.1" 200 15602
+2025-07-11 17:09:47,363 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:50,070 - INFO - "GET /admin/tourplace/venue/1/change/ HTTP/1.1" 200 17434
+2025-07-11 17:09:50,121 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:09:51,523 - INFO - "GET /admin/tourplace/venue/ HTTP/1.1" 200 15394
+2025-07-11 17:10:36,962 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 21105
+2025-07-11 17:10:37,032 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:10:50,569 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 404 62
+2025-07-11 17:10:59,203 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 404 71
+2025-07-11 17:11:11,634 - INFO - "GET /admin/user/user/3/change/ HTTP/1.1" 200 26782
+2025-07-11 17:11:11,703 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:11:16,431 - INFO - "POST /admin/user/user/3/change/ HTTP/1.1" 302 0
+2025-07-11 17:11:16,508 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 21309
+2025-07-11 17:11:16,576 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:11:20,571 - INFO - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 200 653
+2025-07-11 17:11:48,609 - INFO - Starting video upload process for user sahil (ID: 2)
+2025-07-11 17:11:48,609 - INFO - Venue ID: 1, Pricing ID: None
+2025-07-11 17:11:48,612 - INFO - Found venue: demo (ID: 1)
+2025-07-11 17:11:48,613 - INFO - Created necessary directories
+2025-07-11 17:11:48,902 - INFO - Created video record with ID: 1, filename: recording_UTVjYyj.mp4
+2025-07-11 17:11:48,902 - INFO - Processing payment for type 3 user: sahil
+2025-07-11 17:11:48,902 - INFO - User sahil has unlimited access - no decrement needed
+2025-07-11 17:11:48,902 - INFO - Starting video processing for video ID: 1
+2025-07-11 17:11:48,902 - INFO - Starting video processing with parameters:
+2025-07-11 17:11:48,902 - INFO - - Video ID: 1
+2025-07-11 17:11:48,903 - INFO - - User ID: 2
+2025-07-11 17:11:48,903 - INFO - - Original filename: recording_UTVjYyj.mp4
+2025-07-11 17:11:48,903 - INFO - - Venue ID: 1
+2025-07-11 17:11:48,904 - INFO - Video object retrieved: ID 1
+2025-07-11 17:11:48,907 - INFO - User object retrieved: sahil (ID: 2)
+2025-07-11 17:11:48,909 - INFO - Converting C:\Users\kkr crp\Documents\Projects\tour_backend\media\videos\recording_UTVjYyj.mp4 to C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171148.mp4 with resolution 1920x1080, frame rate 30, and bitrate 5M...
+2025-07-11 17:12:12,661 - INFO - Conversion successful: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171148.mp4
+2025-07-11 17:12:12,662 - INFO - Video converted to MP4
+2025-07-11 17:12:32,449 - INFO - Watermark added successfully: None
+2025-07-11 17:12:32,451 - INFO - Watermarked video moved to final location
+2025-07-11 17:12:33,713 - INFO - Successfully sent notification email to sahil@yopmail.com
+2025-07-11 17:12:33,714 - INFO - Video processing completed successfully
+2025-07-11 17:12:33,715 - INFO - Cleaned up temporary file: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171148.mp4
+2025-07-11 17:12:33,716 - INFO - Successfully processed video ID: 1
+2025-07-11 17:12:33,716 - INFO - Video upload and processing completed successfully for video ID: 1
+2025-07-11 17:12:33,719 - INFO - "POST /api/v1/video/video/add HTTP/1.1" 201 260
+2025-07-11 17:12:47,041 - INFO - "GET /admin/videomgmt/video/ HTTP/1.1" 200 15416
+2025-07-11 17:12:47,113 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:12:48,893 - INFO - "GET /admin/videomgmt/video/1/change/ HTTP/1.1" 200 20136
+2025-07-11 17:12:48,956 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:12:50,431 - INFO - "GET /media/videos/recording_UTVjYyj_2ce20eb4ba062573.mp4 HTTP/1.1" 200 2080488
+2025-07-11 17:12:58,356 - INFO - "GET /admin/videomgmt/video/1/change/ HTTP/1.1" 200 20136
+2025-07-11 17:13:20,642 - INFO - "GET /api/v1/user/getprofile HTTP/1.1" 200 715
+2025-07-11 17:16:45,133 - INFO - "POST /api/v1/user/phone/register HTTP/1.1" 201 122
+2025-07-11 17:16:57,521 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 21864
+2025-07-11 17:16:57,596 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:17:00,305 - INFO - "GET /admin/user/user/4/change/ HTTP/1.1" 200 26633
+2025-07-11 17:17:00,361 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:17:18,364 - INFO - "POST /admin/user/user/4/change/ HTTP/1.1" 302 0
+2025-07-11 17:17:18,442 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 22068
+2025-07-11 17:17:18,498 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:17:33,255 - INFO - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 200 660
+2025-07-11 17:17:50,799 - INFO - "GET /api/v1/user/getprofile HTTP/1.1" 200 746
+2025-07-11 17:18:06,759 - INFO - Starting video upload process for user sahil (ID: 2)
+2025-07-11 17:18:06,760 - INFO - Venue ID: 1, Pricing ID: None
+2025-07-11 17:18:06,761 - INFO - Found venue: demo (ID: 1)
+2025-07-11 17:18:06,762 - INFO - Created necessary directories
+2025-07-11 17:18:06,792 - INFO - Created video record with ID: 2, filename: recording_UTVjYyj_d69EDQa.mp4
+2025-07-11 17:18:06,792 - INFO - Processing payment for type 3 user: sahil
+2025-07-11 17:18:06,793 - INFO - User sahil has unlimited access - no decrement needed
+2025-07-11 17:18:06,793 - INFO - Starting video processing for video ID: 2
+2025-07-11 17:18:06,793 - INFO - Starting video processing with parameters:
+2025-07-11 17:18:06,793 - INFO - - Video ID: 2
+2025-07-11 17:18:06,793 - INFO - - User ID: 2
+2025-07-11 17:18:06,793 - INFO - - Original filename: recording_UTVjYyj_d69EDQa.mp4
+2025-07-11 17:18:06,794 - INFO - - Venue ID: 1
+2025-07-11 17:18:06,796 - INFO - Video object retrieved: ID 2
+2025-07-11 17:18:06,798 - INFO - User object retrieved: sahil (ID: 2)
+2025-07-11 17:18:06,800 - INFO - Converting C:\Users\kkr crp\Documents\Projects\tour_backend\media\videos\recording_UTVjYyj_d69EDQa.mp4 to C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171806.mp4 with resolution 1920x1080, frame rate 30, and bitrate 5M...
+2025-07-11 17:18:24,852 - INFO - Conversion successful: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171806.mp4
+2025-07-11 17:18:24,853 - INFO - Video converted to MP4
+2025-07-11 17:18:38,364 - INFO - Watermark added successfully: sahil rawat
+2025-07-11 17:18:38,366 - INFO - Watermarked video moved to final location
+2025-07-11 17:18:38,543 - INFO - Successfully sent notification email to sahil@yopmail.com
+2025-07-11 17:18:38,543 - INFO - Video processing completed successfully
+2025-07-11 17:18:38,550 - INFO - Cleaned up temporary file: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171806.mp4
+2025-07-11 17:18:38,551 - INFO - Successfully processed video ID: 2
+2025-07-11 17:18:38,551 - INFO - Video upload and processing completed successfully for video ID: 2
+2025-07-11 17:18:38,553 - INFO - "POST /api/v1/video/video/add HTTP/1.1" 201 276
+2025-07-11 17:18:49,067 - INFO - "GET /admin/videomgmt/video/ HTTP/1.1" 200 15716
+2025-07-11 17:18:49,138 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:18:50,799 - INFO - "GET /admin/videomgmt/video/2/change/ HTTP/1.1" 200 20221
+2025-07-11 17:18:50,874 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:18:52,042 - INFO - - Broken pipe from ('127.0.0.1', 61719)
+2025-07-11 17:18:52,170 - INFO - "GET /media/videos/recording_UTVjYyj_d69EDQa_b16926e24aab01e1.mp4 HTTP/1.1" 200 2082904
+2025-07-11 17:19:02,531 - INFO - "GET /admin/videomgmt/video/2/change/ HTTP/1.1" 200 20221
+2025-07-11 17:19:32,997 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:19:37,989 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:19:37,991 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:19:37,992 - INFO - Loading Firebase credentials...
+2025-07-11 17:19:38,060 - INFO - Credentials loaded successfully
+2025-07-11 17:19:38,063 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:19:38,064 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:19:38,065 - INFO - Firebase initialization completed successfully
+2025-07-11 17:19:43,937 - INFO - Starting video upload process for user sahil (ID: 2)
+2025-07-11 17:19:43,938 - INFO - Venue ID: 1, Pricing ID: None
+2025-07-11 17:19:43,940 - INFO - Found venue: demo (ID: 1)
+2025-07-11 17:19:43,942 - INFO - Created necessary directories
+2025-07-11 17:19:44,191 - INFO - Created video record with ID: 3, filename: recording_UTVjYyj_IZOXdRs.mp4
+2025-07-11 17:19:44,191 - INFO - Processing payment for type 3 user: sahil
+2025-07-11 17:19:44,192 - INFO - User sahil has unlimited access - no decrement needed
+2025-07-11 17:19:44,192 - INFO - Starting video processing for video ID: 3
+2025-07-11 17:19:44,192 - INFO - Starting video processing with parameters:
+2025-07-11 17:19:44,192 - INFO - - Video ID: 3
+2025-07-11 17:19:44,193 - INFO - - User ID: 2
+2025-07-11 17:19:44,193 - INFO - - Original filename: recording_UTVjYyj_IZOXdRs.mp4
+2025-07-11 17:19:44,193 - INFO - - Venue ID: 1
+2025-07-11 17:19:44,195 - INFO - Video object retrieved: ID 3
+2025-07-11 17:19:44,197 - INFO - User object retrieved: sahil (ID: 2)
+2025-07-11 17:19:44,198 - INFO - Converting C:\Users\kkr crp\Documents\Projects\tour_backend\media\videos\recording_UTVjYyj_IZOXdRs.mp4 to C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171944.mp4 with resolution 1920x1080, frame rate 30, and bitrate 5M...
+2025-07-11 17:19:58,213 - INFO - Conversion successful: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171944.mp4
+2025-07-11 17:19:58,213 - INFO - Video converted to MP4
+2025-07-11 17:20:12,323 - INFO - Watermark added successfully: sahil rawat
+2025-07-11 17:20:12,324 - INFO - Watermarked video moved to final location
+2025-07-11 17:20:13,398 - INFO - Successfully sent notification email to sahil@yopmail.com
+2025-07-11 17:20:13,399 - INFO - Video processing completed successfully
+2025-07-11 17:20:13,401 - INFO - Cleaned up temporary file: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_171944.mp4
+2025-07-11 17:20:13,401 - INFO - Successfully processed video ID: 3
+2025-07-11 17:20:13,402 - INFO - Video upload and processing completed successfully for video ID: 3
+2025-07-11 17:20:13,417 - INFO - "POST /api/v1/video/video/add HTTP/1.1" 201 276
+2025-07-11 17:20:48,631 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:20:53,312 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:20:53,313 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:20:53,314 - INFO - Loading Firebase credentials...
+2025-07-11 17:20:53,378 - INFO - Credentials loaded successfully
+2025-07-11 17:20:53,379 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:20:53,380 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:20:53,381 - INFO - Firebase initialization completed successfully
+2025-07-11 17:21:46,502 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:21:50,385 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:21:50,386 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:21:50,387 - INFO - Loading Firebase credentials...
+2025-07-11 17:21:50,457 - INFO - Credentials loaded successfully
+2025-07-11 17:21:50,458 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:21:50,459 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:21:50,460 - INFO - Firebase initialization completed successfully
+2025-07-11 17:22:52,240 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:22:57,646 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:22:57,647 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:22:57,648 - INFO - Loading Firebase credentials...
+2025-07-11 17:22:57,741 - INFO - Credentials loaded successfully
+2025-07-11 17:22:57,742 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:22:57,744 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:22:57,745 - INFO - Firebase initialization completed successfully
+2025-07-11 17:23:03,567 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:23:09,677 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:23:09,678 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:23:09,680 - INFO - Loading Firebase credentials...
+2025-07-11 17:23:09,786 - INFO - Credentials loaded successfully
+2025-07-11 17:23:09,788 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:23:09,790 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:23:09,792 - INFO - Firebase initialization completed successfully
+2025-07-11 17:23:18,779 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:23:23,510 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:23:23,511 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:23:23,512 - INFO - Loading Firebase credentials...
+2025-07-11 17:23:23,584 - INFO - Credentials loaded successfully
+2025-07-11 17:23:23,585 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:23:23,586 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:23:23,587 - INFO - Firebase initialization completed successfully
+2025-07-11 17:23:38,701 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:23:42,605 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:23:42,605 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:23:42,607 - INFO - Loading Firebase credentials...
+2025-07-11 17:23:42,672 - INFO - Credentials loaded successfully
+2025-07-11 17:23:42,674 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:23:42,675 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:23:42,677 - INFO - Firebase initialization completed successfully
+2025-07-11 17:23:58,900 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:24:02,368 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:24:02,369 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:24:02,370 - INFO - Loading Firebase credentials...
+2025-07-11 17:24:02,436 - INFO - Credentials loaded successfully
+2025-07-11 17:24:02,438 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:24:02,439 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:24:02,441 - INFO - Firebase initialization completed successfully
+2025-07-11 17:24:17,844 - INFO - Starting video upload process for user sahil (ID: 2)
+2025-07-11 17:24:17,845 - INFO - Venue ID: 1, Pricing ID: None
+2025-07-11 17:24:17,847 - INFO - Found venue: demo (ID: 1)
+2025-07-11 17:24:17,847 - INFO - Created necessary directories
+2025-07-11 17:24:18,024 - INFO - Created video record with ID: 4, filename: recording_UTVjYyj_8zNYVh2.mp4
+2025-07-11 17:24:18,025 - INFO - Processing payment for type 3 user: sahil
+2025-07-11 17:24:18,025 - INFO - User sahil has unlimited access - no decrement needed
+2025-07-11 17:24:18,025 - INFO - Starting video processing for video ID: 4
+2025-07-11 17:24:18,025 - INFO - Starting video processing with parameters:
+2025-07-11 17:24:18,025 - INFO - - Video ID: 4
+2025-07-11 17:24:18,026 - INFO - - User ID: 2
+2025-07-11 17:24:18,026 - INFO - - Original filename: recording_UTVjYyj_8zNYVh2.mp4
+2025-07-11 17:24:18,026 - INFO - - Venue ID: 1
+2025-07-11 17:24:18,028 - INFO - Video object retrieved: ID 4
+2025-07-11 17:24:18,030 - INFO - User object retrieved: sahil (ID: 2)
+2025-07-11 17:24:18,033 - INFO - Converting C:\Users\kkr crp\Documents\Projects\tour_backend\media\videos\recording_UTVjYyj_8zNYVh2.mp4 to C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_172418.mp4 with resolution 1920x1080, frame rate 30, and bitrate 5M...
+2025-07-11 17:24:36,944 - INFO - Conversion successful: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_172418.mp4
+2025-07-11 17:24:36,944 - INFO - Video converted to MP4
+2025-07-11 17:24:52,830 - INFO - Watermark added successfully: sahil rawat
+2025-07-11 17:24:52,833 - INFO - Watermarked video moved to final location
+2025-07-11 17:24:53,817 - INFO - Successfully sent notification email to sahil@yopmail.com
+2025-07-11 17:24:53,817 - INFO - Video processing completed successfully
+2025-07-11 17:24:53,820 - INFO - Cleaned up temporary file: C:\Users\kkr crp\Documents\Projects\tour_backend\media\temp\converted_sahil_20250711_172418.mp4
+2025-07-11 17:24:53,821 - INFO - Successfully processed video ID: 4
+2025-07-11 17:24:53,821 - INFO - Video upload and processing completed successfully for video ID: 4
+2025-07-11 17:24:53,837 - INFO - "POST /api/v1/video/video/add HTTP/1.1" 201 276
+2025-07-11 17:25:03,408 - INFO - "GET /admin/videomgmt/footer/ HTTP/1.1" 200 14127
+2025-07-11 17:25:03,482 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:25:06,695 - INFO - "GET /admin/videomgmt/video/ HTTP/1.1" 200 16314
+2025-07-11 17:25:06,743 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:25:08,277 - INFO - "GET /admin/videomgmt/video/4/change/ HTTP/1.1" 200 20221
+2025-07-11 17:25:08,357 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-11 17:25:10,537 - INFO - "GET /media/videos/thumbnail/output_thumbnail_tEtr4Du_ICxC94q.jpg HTTP/1.1" 200 24141
+2025-07-11 17:25:15,443 - INFO - "GET /admin/videomgmt/video/4/change/ HTTP/1.1" 200 20221
+2025-07-11 17:25:19,010 - INFO - "GET /media/videos/recording_UTVjYyj_8zNYVh2_06916d9d51edcfa7.mp4 HTTP/1.1" 200 2082904
+2025-07-11 17:25:19,146 - INFO - "GET /media/videos/recording_UTVjYyj_8zNYVh2_06916d9d51edcfa7.mp4 HTTP/1.1" 200 2082904
+2025-07-11 17:34:36,340 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.
+2025-07-11 17:34:41,162 - INFO - Attempting to initialize Firebase with credentials from: C:\Users\kkr crp\Documents\Projects\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-11 17:34:41,167 - INFO - Using app name: emmysvideo-fb564
+2025-07-11 17:34:41,184 - INFO - Loading Firebase credentials...
+2025-07-11 17:34:41,316 - INFO - Credentials loaded successfully
+2025-07-11 17:34:41,317 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-11 17:34:41,318 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-11 17:34:41,318 - INFO - Firebase initialization completed successfully

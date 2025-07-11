@@ -237,20 +237,26 @@ def concatenate_videos_gpu(output_path, *input_paths):
                 f"Temporary concat list file {concat_list_filename} deleted")
             
 def add_watermark_to_video(input_path, output_path, watermark_text):
-    try:
-        # Command to add watermark using ffmpeg drawtext
-        command = [
-            'ffmpeg',
-            '-i', input_path,
-            '-vf', f"drawtext=text='{watermark_text}':fontcolor=white:fontsize=24:x=10:y=H-th-10",
-            '-codec:a', 'copy',
-            output_path
-        ]
-        subprocess.run(command, check=True)
-        logging.info(f"Watermark added successfully: {watermark_text}")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to add watermark: {e}")
-        raise
+    if not watermark_text.strip():
+        watermark_text = "Tour Video"
+    
+    drawtext_filter = (
+        f"drawtext=text='{watermark_text}':"
+        "fontcolor=white:fontsize=48:x=(w-text_w-10):y=(h-text_h-10):"
+        "box=1:boxcolor=black@0.5:boxborderw=5"
+    )
+
+    command = [
+        "/usr/local/bin/ffmpeg",
+        "-y",
+        "-i", input_path,
+        "-vf", drawtext_filter,
+        "-codec:a", "copy",
+        output_path
+    ]
+
+    logging.info(f"Running ffmpeg command to watermark video: {' '.join(command)}")
+    subprocess.run(command, check=True)
 
 
 # def process_video(video_id, user_id, original_filename, venue):
@@ -437,6 +443,7 @@ def add_watermark_to_video(input_path, output_path, watermark_text):
 
 
 def process_video(video_id, user_id, original_filename, venue):
+    print("********************")
     try:
         # Log initial parameters
         logging.info("Starting video processing with parameters:")
@@ -473,17 +480,17 @@ def process_video(video_id, user_id, original_filename, venue):
         #     raise
 
         # if not header:
-        #     logging.info(f"Header doesn't exist for venue: {venue.pk}")
-        #     video.status = False
-        #     video.save()
-        #     logging.info(f"Updated video status to False (ID: {video.id})")
-        #     video_url = "https://api.dwareapps.com/media/" + str(video.video_path)
-        #     send_notification_email(user, video_url, '')
-        #     return
+        # logging.info(f"Header doesn't exist for venue: {venue.pk}")
+        # video.status = False
+        # video.save()
+        # logging.info(f"Updated video status to False (ID: {video.id})")
+        # video_url = "https://api.dwareapps.com/media/" + str(video.video_path)
+        # send_notification_email(user, video_url, '')
 
         # Continue processing without header
         current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
 
+        print("Current Time:", current_time)
         temp_video_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, str(video.video_path)))
         converted_video_path = os.path.join(settings.MEDIA_ROOT, 'temp', f'converted_{user.username}_{current_time}.mp4')
         watermarked_video_path = os.path.join(settings.MEDIA_ROOT, 'temp', f'watermarked_{user.username}_{current_time}.mp4')
@@ -491,6 +498,7 @@ def process_video(video_id, user_id, original_filename, venue):
         final_video_relative_path = os.path.join('videos', final_video_name)
         final_video_absolute_path = os.path.join(settings.MEDIA_ROOT, final_video_relative_path)
 
+        print("Temp Video Path:", temp_video_path)
         os.makedirs(os.path.dirname(converted_video_path), exist_ok=True)
         os.makedirs(os.path.dirname(final_video_absolute_path), exist_ok=True)
 
@@ -498,8 +506,10 @@ def process_video(video_id, user_id, original_filename, venue):
         convert_webm_to_mp4(temp_video_path, converted_video_path)
         logging.info("Video converted to MP4")
 
+        print("Converted Video Path:", converted_video_path)
         # Add watermark
         customer_name = user.isp.customer_name if user.isp else " "
+        print(customer_name, "----------------------------------------------***********************8")
         add_watermark_to_video(converted_video_path, watermarked_video_path, customer_name)
 
         # Move watermarked video to final destination
@@ -514,6 +524,7 @@ def process_video(video_id, user_id, original_filename, venue):
         video_url = "https://api.dwareapps.com/media/" + final_video_relative_path
         send_notification_email(user, video_url, final_video_name)
         logging.info("Video processing completed successfully")
+        return 
 
     except Exception as e:
         logging.error(f"Error processing video: {str(e)}", exc_info=True)

@@ -252,10 +252,10 @@ def add_watermark_to_video(input_path, output_path, watermark_text):
     )
 
     command = [
-        "/usr/local/bin/ffmpeg",
+        "ffmpeg",  # not "/usr/local/bin/ffmpeg"
         "-y",
         "-i", input_path,
-        "-vf", drawtext_filter,
+        "-vf", f"drawtext=text='{watermark_text}':fontsize=24:fontcolor=white:x=10:y=10",
         "-codec:a", "copy",
         output_path
     ]

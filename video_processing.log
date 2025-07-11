@@ -2760,3 +2760,4 @@ Error opening input files: Invalid data found when processing input
 2025-07-11 17:34:41,317 - INFO - Initializing Firebase app with name: emmysvideo-fb564
 2025-07-11 17:34:41,318 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
 2025-07-11 17:34:41,318 - INFO - Firebase initialization completed successfully
+2025-07-11 17:48:16,182 - INFO - C:\Users\kkr crp\Documents\Projects\tour_backend\videomgmt\video_processing.py changed, reloading.

@@ -11,6 +11,7 @@ class Camera(models.Model):
     output_url = models.CharField(max_length=255)
     venue = models.ForeignKey(
         Venue, null=True, blank=True, on_delete=models.CASCADE)
+    level = models.IntegerField() 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

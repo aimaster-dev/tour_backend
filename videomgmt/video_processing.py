@@ -240,22 +240,22 @@ def add_watermark_to_video(input_path, output_path, watermark_text):
     if not watermark_text.strip():
         watermark_text = "Tour Video"
 
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"  # ✅ Reliable font path on Ubuntu
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"  # Reliable font path on Ubuntu
 
     # Escape single quotes in text to prevent ffmpeg errors
     watermark_text = watermark_text.replace("'", "\\'")
 
     drawtext_filter = (
         f"drawtext=fontfile='{font_path}':text='{watermark_text}':"
-        "fontcolor=white:fontsize=48:x=(w-text_w-10):y=(h-text_h-10):"
+        "fontcolor=white:fontsize=96:x=(w-text_w)/2:y=10:"
         "box=1:boxcolor=black@0.5:boxborderw=5"
     )
 
     command = [
-        "/usr/bin/ffmpeg",  # full path to ffmpeg
+        "/usr/bin/ffmpeg",
         "-y",
         "-i", input_path,
-        "-vf", f"drawtext=text='{watermark_text}':fontsize=24:fontcolor=white:x=10:y=10",
+        "-vf", drawtext_filter,
         "-codec:a", "copy",
         output_path
     ]
@@ -268,7 +268,7 @@ def add_watermark_to_video(input_path, output_path, watermark_text):
         logging.info("FFmpeg stdout:\n" + result.stdout)
         logging.info("FFmpeg completed successfully.")
     except subprocess.CalledProcessError as e:
-        logging.error("FFmpeg stderr:\n" + e.stderr)  # 👈 This will show the real error
+        logging.error("FFmpeg stderr:\n" + e.stderr)
         raise
 
 

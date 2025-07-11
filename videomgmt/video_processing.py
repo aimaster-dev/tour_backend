@@ -239,9 +239,14 @@ def concatenate_videos_gpu(output_path, *input_paths):
 def add_watermark_to_video(input_path, output_path, watermark_text):
     if not watermark_text.strip():
         watermark_text = "Tour Video"
-    
+
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"  # ✅ Reliable font path on Ubuntu
+
+    # Escape single quotes in text to prevent ffmpeg errors
+    watermark_text = watermark_text.replace("'", "\\'")
+
     drawtext_filter = (
-        f"drawtext=text='{watermark_text}':"
+        f"drawtext=fontfile='{font_path}':text='{watermark_text}':"
         "fontcolor=white:fontsize=48:x=(w-text_w-10):y=(h-text_h-10):"
         "box=1:boxcolor=black@0.5:boxborderw=5"
     )
@@ -255,8 +260,16 @@ def add_watermark_to_video(input_path, output_path, watermark_text):
         output_path
     ]
 
-    logging.info(f"Running ffmpeg command to watermark video: {' '.join(command)}")
-    subprocess.run(command, check=True)
+    logging.info("Running ffmpeg command to watermark video:")
+    logging.info(" ".join(command))
+
+    try:
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        logging.info("FFmpeg stdout:\n" + result.stdout)
+        logging.info("FFmpeg completed successfully.")
+    except subprocess.CalledProcessError as e:
+        logging.error("FFmpeg stderr:\n" + e.stderr)  # 👈 This will show the real error
+        raise
 
 
 # def process_video(video_id, user_id, original_filename, venue):

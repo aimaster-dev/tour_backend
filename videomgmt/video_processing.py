@@ -247,8 +247,8 @@ def add_watermark_to_video(input_path, output_path, watermark_text):
 
     drawtext_filter = (
         f"drawtext=fontfile='{font_path}':text='{watermark_text}':"
-        "fontcolor=white:fontsize=96:x=(w-text_w)/2:y=10:"
-        "box=1:boxcolor=black@0.5:boxborderw=5"
+        "fontcolor=white@0.8:fontsize=96:x=(w-text_w)/2:y=(h-text_h)/2:"
+        "box=1:boxcolor=black@0.3:boxborderw=5"
     )
 
     command = [

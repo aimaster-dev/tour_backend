@@ -499,7 +499,8 @@ def process_video(video_id, user_id, original_filename, venue):
         logging.info("Video converted to MP4")
 
         # Add watermark
-        add_watermark_to_video(converted_video_path, watermarked_video_path, user.customer_name)
+        customer_name = user.isp.customer_name if user.isp else " "
+        add_watermark_to_video(converted_video_path, watermarked_video_path, customer_name)
 
         # Move watermarked video to final destination
         os.rename(watermarked_video_path, final_video_absolute_path)

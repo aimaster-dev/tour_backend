@@ -163,6 +163,7 @@ class CameraAPIView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             logger.info(f"Found {len(cameras)} cameras")
+            cameras = cameras.order_by('level')
             serializer = CameraUpdateSerializer(cameras, many=True)
 
             # Log successful response

@@ -645,7 +645,7 @@ class CameraViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # ISP can only see their own cameras
-        return Camera.objects.all()
+        return Camera.objects.all().order_by('level')
 
     def perform_create(self, serializer):
         serializer.save(isp=self.request.user)
@@ -662,7 +662,7 @@ class CameraViewSetForISP(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # ISP can only see their own cameras
-        return Camera.objects.filter(isp=self.request.user)
+        return Camera.objects.filter(isp=self.request.user).order_by('level')
 
     def perform_create(self, serializer):
         serializer.save(isp=self.request.user)
@@ -703,7 +703,9 @@ class CamerasByCustomerAPIView(APIView):
         else:
             venue_ids = user.venue
             cameras = Camera.objects.filter(venue__id__in=venue_ids)
-
+        
+        cameras = cameras.order_by('level')
+        
         serializer = CameraSerializer(cameras, many=True)
         logger.info(f"Found {len(serializer.data)} cameras for customer ID: {user.pk}")
         return Response({'status': True, 'data': serializer.data}, status=status.HTTP_200_OK)

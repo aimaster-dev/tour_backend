@@ -171,6 +171,9 @@ class VenueDetailAPIView(APIView):
 
     def delete(self, request, pk):
         venue = get_object_or_404(Venue, pk=pk)
+        user = User.objects.filter(venue__contains=[pk])
+        if user and user.isp:
+            return Response({'status': False, 'message': 'Cannot delete venue with associated ISP'}, status=status.HTTP_400_BAD_REQUEST)
         venue.delete()
         return Response({'status': True, 'message': 'Venue deleted successfully'}, status=status.HTTP_200_OK)
 

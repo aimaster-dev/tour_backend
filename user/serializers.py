@@ -62,13 +62,25 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
 
 class UserListSerializer(serializers.ModelSerializer):
     venue = serializers.SerializerMethodField()
+    isp = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'phone_number', 'usertype',
                   'status', 'venue', 'level', 'is_activate', 'device_token',
-                  'has_unlimited_access']
+                  'has_unlimited_access', 'isp']
         read_only_fields = fields
+
+    def get_isp(self, obj):
+        if obj.isp:
+            return {
+                'id': obj.isp.id,
+                'username': obj.isp.username,
+                'email': obj.isp.email,
+                'phone_number': obj.isp.phone_number,
+                'customer_name': obj.isp.customer_name  
+            }
+        return None
 
     def get_venue(self, obj):
         venue_ids = obj.venue

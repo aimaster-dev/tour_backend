@@ -126,6 +126,17 @@ class UserDeleteAPIView(APIView):
             return Response({"status": False, "data": {"msg": "User ID is required."}}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(id=user_id)
+            if user.usertype == 2:
+                cameras = user.camera_set.all()
+                customers = User.objects.filter(isp=user, usertype__in=[3, 4])
+                
+                if customers.exists() or cameras.exists():
+                    return Response({
+                        "status": False,
+                        "data": {
+                            "msg": "This user has associated cameras or customers. Please remove them first."
+                        }
+                    }, status=status.HTTP_400_BAD_REQUEST)
             user.delete()
             return Response({"status": True, "data": "The User Successfully deleted."}, status=status.HTTP_200_OK)
         except user.DoesNotExist:

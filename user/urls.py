@@ -8,7 +8,8 @@ from .views import (UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeLi
                     CustomerDetailAPIView, CustomerDeleteAPIView, VenueByISPListView, CustomersByISPListView,
                     CustomerByISPCreateView, CustomerByISPUpdateView, CustomerByISPDeleteView,
                     CustomerByISPDetailView, ClientUserListAPIView, ClientManagementView,
-                    ClientTestUserView, ClientsByISPListView, ClientsByCustomerListView)
+                    ClientTestUserView, ClientsByISPListView, ClientsByCustomerListView,
+                    CheckVenueISPsBeforeDeletionView, SafeDeleteISPUserView)
 
 urlpatterns = [
      path('register', UserAPIView.as_view(), name='auth_register'),
@@ -73,5 +74,10 @@ urlpatterns = [
           name='customer-by-isp-update'),
      path('isp/<int:isp_id>/customer/<int:customer_id>/delete/', CustomerByISPDeleteView.as_view(),
           name='customer-by-isp-delete'),
+     
+     path('venues/<int:venue_id>/check-isps/', CheckVenueISPsBeforeDeletionView.as_view(), name='check_venue_isps'),
+     path('users/<int:user_id>/safe-delete-isp/', SafeDeleteISPUserView.as_view(), name='safe_delete_isp_user'),
+
+
    
 ]

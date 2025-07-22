@@ -1506,7 +1506,7 @@ class ClientList(APIView):
         
 
 class ClientManagementView(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAdminOrISP]
     
     def get(self, request, client_id):
         """Retrieve a single Client by ID"""
@@ -1807,3 +1807,75 @@ class ClientsByCustomerListView(APIView):
                 "status": False,
                 "data": {"msg": str(e)}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+
+class CheckVenueISPsBeforeDeletionView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, venue_id):
+        try:
+            # First verify the venue exists and is active
+            venue = get_object_or_404(Venue, id=venue_id)
+
+            # Filter users with usertype=2 (ISP) and active status
+            isps = User.objects.filter(usertype=2, status=True)
+
+            # Filter ISPs that have this venue_id in their venue list
+            filtered_isps = []
+            for isp in isps:
+                if isinstance(isp.venue, list) and venue_id in isp.venue:
+                    filtered_isps.append(isp)
+                elif isinstance(isp.venue, int) and isp.venue == venue_id:
+                    filtered_isps.append(isp)
+
+            isp_data = [{
+                'id': isp.id,
+                'name': isp.username,
+                'email': isp.email,
+                'phone_number': isp.phone_number
+            } for isp in filtered_isps]
+
+            if isp_data:
+                return Response({
+                    'status': False,
+                    'message': "You can't delete this venue as it has associated ISPs",
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response({
+                'status': True,
+                'message': "Venue deleted successfully"
+            }, status=status.HTTP_200_OK)
+
+        except Venue.DoesNotExist:
+            return Response({
+                'status': False,
+                'message': f'Venue with ID {venue_id} not found or inactive'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+            
+class SafeDeleteISPUserView(APIView):
+    """
+    API to safely delete an ISP user only if they have no associated customers or cameras.
+    """
+    def delete(self, request, user_id):
+        # Ensure the user is an ISP
+        user = get_object_or_404(User, id=user_id, usertype=2)
+
+        # Check if the ISP has any linked cameras or customer accounts
+        cameras = user.camera_set.all()
+        customers = User.objects.filter(isp=user, usertype__in=[3, 4])
+
+        if customers.exists() or cameras.exists():
+            return Response({
+                "status": False,
+                "data": {
+                    "msg": "This ISP user has associated cameras or customers. Please remove them first."
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user.delete()
+        return Response({
+            "status": True,
+            "message": "ISP user deleted successfully."
+        }, status=status.HTTP_200_OK)

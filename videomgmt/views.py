@@ -494,7 +494,7 @@ class VideoAddAPIView(APIView):
                 data[i]["client"] = client.username
                 data[i]["venue"] = venue.venue_name
             return Response({"status": True, "data": data}, status=status.HTTP_200_OK)
-        elif user.usertype == 3:
+        elif user.usertype in [3,4]:
             venue = Venue.objects.get(id=user.venue[0])
             videos = Video.objects.filter(
                 client=user.pk, venue=venue.pk)

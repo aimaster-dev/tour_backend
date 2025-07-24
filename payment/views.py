@@ -1,3 +1,6 @@
+from django.db import transaction
+from django.utils import timezone
+
 from user.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -613,25 +616,22 @@ class InAppPurchaseAPIView(APIView):
     def post(self, request):
         try:
             user = request.user
-            purchase_data = request.data[0]  # Get first purchase object
+            purchase_data = request.data[0]
             product_id = purchase_data.get('productId')
             transaction_id = purchase_data.get('transactionId')
 
-            # Validate required fields
             if not all([product_id, transaction_id]):
                 return Response({
                     "status": False,
                     "data": "Missing required purchase information"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Check for duplicate transaction
             if PaymentLogs.objects.filter(transaction_id=transaction_id).exists():
                 return Response({
                     "status": False,
                     "data": "Transaction already processed"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Find matching price plan
             try:
                 price = Price.objects.get(product_id=product_id)
             except Price.DoesNotExist:
@@ -640,38 +640,57 @@ class InAppPurchaseAPIView(APIView):
                     "data": "Invalid product ID"
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create payment record
-            payment_data = {
-                "user": user.pk,
-                "price": price.pk,
-                "amount": price.price,
-                "videoremain": price.record_limit,
-                "snapshotremain": price.snapshot_limit,
-                "status": "COMPLETED",
-                "transaction_id": transaction_id
-            }
+            with transaction.atomic():
+                # Get user's active, non-cancelled, completed payments
+                previous_logs = PaymentLogs.objects.filter(
+                    user=user,
+                    is_cancelled=False,
+                    status='COMPLETED'
+                )
 
-            serializer = PaymentLogsSerializer(data=payment_data)
-            if serializer.is_valid():
-                payment = serializer.save()
+                # Sum remaining limits from old plans
+                total_video_remain = 0
+                total_snapshot_remain = 0
+                total_record_time = 0
 
-                return Response({
-                    "status": True,
-                    "data": {
-                        "payment_id": payment.id,
-                        "plan_name": price.title,
-                        "amount": price.price,
-                        "video_limit": price.record_limit,
-                        "snapshot_limit": price.snapshot_limit,
-                        "transaction_id": transaction_id,
-                        "purchase_date": payment.created_at
-                    }
-                }, status=status.HTTP_201_CREATED)
+                for log in previous_logs:
+                    total_video_remain += log.videoremain
+                    total_snapshot_remain += log.snapshotremain
+                    total_record_time += log.record_time
+
+                # Cancel all old plans
+                previous_logs.update(is_cancelled=True, updated_at=timezone.now())
+
+                # Add previous remaining limits to new limits
+                new_video = total_video_remain + price.record_limit
+                new_snapshot = total_snapshot_remain + price.snapshot_limit
+                new_record_time = total_record_time + price.record_time  # if dynamic; else use default
+
+                # Create new payment log
+                payment = PaymentLogs.objects.create(
+                    user=user,
+                    price=price,
+                    amount=price.price,
+                    videoremain=new_video,
+                    snapshotremain=new_snapshot,
+                    record_time=new_record_time,
+                    status='COMPLETED',
+                    transaction_id=transaction_id
+                )
 
             return Response({
-                "status": False,
-                "data": serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+                "status": True,
+                "data": {
+                    "payment_id": payment.id,
+                    "plan_name": price.title,
+                    "amount": price.price,
+                    "video_limit": new_video,
+                    "snapshot_limit": new_snapshot,
+                    "record_time": new_record_time,
+                    "transaction_id": transaction_id,
+                    "purchase_date": payment.created_at
+                }
+            }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response({

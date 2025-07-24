@@ -139,7 +139,7 @@ class UserDeleteAPIView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
             user.delete()
             return Response({"status": True, "data": "The User Successfully deleted."}, status=status.HTTP_200_OK)
-        except user.DoesNotExist:
+        except User.DoesNotExist:
             Response({"status": False, "data": {"msg": "User not found."}},
                      status=status.HTTP_404_NOT_FOUND)
         except Exception as e:

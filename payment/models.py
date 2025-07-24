@@ -22,6 +22,7 @@ class PaymentLogs(models.Model):
         max_length=20, choices=PAYMENT_STATUS, default='PENDING')
     transaction_id = models.CharField(
         max_length=255, unique=True, null=True, blank=True)
+    is_cancelled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

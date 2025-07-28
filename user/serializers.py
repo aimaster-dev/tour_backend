@@ -143,10 +143,30 @@ class UserLoginSerializer(serializers.Serializer):
     isp = serializers.IntegerField(required=False)
 
     def validate(self, data):
-        user = authenticate(email=data['email'], password=data['password'])
+        email = data['email']
+        password = data['password']
         
-        if not user:
-            raise serializers.ValidationError("Invalid email or password")
+        # First check if email exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Email address not found. Please check your email or register a new account.")
+        
+        # Check if account is deleted
+        if not user.status:
+            raise serializers.ValidationError("Your account has been deleted. Please contact support.")
+        
+        # Check if account is activated (for customers)
+        if user.usertype == 3 and not user.is_activate:
+            raise serializers.ValidationError("Please activate your account first. Check your email for activation link.")
+        
+        # Now check password
+        if not user.check_password(password):
+            raise serializers.ValidationError("Incorrect password. Please try again or use 'Forgot Password'.")
+        
+        # Check if user is allowed to login
+        if user.usertype not in [1, 2, 3]:
+            raise serializers.ValidationError("You are not allowed to login in admin panel.")
 
         # Handle different user types
         if user.usertype == 1:  # Admin
@@ -183,7 +203,7 @@ class UserLoginSerializer(serializers.Serializer):
                         # Check if ISP's venue list contains user's venue
                         status=True
                     )
-                    # Now check if the ISP’s venue list contains the user’s venue
+                    # Now check if the ISP's venue list contains the user's venue
                     user_venue = user_venues[0]
 
                     if not isp.venue or user_venue not in isp.venue:
@@ -220,9 +240,30 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
     isp_id = serializers.IntegerField(required=True)
 
     def validate(self, data):
-        user = authenticate(email=data['email'], password=data['password'])
-        if not user:
-            raise serializers.ValidationError("Invalid email or password")
+        email = data['email']
+        password = data['password']
+        
+        # First check if email exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Email address not found. Please check your email or register a new account.")
+        
+        # Check if account is deleted
+        if not user.status:
+            raise serializers.ValidationError("Your account has been deleted. Please contact support.")
+        
+        # Check if account is activated (for customers and clients)
+        if user.usertype in [3, 4] and not user.is_activate:
+            raise serializers.ValidationError("Please activate your account first. Check your email for activation link.")
+        
+        # Now check password
+        if not user.check_password(password):
+            raise serializers.ValidationError("Incorrect password. Please try again or use 'Forgot Password'.")
+        
+        # Check if user is allowed to login
+        if user.usertype not in [1, 2, 3, 4]:
+            raise serializers.ValidationError("You are not allowed to login in admin panel.")
 
         # Handle different user types
         if user.usertype == 1:  # Admin
@@ -258,7 +299,7 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
                         # Check if ISP's venue list contains user's venue
                         status=True
                     )
-                    # Now check if the ISP’s venue list contains the user’s venue
+                    # Now check if the ISP's venue list contains the user's venue
                     user_venue = user_venues[0]
 
                     if not isp.venue or user_venue not in isp.venue:
@@ -281,15 +322,8 @@ class UserLoginWithVenueISPIdSerializer(serializers.Serializer):
             'level': user.level,
             'username': user.username,
             'status': user.status,
-            'venue': {
-                'id': user.venue.id if hasattr(user.venue, 'id') else user.venue,
-                'name': user.venue.venue_name if hasattr(user.venue, 'venue_name') else Venue.objects.get(id=user.venue).venue_name if isinstance(user.venue, int) else None
-            } if user.venue else None,
-            'isp': {
-                'id': user.isp.id,
-                'name': user.isp.username
-            } if user.isp else None,
             'user': user,
+            'venue': user.venue,
             'device_token': user.device_token
         }
 

@@ -194,13 +194,8 @@ class UserLoginAPIView(APIView):
                     return Response({"status": False, "data": {"msg": "Please wait until admin allows you"}}, status=status.HTTP_423_LOCKED)
                 else:
                     user = validated_data.pop('user')
-                    if user.usertype not in [1,2,3]:
-                        return Response({"status": False, "data": {"msg": "You are not allowed to login in admin panel."}}, status=status.HTTP_403_FORBIDDEN)
-                    if user.status == False:
-                        return Response({"status": False, "data": {"msg": "Your account is deleted."}}, status=status.HTTP_403_FORBIDDEN)
+                    # Additional checks for venue and activation are now handled in serializer
                     if user.usertype == 3:
-                        if user.is_activate == False:
-                            return Response({"status": False, "data": {"msg": "Please activate your account first.", "user_id": user.id}}, status=status.HTTP_406_NOT_ACCEPTABLE)
                         if venue == 0:
                             return Response({"status": False, "data": {"msg": "Please input venue."}}, status=status.HTTP_403_FORBIDDEN)
                         else:
@@ -244,7 +239,10 @@ class UserLoginAPIView(APIView):
                                 return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                     else:
                         return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
-            return Response({"status": False, "data": {"msg": "Invalid email or password"}}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                # Return the specific error message from serializer
+                error_msg = serializer.errors.get('non_field_errors', ['Invalid credentials'])[0]
+                return Response({"status": False, "data": {"msg": error_msg}}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             print(e)
@@ -267,11 +265,8 @@ class UserLoginWithVenueISPIdAPIView(APIView):
                     return Response({"status": False, "data": {"msg": "Please wait until admin allows you"}}, status=status.HTTP_423_LOCKED)
                 else:
                     user = validated_data.pop('user')
-                    if user.status == False:
-                        return Response({"status": False, "data": {"msg": "Your account is deleted."}}, status=status.HTTP_403_FORBIDDEN)
+                    # Additional checks for venue and activation are now handled in serializer
                     if user.usertype in [3, 4]:  # Assuming 3 is for clients and 4 for app users
-                        if user.is_activate == False:
-                            return Response({"status": False, "data": {"msg": "Please activate your account first.", "user_id": user.id}}, status=status.HTTP_406_NOT_ACCEPTABLE)
                         if venue == 0:
                             return Response({"status": False, "data": {"msg": "Please input venue."}}, status=status.HTTP_403_FORBIDDEN)
                         else:
@@ -315,8 +310,10 @@ class UserLoginWithVenueISPIdAPIView(APIView):
                                 return Response({"status": True, "data": userdata}, status=status.HTTP_200_OK)
                     else:
                         return Response({"status": True, "data": serializer.validated_data}, status=status.HTTP_200_OK)
-            first_error = next(iter(serializer.errors.values()))[0]  # Get first error message string
-            return Response({"status": False, "data": {"msg": first_error}}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                # Return the specific error message from serializer
+                error_msg = serializer.errors.get('non_field_errors', ['Invalid credentials'])[0]
+                return Response({"status": False, "data": {"msg": error_msg}}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(e)
             return Response({"status": False, "data": {"msg": str(e)}}, status=status.HTTP_400_BAD_REQUEST)

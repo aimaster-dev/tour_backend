@@ -2770,3 +2770,233 @@ Error opening input files: Invalid data found when processing input
 2025-07-11 19:06:30,595 - INFO - "POST /admin/login/?next=/admin/videomgmt/video/ HTTP/1.1" 302 0
 2025-07-11 19:06:30,825 - INFO - "GET /admin/videomgmt/video/ HTTP/1.1" 200 16314
 2025-07-11 19:06:30,926 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 16:35:12,952 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 16:35:12,954 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 16:35:12,954 - INFO - Loading Firebase credentials...
+2025-07-28 16:35:13,042 - INFO - Credentials loaded successfully
+2025-07-28 16:35:13,042 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 16:35:13,043 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 16:35:13,043 - INFO - Firebase initialization completed successfully
+2025-07-28 16:35:34,126 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 16:35:34,146 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 16:35:34,149 - INFO - Loading Firebase credentials...
+2025-07-28 16:35:34,326 - INFO - Credentials loaded successfully
+2025-07-28 16:35:34,329 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 16:35:34,332 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 16:35:34,334 - INFO - Firebase initialization completed successfully
+2025-07-28 17:31:41,106 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 17:31:41,107 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 17:31:41,108 - INFO - Loading Firebase credentials...
+2025-07-28 17:31:41,189 - INFO - Credentials loaded successfully
+2025-07-28 17:31:41,189 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 17:31:41,190 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 17:31:41,190 - INFO - Firebase initialization completed successfully
+2025-07-28 17:31:49,758 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 17:31:49,758 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 17:31:49,759 - INFO - Loading Firebase credentials...
+2025-07-28 17:31:49,823 - INFO - Credentials loaded successfully
+2025-07-28 17:31:49,823 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 17:31:49,824 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 17:31:49,824 - INFO - Firebase initialization completed successfully
+2025-07-28 17:32:06,956 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 17:32:06,957 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 17:32:06,958 - INFO - Loading Firebase credentials...
+2025-07-28 17:32:07,058 - INFO - Credentials loaded successfully
+2025-07-28 17:32:07,059 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 17:32:07,060 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 17:32:07,068 - INFO - Firebase initialization completed successfully
+2025-07-28 17:42:38,981 - INFO - E:\All_Repo\1880\tour_backend\user\serializers.py changed, reloading.
+2025-07-28 17:42:42,408 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 17:42:42,409 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 17:42:42,409 - INFO - Loading Firebase credentials...
+2025-07-28 17:42:42,469 - INFO - Credentials loaded successfully
+2025-07-28 17:42:42,470 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 17:42:42,471 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 17:42:42,471 - INFO - Firebase initialization completed successfully
+2025-07-28 17:42:59,355 - INFO - E:\All_Repo\1880\tour_backend\user\views.py changed, reloading.
+2025-07-28 17:43:04,223 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 17:43:04,224 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 17:43:04,225 - INFO - Loading Firebase credentials...
+2025-07-28 17:43:04,298 - INFO - Credentials loaded successfully
+2025-07-28 17:43:04,299 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 17:43:04,299 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 17:43:04,300 - INFO - Firebase initialization completed successfully
+2025-07-28 17:44:01,953 - WARNING - "POST /api/v1/user/register HTTP/1.1" 400 84
+2025-07-28 17:44:16,307 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 109
+2025-07-28 17:46:30,243 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-28 17:47:33,127 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 53
+2025-07-28 17:49:35,402 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 88
+2025-07-28 17:51:31,982 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 88
+2025-07-28 17:57:01,187 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 109
+2025-07-28 17:59:07,959 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 88
+2025-07-28 18:01:30,111 - INFO - E:\All_Repo\1880\tour_backend\user\views.py changed, reloading.
+2025-07-28 18:01:33,986 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 18:01:33,987 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 18:01:33,988 - INFO - Loading Firebase credentials...
+2025-07-28 18:01:34,047 - INFO - Credentials loaded successfully
+2025-07-28 18:01:34,048 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 18:01:34,048 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 18:01:34,049 - INFO - Firebase initialization completed successfully
+2025-07-28 18:01:40,082 - WARNING - "POST /api/v1/user/login HTTP/1.1" 404 59
+2025-07-28 18:01:54,299 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-28 18:03:03,743 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 404 57
+2025-07-28 18:03:13,999 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 404 57
+2025-07-28 18:04:57,694 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 18:04:57,695 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 18:04:57,695 - INFO - Loading Firebase credentials...
+2025-07-28 18:04:57,790 - INFO - Credentials loaded successfully
+2025-07-28 18:04:57,791 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 18:04:57,791 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 18:04:57,792 - INFO - Firebase initialization completed successfully
+2025-07-28 18:05:38,676 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 18:05:38,677 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 18:05:38,677 - INFO - Loading Firebase credentials...
+2025-07-28 18:05:38,737 - INFO - Credentials loaded successfully
+2025-07-28 18:05:38,738 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 18:05:38,738 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 18:05:38,739 - INFO - Firebase initialization completed successfully
+2025-07-28 18:05:48,060 - INFO - "GET /admin HTTP/1.1" 301 0
+2025-07-28 18:05:48,103 - INFO - "GET /admin/ HTTP/1.1" 302 0
+2025-07-28 18:05:48,317 - INFO - "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4155
+2025-07-28 18:05:48,639 - INFO - "GET /static/admin/css/responsive.css HTTP/1.1" 200 17905
+2025-07-28 18:05:48,646 - INFO - "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2682
+2025-07-28 18:05:48,659 - INFO - "GET /static/admin/css/login.css HTTP/1.1" 200 958
+2025-07-28 18:05:48,663 - INFO - "GET /static/admin/css/base.css HTTP/1.1" 200 21544
+2025-07-28 18:05:48,687 - INFO - "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+2025-07-28 18:05:48,733 - INFO - "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+2025-07-28 18:05:48,733 - INFO - "GET /static/admin/js/theme.js HTTP/1.1" 200 1943
+2025-07-28 18:05:48,832 - WARNING - "GET /favicon.ico HTTP/1.1" 404 3050
+2025-07-28 18:06:00,455 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+2025-07-28 18:06:00,516 - INFO - "GET /admin/ HTTP/1.1" 200 14902
+2025-07-28 18:06:00,568 - INFO - "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+2025-07-28 18:06:00,611 - INFO - "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+2025-07-28 18:06:00,613 - INFO - "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+2025-07-28 18:06:11,228 - INFO - "GET /admin/tourplace/venue/ HTTP/1.1" 200 15395
+2025-07-28 18:06:11,266 - INFO - "GET /static/admin/css/changelists.css HTTP/1.1" 200 6811
+2025-07-28 18:06:11,297 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:06:11,305 - INFO - "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+2025-07-28 18:06:11,345 - INFO - "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+2025-07-28 18:06:11,346 - INFO - "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9042
+2025-07-28 18:06:11,356 - INFO - "GET /static/admin/js/actions.js HTTP/1.1" 200 8067
+2025-07-28 18:06:11,396 - INFO - "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+2025-07-28 18:06:11,404 - INFO - "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+2025-07-28 18:06:11,413 - INFO - "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+2025-07-28 18:06:11,499 - INFO - "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+2025-07-28 18:06:11,613 - INFO - "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+2025-07-28 18:06:11,667 - INFO - "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+2025-07-28 18:06:14,669 - INFO - "GET /admin/tourplace/venue/1/change/ HTTP/1.1" 200 17435
+2025-07-28 18:06:14,700 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:06:14,712 - INFO - "GET /static/admin/css/forms.css HTTP/1.1" 200 9090
+2025-07-28 18:06:14,729 - INFO - "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+2025-07-28 18:06:14,745 - INFO - "GET /static/admin/css/widgets.css HTTP/1.1" 200 11800
+2025-07-28 18:06:14,752 - INFO - "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+2025-07-28 18:06:57,601 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 24087
+2025-07-28 18:06:57,644 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:06:57,661 - INFO - "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+2025-07-28 18:06:57,666 - INFO - "GET /static/admin/img/icon-no.svg HTTP/1.1" 200 560
+2025-07-28 18:06:57,703 - INFO - "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+2025-07-28 18:06:57,727 - INFO - "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+2025-07-28 18:06:57,728 - INFO - "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+2025-07-28 18:07:41,127 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 404 59
+2025-07-28 18:08:29,065 - WARNING - "POST /api/v1/user/login HTTP/1.1" 404 59
+2025-07-28 18:09:25,494 - WARNING - "POST /api/v1/user/login HTTP/1.1" 404 59
+2025-07-28 18:11:54,865 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-28 18:13:49,516 - INFO - "GET /admin/tourplace/venue/ HTTP/1.1" 200 15395
+2025-07-28 18:13:49,541 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:13:50,721 - INFO - "GET /admin/tourplace/venue/1/change/ HTTP/1.1" 200 17435
+2025-07-28 18:13:50,746 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:14:05,784 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 24830
+2025-07-28 18:14:05,808 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:14:28,102 - INFO - "GET /admin/user/user/3/change/ HTTP/1.1" 200 26785
+2025-07-28 18:14:28,126 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:14:28,160 - INFO - "GET /static/admin/js/collapse.js HTTP/1.1" 200 1803
+2025-07-28 18:14:28,179 - INFO - "GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 200 392
+2025-07-28 18:15:38,519 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 404 62
+2025-07-28 18:16:03,200 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 404 59
+2025-07-28 18:17:07,548 - INFO - E:\All_Repo\1880\tour_backend\user\views.py changed, reloading.
+2025-07-28 18:17:11,421 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 18:17:11,432 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 18:17:11,434 - INFO - Loading Firebase credentials...
+2025-07-28 18:17:11,536 - INFO - Credentials loaded successfully
+2025-07-28 18:17:11,537 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 18:17:11,538 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 18:17:11,538 - INFO - Firebase initialization completed successfully
+2025-07-28 18:20:01,880 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-28 18:20:01,880 - INFO - Using app name: emmysvideo-fb564
+2025-07-28 18:20:01,881 - INFO - Loading Firebase credentials...
+2025-07-28 18:20:01,950 - INFO - Credentials loaded successfully
+2025-07-28 18:20:01,950 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-28 18:20:01,951 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-28 18:20:01,951 - INFO - Firebase initialization completed successfully
+2025-07-28 18:20:06,421 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 24830
+2025-07-28 18:20:06,500 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:20:22,565 - ERROR - "POST /admin/user/user/ HTTP/1.1" 500 224499
+2025-07-28 18:20:33,932 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 24830
+2025-07-28 18:21:35,663 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-28 18:21:42,616 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 25566
+2025-07-28 18:21:42,642 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:21:44,203 - INFO - "GET /admin/user/user/9/change/ HTTP/1.1" 200 26599
+2025-07-28 18:21:44,229 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:22:15,399 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 88
+2025-07-28 18:22:45,538 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 25566
+2025-07-28 18:22:45,570 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:23:02,453 - INFO - "GET /admin/tourplace/venue/ HTTP/1.1" 200 15395
+2025-07-28 18:23:02,482 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:23:04,295 - INFO - "GET /admin/tourplace/venue/1/change/ HTTP/1.1" 200 17435
+2025-07-28 18:23:04,323 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:24:17,398 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 25566
+2025-07-28 18:24:17,421 - INFO - "GET /static/admin/css/base.css HTTP/1.1" 304 0
+2025-07-28 18:24:17,421 - INFO - "GET /static/admin/css/dark_mode.css HTTP/1.1" 304 0
+2025-07-28 18:24:17,463 - INFO - "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 304 0
+2025-07-28 18:24:17,471 - INFO - "GET /static/admin/css/responsive.css HTTP/1.1" 304 0
+2025-07-28 18:24:17,478 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:24:17,481 - INFO - "GET /static/admin/js/theme.js HTTP/1.1" 304 0
+2025-07-28 18:24:17,489 - INFO - "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 304 0
+2025-07-28 18:24:30,572 - INFO - "GET /admin/user/user/9/change/ HTTP/1.1" 200 26599
+2025-07-28 18:24:30,592 - INFO - "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 304 0
+2025-07-28 18:24:30,611 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:24:30,618 - INFO - "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 304 0
+2025-07-28 18:24:39,906 - INFO - "POST /admin/user/user/9/change/ HTTP/1.1" 302 0
+2025-07-28 18:24:39,957 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 25769
+2025-07-28 18:24:40,011 - INFO - "GET /static/admin/css/changelists.css HTTP/1.1" 304 0
+2025-07-28 18:24:40,017 - INFO - "GET /static/admin/js/jquery.init.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,017 - INFO - "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,018 - INFO - "GET /static/admin/js/core.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,025 - INFO - "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,026 - INFO - "GET /static/admin/js/urlify.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,031 - INFO - "GET /static/admin/js/prepopulate.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,032 - INFO - "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,034 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:24:40,038 - INFO - "GET /static/admin/js/actions.js HTTP/1.1" 304 0
+2025-07-28 18:24:40,049 - INFO - "GET /static/admin/js/filters.js HTTP/1.1" 304 0
+2025-07-28 18:24:50,179 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 88
+2025-07-28 18:25:10,342 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 53
+2025-07-28 18:25:51,223 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 88
+2025-07-28 18:26:00,086 - INFO - "GET /admin/user/user/9/change/ HTTP/1.1" 200 26607
+2025-07-28 18:26:00,250 - INFO - "GET /static/admin/css/forms.css HTTP/1.1" 304 0
+2025-07-28 18:26:00,255 - INFO - "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 304 0
+2025-07-28 18:26:00,262 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:26:00,361 - INFO - "GET /static/admin/css/widgets.css HTTP/1.1" 304 0
+2025-07-28 18:26:00,414 - INFO - "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 304 0
+2025-07-28 18:26:00,418 - INFO - "GET /static/admin/js/change_form.js HTTP/1.1" 304 0
+2025-07-28 18:26:37,417 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 25566
+2025-07-28 18:26:37,441 - INFO - "GET /static/admin/img/icon-yes.svg HTTP/1.1" 304 0
+2025-07-28 18:26:37,443 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:26:37,444 - INFO - "GET /static/admin/img/search.svg HTTP/1.1" 304 0
+2025-07-28 18:26:37,476 - INFO - "GET /static/admin/img/icon-no.svg HTTP/1.1" 304 0
+2025-07-28 18:26:39,520 - INFO - "GET /admin/user/user/9/change/ HTTP/1.1" 200 26607
+2025-07-28 18:26:39,586 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:26:45,810 - INFO - "POST /admin/user/user/9/change/ HTTP/1.1" 302 0
+2025-07-28 18:26:45,861 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 25767
+2025-07-28 18:26:45,881 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:26:50,181 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 96
+2025-07-28 18:29:27,189 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 96
+2025-07-28 18:30:58,730 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 109
+2025-07-28 18:31:37,360 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 64
+2025-07-28 18:31:46,263 - INFO - "GET /admin/user/user/9/change/ HTTP/1.1" 200 26782
+2025-07-28 18:31:46,314 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:32:00,476 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 25564
+2025-07-28 18:32:00,497 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:32:03,270 - INFO - "GET /admin/user/user/3/change/ HTTP/1.1" 200 26785
+2025-07-28 18:32:03,290 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-28 18:33:55,712 - INFO - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 200 606

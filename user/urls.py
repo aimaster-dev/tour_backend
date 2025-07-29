@@ -9,7 +9,8 @@ from .views import (UserAPIView, UserDeleteAPIView, UserLoginAPIView, ISPRangeLi
                     CustomerByISPCreateView, CustomerByISPUpdateView, CustomerByISPDeleteView,
                     CustomerByISPDetailView, ClientUserListAPIView, ClientManagementView,
                     ClientTestUserView, ClientsByISPListView, ClientsByCustomerListView,
-                    CheckVenueISPsBeforeDeletionView, SafeDeleteISPUserView)
+                    CheckVenueISPsBeforeDeletionView, SafeDeleteISPUserView, ForgotPasswordView,
+                    VerifyForgotPasswordOTPView, ResetPasswordView, ChangePasswordView)
 
 urlpatterns = [
      path('register', UserAPIView.as_view(), name='auth_register'),
@@ -43,7 +44,7 @@ urlpatterns = [
      path('isp/<int:isp_id>/clients/', ClientsByISPListView.as_view(),
           name='clients-by-isp-list'),
      path('customer/<int:customer_id>/clients/', ClientsByCustomerListView.as_view(),
-          name='clients-by-isp-list'),
+          name='clients-by-customer-list'),
      
 
      path('isp/manage/', ISPManagementView.as_view(), name='isp-management'),
@@ -77,6 +78,12 @@ urlpatterns = [
      
      path('venues/<int:venue_id>/check-isps/', CheckVenueISPsBeforeDeletionView.as_view(), name='check_venue_isps'),
      path('users/<int:user_id>/safe-delete-isp/', SafeDeleteISPUserView.as_view(), name='safe_delete_isp_user'),
+
+     # Password management APIs
+     path('forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
+     path('verify-forgot-password-otp/', VerifyForgotPasswordOTPView.as_view(), name='verify-forgot-password-otp'),
+     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
+     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
 
 
    

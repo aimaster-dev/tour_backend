@@ -3000,3 +3000,90 @@ Error opening input files: Invalid data found when processing input
 2025-07-28 18:32:03,270 - INFO - "GET /admin/user/user/3/change/ HTTP/1.1" 200 26785
 2025-07-28 18:32:03,290 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
 2025-07-28 18:33:55,712 - INFO - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 200 606
+2025-07-29 12:35:39,720 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-29 12:35:39,721 - INFO - Using app name: emmysvideo-fb564
+2025-07-29 12:35:39,722 - INFO - Loading Firebase credentials...
+2025-07-29 12:35:39,794 - INFO - Credentials loaded successfully
+2025-07-29 12:35:39,795 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-29 12:35:39,796 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-29 12:35:39,796 - INFO - Firebase initialization completed successfully
+2025-07-29 12:40:12,957 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-29 12:40:12,958 - INFO - Using app name: emmysvideo-fb564
+2025-07-29 12:40:12,958 - INFO - Loading Firebase credentials...
+2025-07-29 12:40:13,035 - INFO - Credentials loaded successfully
+2025-07-29 12:40:13,035 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-29 12:40:13,036 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-29 12:40:13,036 - INFO - Firebase initialization completed successfully
+2025-07-29 12:40:16,967 - WARNING - "POST /api/v1/user/forgot-password/ HTTP/1.1" 404 64
+2025-07-29 12:40:40,917 - WARNING - "POST /api/v1/user/forgot-password/ HTTP/1.1" 404 64
+2025-07-29 12:42:07,170 - WARNING - "POST /api/v1/user/register HTTP/1.1" 400 61
+2025-07-29 12:42:28,843 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-29 12:47:05,301 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 109
+2025-07-29 12:47:19,628 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-29 12:47:33,116 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 88
+2025-07-29 12:47:58,960 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 109
+2025-07-29 12:48:04,690 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 88
+2025-07-29 12:49:03,892 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-29 12:50:42,244 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 88
+2025-07-29 12:50:54,158 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 88
+2025-07-29 12:51:12,406 - WARNING - "POST /api/v1/user/forgot-password/ HTTP/1.1" 400 80
+2025-07-29 12:53:04,007 - INFO - "POST /api/v1/user/register HTTP/1.1" 201 128
+2025-07-29 12:53:58,639 - INFO - "GET /admin/ HTTP/1.1" 200 15639
+2025-07-29 12:53:58,662 - INFO - "GET /static/admin/css/base.css HTTP/1.1" 304 0
+2025-07-29 12:53:58,663 - INFO - "GET /static/admin/css/dark_mode.css HTTP/1.1" 304 0
+2025-07-29 12:53:58,684 - INFO - "GET /static/admin/css/responsive.css HTTP/1.1" 304 0
+2025-07-29 12:53:58,692 - INFO - "GET /static/admin/css/dashboard.css HTTP/1.1" 304 0
+2025-07-29 12:53:58,701 - INFO - "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 304 0
+2025-07-29 12:53:58,702 - INFO - "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 304 0
+2025-07-29 12:53:58,702 - INFO - "GET /static/admin/js/theme.js HTTP/1.1" 304 0
+2025-07-29 12:53:58,730 - INFO - "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 304 0
+2025-07-29 12:53:58,734 - INFO - "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 304 0
+2025-07-29 12:54:03,702 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 28591
+2025-07-29 12:54:03,741 - INFO - "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,744 - INFO - "GET /static/admin/js/jquery.init.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,745 - INFO - "GET /static/admin/js/core.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,749 - INFO - "GET /static/admin/css/changelists.css HTTP/1.1" 304 0
+2025-07-29 12:54:03,754 - INFO - "GET /static/admin/js/actions.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,758 - INFO - "GET /static/admin/js/prepopulate.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,761 - INFO - "GET /static/admin/js/urlify.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,769 - INFO - "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,771 - INFO - "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,797 - INFO - "GET /static/admin/img/search.svg HTTP/1.1" 304 0
+2025-07-29 12:54:03,800 - INFO - "GET /static/admin/img/icon-no.svg HTTP/1.1" 304 0
+2025-07-29 12:54:03,816 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-29 12:54:03,824 - INFO - "GET /static/admin/js/filters.js HTTP/1.1" 304 0
+2025-07-29 12:54:03,827 - INFO - "GET /static/admin/img/icon-yes.svg HTTP/1.1" 304 0
+2025-07-29 12:54:03,894 - INFO - "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 304 0
+2025-07-29 12:54:03,900 - INFO - "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 304 0
+2025-07-29 12:54:03,903 - INFO - "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 304 0
+2025-07-29 12:55:08,484 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 96
+2025-07-29 12:55:22,556 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 96
+2025-07-29 12:55:37,924 - INFO - "POST /api/v1/user/forgot-password/ HTTP/1.1" 200 63
+2025-07-29 12:56:01,044 - INFO - "GET /admin/user/user/11/change/ HTTP/1.1" 200 26653
+2025-07-29 12:56:01,093 - INFO - "GET /static/admin/css/forms.css HTTP/1.1" 304 0
+2025-07-29 12:56:01,109 - INFO - "GET /static/admin/js/collapse.js HTTP/1.1" 304 0
+2025-07-29 12:56:01,109 - INFO - "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 304 0
+2025-07-29 12:56:01,111 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-29 12:56:01,146 - INFO - "GET /static/admin/css/widgets.css HTTP/1.1" 304 0
+2025-07-29 12:56:01,149 - INFO - "GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 304 0
+2025-07-29 12:56:01,163 - INFO - "GET /static/admin/js/change_form.js HTTP/1.1" 304 0
+2025-07-29 12:56:15,796 - INFO - "POST /admin/user/user/11/change/ HTTP/1.1" 302 0
+2025-07-29 12:56:15,862 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 28806
+2025-07-29 12:56:15,895 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-29 12:56:56,630 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 96
+2025-07-29 12:57:04,068 - WARNING - "POST /api/v1/user/login HTTP/1.1" 400 96
+2025-07-29 12:57:16,811 - INFO - "POST /api/v1/user/forgot-password/ HTTP/1.1" 200 63
+2025-07-29 13:02:45,768 - INFO - "GET /admin/user/emailotp/ HTTP/1.1" 200 18262
+2025-07-29 13:02:45,791 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-29 13:03:37,848 - WARNING - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 400 53
+2025-07-29 13:03:50,430 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 28589
+2025-07-29 13:03:50,452 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-29 13:03:56,979 - INFO - "POST /admin/user/user/ HTTP/1.1" 302 0
+2025-07-29 13:03:57,044 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 28714
+2025-07-29 13:03:57,068 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-29 13:03:57,198 - INFO - "GET /static/admin/img/icon-alert.svg HTTP/1.1" 200 504
+2025-07-29 13:04:04,942 - ERROR - "POST /admin/user/user/ HTTP/1.1" 500 223794
+2025-07-29 13:04:06,696 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 28589
+2025-07-29 13:04:18,865 - INFO - "GET /admin/user/user/9/change/ HTTP/1.1" 200 26773
+2025-07-29 13:04:18,891 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-07-29 13:04:29,749 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 28589

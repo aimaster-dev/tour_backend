@@ -1876,3 +1876,230 @@ class SafeDeleteISPUserView(APIView):
             "status": True,
             "message": "ISP user deleted successfully."
         }, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """Send OTP for forgot password"""
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({
+                "status": False,
+                "data": "Email is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            
+            # Check if user is active
+            if not user.status:
+                return Response({
+                    "status": False,
+                    "data": "Your account has been deleted. Please contact support."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Delete any existing OTP for this user
+            EmailOTP.objects.filter(user=user).delete()
+            
+            # Generate new OTP
+            otp = str(random.randint(100000, 999999))
+            EmailOTP.objects.create(user=user, otp=otp)
+            
+            # Send email
+            mail_subject = 'Password Reset OTP'
+            message = f"""
+                <html>
+                <body>
+                    <p>Your password reset OTP for <strong>dwareapps.com</strong> is <strong>{otp}</strong></p>
+                    <p>This OTP will expire in 10 minutes.</p>
+                </body>
+                </html>
+            """
+            email = EmailMessage(mail_subject, message, to=[user.email])
+            email.content_subtype = "html"
+            email.send()
+
+            return Response({
+                "status": True,
+                "data": "Password reset OTP sent to your email."
+            }, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": "No user found with this email address."
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class VerifyForgotPasswordOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """Verify OTP for password reset"""
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        
+        if not email or not otp:
+            return Response({
+                "status": False,
+                "data": "Email and OTP are required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            email_otp = EmailOTP.objects.get(user=user, otp=otp)
+            
+            # Check if OTP is expired (10 minutes)
+            from datetime import timedelta
+            if email_otp.created_at + timedelta(minutes=10) < timezone.now():
+                email_otp.delete()
+                return Response({
+                    "status": False,
+                    "data": "OTP has expired. Please request a new one."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # OTP is valid, return success
+            return Response({
+                "status": True,
+                "data": "OTP verified successfully. You can now reset your password."
+            }, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": "No user found with this email address."
+            }, status=status.HTTP_404_NOT_FOUND)
+        except EmailOTP.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": "Invalid OTP code."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """Reset password after OTP verification"""
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+        
+        if not all([email, otp, new_password, confirm_password]):
+            return Response({
+                "status": False,
+                "data": "Email, OTP, new password, and confirm password are required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_password != confirm_password:
+            return Response({
+                "status": False,
+                "data": "Passwords do not match"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 6:
+            return Response({
+                "status": False,
+                "data": "Password must be at least 6 characters long"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            email_otp = EmailOTP.objects.get(user=user, otp=otp)
+            
+            # Check if OTP is expired (10 minutes)
+            from datetime import timedelta
+            if email_otp.created_at + timedelta(minutes=10) < timezone.now():
+                email_otp.delete()
+                return Response({
+                    "status": False,
+                    "data": "OTP has expired. Please request a new one."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Reset password
+            user.set_password(new_password)
+            user.save()
+            
+            # Delete the OTP
+            email_otp.delete()
+            
+            return Response({
+                "status": True,
+                "data": "Password reset successfully."
+            }, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": "No user found with this email address."
+            }, status=status.HTTP_404_NOT_FOUND)
+        except EmailOTP.DoesNotExist:
+            return Response({
+                "status": False,
+                "data": "Invalid OTP code."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "status": False,
+                "data": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Change password for authenticated users"""
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+        
+        if not all([current_password, new_password, confirm_password]):
+            return Response({
+                "status": False,
+                "data": "Current password, new password, and confirm password are required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_password != confirm_password:
+            return Response({
+                "status": False,
+                "data": "Passwords do not match"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 6:
+            return Response({
+                "status": False,
+                "data": "Password must be at least 6 characters long"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        
+        # Verify current password
+        if not user.check_password(current_password):
+            return Response({
+                "status": False,
+                "data": "Current password is incorrect"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Change password
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({
+            "status": True,
+            "data": "Password changed successfully."
+        }, status=status.HTTP_200_OK)

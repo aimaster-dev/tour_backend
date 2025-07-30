@@ -628,7 +628,7 @@ class SnapShotAddAPIView(APIView):
             logging.info(
                 f"Starting snapshot upload process for user {request.user.username}")
             client = request.user
-            if client.usertype not in [3,4]:
+            if client.usertype not in [1,3,4]:
                 logging.warning(
                     f"Unauthorized access attempt by user {client.username} (type {client.usertype})")
                 return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."},

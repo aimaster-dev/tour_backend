@@ -554,10 +554,10 @@ class SnapShotAPIView(APIView):
 
     def get(self, request):
         client = request.user
-        if client.usertype not in [1,3,4]:
+        if client.usertype not in [3,4]:
             return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."}, status=status.HTTP_400_BAD_REQUEST)
 
-        venue_id = client.venue[0] if client.venue else 1  # Use venue ID 1 as default for testing
+        venue_id = client.venue[0]
         images = SnapShot.objects.filter(
             venue_id=venue_id, client=client)
         serializer = SnatShotSerializer(images, many=True)
@@ -628,13 +628,13 @@ class SnapShotAddAPIView(APIView):
             logging.info(
                 f"Starting snapshot upload process for user {request.user.username}")
             client = request.user
-            if client.usertype not in [1,3,4]:
+            if client.usertype not in [3,4]:
                 logging.warning(
                     f"Unauthorized access attempt by user {client.username} (type {client.usertype})")
                 return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            venue_id = client.venue[0] if client.venue else 1  # Use venue ID 1 as default for testing
+            venue_id = client.venue[0]
             logging.info(f"Processing snapshots for venue ID: {venue_id}")
             
             try:

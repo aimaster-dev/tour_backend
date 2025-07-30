@@ -12,6 +12,18 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('email', 'username', 'phone_number')
     ordering = ('-created_at',)
 
+    add_fieldsets = (
+        ('Account Information', {
+            'fields': ('email', 'username', 'password1', 'password2', 'phone_number')
+        }),
+        ('Role & Permissions', {
+            'fields': ('usertype', 'venue', 'isp', 'level')
+        }),
+        ('Status', {
+            'fields': ('status', 'is_activate', 'is_invited', 'has_unlimited_access')
+        }),
+    )
+
     fieldsets = (
         ('Account Information', {
             'fields': ('email', 'username', 'password', 'phone_number')

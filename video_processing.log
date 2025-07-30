@@ -3190,3 +3190,11 @@ Error opening input files: Invalid data found when processing input
 2025-07-29 18:07:04,194 - INFO - Initializing Firebase app with name: emmysvideo-fb564
 2025-07-29 18:07:04,194 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
 2025-07-29 18:07:04,195 - INFO - Firebase initialization completed successfully
+2025-07-29 19:12:16,282 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-07-29 19:12:16,283 - INFO - Using app name: emmysvideo-fb564
+2025-07-29 19:12:16,283 - INFO - Loading Firebase credentials...
+2025-07-29 19:12:16,361 - INFO - Credentials loaded successfully
+2025-07-29 19:12:16,362 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-07-29 19:12:16,362 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-07-29 19:12:16,370 - INFO - Firebase initialization completed successfully
+2025-07-29 19:12:23,961 - INFO - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 200 636

@@ -554,7 +554,7 @@ class SnapShotAPIView(APIView):
 
     def get(self, request):
         client = request.user
-        if client.usertype not in [3,4]:
+        if client.usertype not in [1,3,4]:
             return Response({"status": False, "data": "Admin or ISP can't upload the snapshots."}, status=status.HTTP_400_BAD_REQUEST)
 
         venue_id = client.venue[0]

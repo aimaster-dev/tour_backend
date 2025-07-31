@@ -35,7 +35,26 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
             user_venues = getattr(user, 'venue', [])
             if not validated_data.get('venue') and isinstance(user_venues, list) and user_venues:
                 validated_data['venue'] = user_venues[0]  # pick the first venue ID
-        return super().create(validated_data)
+        
+        # Extract password and handle ISP assignment
+        password = validated_data.pop('password')
+        isp_id = validated_data.pop('isp_id', None)
+        
+        # Create user with proper password hashing
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        
+        # Handle ISP assignment if provided
+        if isp_id:
+            try:
+                isp = User.objects.get(id=isp_id, usertype=2, status=True)
+                user.isp = isp
+            except User.DoesNotExist:
+                # If ISP doesn't exist, continue without assignment
+                pass
+        
+        user.save()
+        return user
 
     def update(self, instance, validated_data):
         if 'venue' in validated_data:
@@ -453,10 +472,9 @@ class CustomerByISPSerializer(serializers.ModelSerializer):
         validated_data['status'] = True  # Ensure status is True
         validated_data['is_activate'] = True
         
-        # Create user with password if provided
+        # Create user with proper password hashing
         if password:
             user = User.objects.create_user(**validated_data)
-            user.set_password(password)
             user.save()
         else:
             user = User.objects.create(**validated_data)

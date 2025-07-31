@@ -23,6 +23,7 @@ import random
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
+import logging
 
 # Create your views here.
 
@@ -54,6 +55,37 @@ class UserAPIView(APIView):
                 serializer.is_activate = False
                 user.save()
 
+                # If this is a client user (usertype=4) and no ISP is assigned,
+                # create a default ISP for the venue
+                if user.usertype == 4 and not user.isp:
+                    venue_id = user.venue[0] if user.venue else None
+                    if venue_id:
+                        # Check if any ISP exists for this venue
+                        existing_isp = User.objects.filter(
+                            usertype=2, 
+                            venue__contains=[venue_id], 
+                            status=True
+                        ).first()
+                        
+                        if not existing_isp:
+                            # Create a default ISP for this venue
+                            try:
+                                venue_obj = Venue.objects.get(id=venue_id)
+                                default_isp = User.objects.create_user(
+                                    email=f"default_isp_{venue_id}@example.com",
+                                    username=f"Default ISP - {venue_obj.venue_name}",
+                                    password="default_isp_password_123",
+                                    phone_number="1234567890",
+                                    usertype=2,
+                                    venue=[venue_id],
+                                    status=True,
+                                    is_activate=True
+                                )
+                                user.isp = default_isp
+                                user.save()
+                            except Venue.DoesNotExist:
+                                pass  # Venue doesn't exist, skip ISP creation
+
                 # Check if user already had a free plan before
                 existing_free_plan = PaymentLogs.objects.filter(
                     user__email=email_addr,
@@ -75,23 +107,32 @@ class UserAPIView(APIView):
                     )
 
                 # Send verification email
-                token = account_activation_token.make_token(user)
-                uid = urlsafe_base64_encode(force_bytes(user.pk))
-                activation_url = f"https://dwareapps.com/email_verify?uid={uid}&token={token}"
-                mail_subject = 'Activate your account'
-                message = render_to_string('acc_active_email.html', {
-                    'user': user,
-                    'activation_url': activation_url,
-                })
-                email = EmailMessage(mail_subject, message, to=[user.email])
-                email.content_subtype = "html"
-                email.send()
-
-                return Response({
-                    "status": True,
-                    "past_registered": False,
-                    "data": "User Registered Successfully. Please check your email to activate your account."
-                }, status=status.HTTP_201_CREATED)
+                try:
+                    token = account_activation_token.make_token(user)
+                    uid = urlsafe_base64_encode(force_bytes(user.pk))
+                    activation_url = f"https://dwareapps.com/email_verify?uid={uid}&token={token}"
+                    mail_subject = 'Activate your account'
+                    message = render_to_string('acc_active_email.html', {
+                        'user': user,
+                        'activation_url': activation_url,
+                    })
+                    email = EmailMessage(mail_subject, message, to=[user.email])
+                    email.content_subtype = "html"
+                    email.send()
+                    
+                    return Response({
+                        "status": True,
+                        "past_registered": False,
+                        "data": "User Registered Successfully. Please check your email to activate your account."
+                    }, status=status.HTTP_201_CREATED)
+                except Exception as e:
+                    # If email fails, still create the user but return a different message
+                    logging.error(f"Failed to send activation email to {user.email}: {str(e)}")
+                    return Response({
+                        "status": True,
+                        "past_registered": False,
+                        "data": "User Registered Successfully. Please contact admin to activate your account."
+                    }, status=status.HTTP_201_CREATED)
 
         return Response({"status": False, "data": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 

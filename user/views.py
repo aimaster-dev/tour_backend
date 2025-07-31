@@ -56,35 +56,25 @@ class UserAPIView(APIView):
                 user.save()
 
                 # If this is a client user (usertype=4) and no ISP is assigned,
-                # create a default ISP for the venue
+                # find and assign an existing ISP for the venue
                 if user.usertype == 4 and not user.isp:
                     venue_id = user.venue[0] if user.venue else None
                     if venue_id:
-                        # Check if any ISP exists for this venue
+                        # Find existing ISP for this venue
                         existing_isp = User.objects.filter(
                             usertype=2, 
                             venue__contains=[venue_id], 
                             status=True
                         ).first()
                         
-                        if not existing_isp:
-                            # Create a default ISP for this venue
-                            try:
-                                venue_obj = Venue.objects.get(id=venue_id)
-                                default_isp = User.objects.create_user(
-                                    email=f"default_isp_{venue_id}@example.com",
-                                    username=f"Default ISP - {venue_obj.venue_name}",
-                                    password="default_isp_password_123",
-                                    phone_number="1234567890",
-                                    usertype=2,
-                                    venue=[venue_id],
-                                    status=True,
-                                    is_activate=True
-                                )
-                                user.isp = default_isp
-                                user.save()
-                            except Venue.DoesNotExist:
-                                pass  # Venue doesn't exist, skip ISP creation
+                        if existing_isp:
+                            # Assign existing ISP to the user
+                            user.isp = existing_isp
+                            user.save()
+                            logging.info(f"Assigned existing ISP {existing_isp.id} ({existing_isp.email}) to user {user.id}")
+                        else:
+                            # No ISP exists for this venue, log warning but don't create one
+                            logging.warning(f"No ISP found for venue {venue_id}, user {user.id} will need manual ISP assignment")
 
                 # Check if user already had a free plan before
                 existing_free_plan = PaymentLogs.objects.filter(

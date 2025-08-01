@@ -205,18 +205,18 @@ class CameraAPIView(APIView):
                 return Response({'status': False, 'error': 'Only ISP users can create cameras'},
                                 status=status.HTTP_403_FORBIDDEN)
 
-            rtsp_url = data.get("rtsp_url")
-            if not rtsp_url:
-                logger.error("Missing required field: rtsp_url")
-                return Response({'status': False, 'error': 'RTSP URL is required'},
+            stream_url = data.get("stream_url")
+            if not stream_url:
+                logger.error("Missing required field: stream_url")
+                return Response({'status': False, 'error': 'Stream URL is required'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
-            logger.info(f"Processing RTSP URL: {rtsp_url}")
-            output_dir = get_output_dir(rtsp_url)
+            logger.info(f"Processing Stream URL: {stream_url}")
+            output_dir = get_output_dir(stream_url)
             logger.info(f"Generated output directory: {output_dir}")
 
             camdata = {
-                "rtsp_url": rtsp_url,
+                "stream_url": stream_url,
                 "camera_name": data.get("camera_name"),
                 "output_url": output_dir
             }
@@ -363,17 +363,17 @@ class CameraUpdateAPIView(APIView):
 
             # stop_stream(origin_dir)
             data = request.data
-            rtsp_url = data.get("rtsp_url")
-            if not rtsp_url:
-                logger.error("Missing required field: rtsp_url")
-                return Response({'status': False, 'error': 'RTSP URL is required'}, status=status.HTTP_400_BAD_REQUEST)
+            stream_url = data.get("stream_url")
+            if not stream_url:
+                logger.error("Missing required field: stream_url")
+                return Response({'status': False, 'error': 'Stream URL is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-            logger.info(f"New RTSP URL: {rtsp_url}")
-            output_dir = get_output_dir(rtsp_url)
+            logger.info(f"New Stream URL: {stream_url}")
+            output_dir = get_output_dir(stream_url)
             logger.info(f"New output directory: {output_dir}")
 
             camdata = {
-                "rtsp_url": rtsp_url,
+                "stream_url": stream_url,
                 "output_url": output_dir,
                 "camera_name": data.get("camera_name"),
             }
@@ -500,8 +500,8 @@ class CameraDeleteAPIView(APIView):
 #                 "password": camera.password,
 #                 "output_url": camera.output_url
 #             }
-#             rtsp_url = "rtsp://" + data["camera_user_name"] + ":" + data["password"] + "@" + data["camera_ip"] + ":" + data["camera_port"] + "/"
-#             # convert_rtsp_to_hls(rtsp_url, data["output_url"])
+#             stream_url = "rtsp://" + data["camera_user_name"] + ":" + data["password"] + "@" + data["camera_ip"] + ":" + data["camera_port"] + "/"
+#             # convert_rtsp_to_hls(stream_url, data["output_url"])
 #             return Response({"status": True, "data": {"msg": "Successfully Restarted."}}, status=status.HTTP_200_OK)
 #         except Camera.DoesNotExist:
 #             try:
@@ -640,7 +640,7 @@ class CameraViewSet(viewsets.ModelViewSet):
     pagination_class = CameraPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['venue']
-    search_fields = ['camera_name', 'rtsp_url']
+    search_fields = ['camera_name', 'stream_url']
     ordering_fields = ['created_at', 'camera_name']
 
     def get_queryset(self):
@@ -657,7 +657,7 @@ class CameraViewSetForISP(viewsets.ModelViewSet):
     pagination_class = CameraPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['venue']
-    search_fields = ['camera_name', 'rtsp_url']
+    search_fields = ['camera_name', 'stream_url']
     ordering_fields = ['created_at', 'camera_name']
 
     def get_queryset(self):

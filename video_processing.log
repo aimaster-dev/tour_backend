@@ -3198,3 +3198,95 @@ Error opening input files: Invalid data found when processing input
 2025-07-29 19:12:16,362 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
 2025-07-29 19:12:16,370 - INFO - Firebase initialization completed successfully
 2025-07-29 19:12:23,961 - INFO - "POST /api/v1/user/login-with-venue-isp-id HTTP/1.1" 200 636
+2025-08-19 10:37:14,916 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-08-19 10:37:14,917 - INFO - Using app name: emmysvideo-fb564
+2025-08-19 10:37:14,918 - INFO - Loading Firebase credentials...
+2025-08-19 10:37:14,973 - INFO - Credentials loaded successfully
+2025-08-19 10:37:14,974 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-08-19 10:37:14,974 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-08-19 10:37:14,975 - INFO - Firebase initialization completed successfully
+2025-08-19 10:39:28,762 - WARNING - "GET / HTTP/1.1" 404 2999
+2025-08-19 10:39:28,920 - WARNING - "GET /favicon.ico HTTP/1.1" 404 3050
+2025-08-19 10:39:32,707 - INFO - "GET /admin HTTP/1.1" 301 0
+2025-08-19 10:39:32,787 - INFO - "GET /admin/ HTTP/1.1" 302 0
+2025-08-19 10:39:33,117 - INFO - "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4155
+2025-08-19 10:39:33,420 - INFO - "GET /static/admin/css/login.css HTTP/1.1" 200 958
+2025-08-19 10:39:33,437 - INFO - "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2682
+2025-08-19 10:39:33,438 - INFO - "GET /static/admin/css/responsive.css HTTP/1.1" 200 17905
+2025-08-19 10:39:33,438 - INFO - "GET /static/admin/css/base.css HTTP/1.1" 200 21544
+2025-08-19 10:39:33,439 - INFO - "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2810
+2025-08-19 10:39:33,471 - INFO - "GET /static/admin/js/theme.js HTTP/1.1" 200 1943
+2025-08-19 10:39:33,519 - INFO - "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+2025-08-19 10:40:07,614 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4326
+2025-08-19 10:40:30,176 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4336
+2025-08-19 10:40:34,497 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4336
+2025-08-19 10:45:03,502 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-08-19 10:45:03,502 - INFO - Using app name: emmysvideo-fb564
+2025-08-19 10:45:03,503 - INFO - Loading Firebase credentials...
+2025-08-19 10:45:03,568 - INFO - Credentials loaded successfully
+2025-08-19 10:45:03,569 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-08-19 10:45:03,570 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-08-19 10:45:03,570 - INFO - Firebase initialization completed successfully
+2025-08-19 10:47:30,664 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-08-19 10:47:30,665 - INFO - Using app name: emmysvideo-fb564
+2025-08-19 10:47:30,666 - INFO - Loading Firebase credentials...
+2025-08-19 10:47:30,727 - INFO - Credentials loaded successfully
+2025-08-19 10:47:30,728 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-08-19 10:47:30,728 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-08-19 10:47:30,729 - INFO - Firebase initialization completed successfully
+2025-08-19 10:47:46,612 - INFO - "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+2025-08-19 10:47:46,750 - INFO - "GET /admin/ HTTP/1.1" 200 14905
+2025-08-19 10:47:46,865 - INFO - "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+2025-08-19 10:47:46,906 - INFO - "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+2025-08-19 10:47:46,907 - INFO - "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+2025-08-19 10:50:20,293 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 30108
+2025-08-19 10:50:20,358 - INFO - "GET /static/admin/css/changelists.css HTTP/1.1" 200 6811
+2025-08-19 10:50:20,395 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-08-19 10:50:20,420 - INFO - "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+2025-08-19 10:50:20,424 - INFO - "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9042
+2025-08-19 10:50:20,469 - INFO - "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+2025-08-19 10:50:20,476 - INFO - "GET /static/admin/js/actions.js HTTP/1.1" 200 8067
+2025-08-19 10:50:20,494 - INFO - "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+2025-08-19 10:50:20,509 - INFO - "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+2025-08-19 10:50:20,570 - INFO - "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+2025-08-19 10:50:20,611 - INFO - "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+2025-08-19 10:50:20,627 - INFO - "GET /static/admin/img/icon-no.svg HTTP/1.1" 200 560
+2025-08-19 10:50:20,711 - INFO - "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+2025-08-19 10:50:20,742 - INFO - "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+2025-08-19 10:50:20,795 - INFO - "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+2025-08-19 10:50:20,850 - INFO - "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+2025-08-19 10:50:20,856 - INFO - "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+2025-08-19 10:50:20,868 - INFO - "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 581
+2025-08-19 10:50:31,101 - INFO - "GET /admin/user/user/3/change/ HTTP/1.1" 200 26788
+2025-08-19 10:50:31,154 - INFO - "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+2025-08-19 10:50:31,155 - INFO - "GET /static/admin/css/forms.css HTTP/1.1" 200 9090
+2025-08-19 10:50:31,174 - INFO - "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+2025-08-19 10:50:31,184 - INFO - "GET /static/admin/js/collapse.js HTTP/1.1" 200 1803
+2025-08-19 10:50:31,209 - INFO - "GET /static/admin/img/icon-deletelink.svg HTTP/1.1" 200 392
+2025-08-19 10:50:31,217 - INFO - "GET /static/admin/css/widgets.css HTTP/1.1" 200 11800
+2025-08-19 10:50:31,261 - INFO - "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+2025-08-19 10:51:50,295 - INFO - "GET /admin/user/user/ HTTP/1.1" 200 30108
+2025-08-19 10:56:59,409 - INFO - E:\All_Repo\1880\tour_backend\videomgmt\views.py changed, reloading.
+2025-08-19 10:57:02,324 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-08-19 10:57:02,325 - INFO - Using app name: emmysvideo-fb564
+2025-08-19 10:57:02,326 - INFO - Loading Firebase credentials...
+2025-08-19 10:57:02,389 - INFO - Credentials loaded successfully
+2025-08-19 10:57:02,390 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-08-19 10:57:02,390 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-08-19 10:57:02,391 - INFO - Firebase initialization completed successfully
+2025-08-19 10:57:08,588 - INFO - E:\All_Repo\1880\tour_backend\videomgmt\views.py changed, reloading.
+2025-08-19 10:57:12,081 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-08-19 10:57:12,081 - INFO - Using app name: emmysvideo-fb564
+2025-08-19 10:57:12,082 - INFO - Loading Firebase credentials...
+2025-08-19 10:57:12,156 - INFO - Credentials loaded successfully
+2025-08-19 10:57:12,157 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-08-19 10:57:12,157 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-08-19 10:57:12,158 - INFO - Firebase initialization completed successfully
+2025-08-19 10:57:18,148 - INFO - E:\All_Repo\1880\tour_backend\videomgmt\views.py changed, reloading.
+2025-08-19 10:57:21,406 - INFO - Attempting to initialize Firebase with credentials from: E:\All_Repo\1880\tour_backend\emmysvideo-fb564-firebase-adminsdk-tk4rs-f56faea058.json
+2025-08-19 10:57:21,407 - INFO - Using app name: emmysvideo-fb564
+2025-08-19 10:57:21,407 - INFO - Loading Firebase credentials...
+2025-08-19 10:57:21,463 - INFO - Credentials loaded successfully
+2025-08-19 10:57:21,464 - INFO - Initializing Firebase app with name: emmysvideo-fb564
+2025-08-19 10:57:21,465 - INFO - Firebase initialized successfully with app name: emmysvideo-fb564
+2025-08-19 10:57:21,466 - INFO - Firebase initialization completed successfully

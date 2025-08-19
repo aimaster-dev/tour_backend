@@ -654,7 +654,7 @@ class SnapShotAddAPIView(APIView):
             logging.info(f"Received {len(images)} images for processing")
 
             # Check if user has unlimited access
-            if not client.has_free_recording_access() or (venue and not venue.is_test):
+            if not client.has_free_recording_access() and (not venue or not venue.is_test):
                 logging.info(
                     f"Checking snapshot limits for user {client.username}")
                 # Check the user's remaining snapshot count
@@ -680,7 +680,7 @@ class SnapShotAddAPIView(APIView):
             logging.info("Snapshot records created successfully")
 
             # Decrement the snapshot count only if user doesn't have unlimited access
-            if not client.has_free_recording_access() or (venue and not venue.is_test):
+            if not client.has_free_recording_access() and (not venue or not venue.is_test):
                 payment_log.snapshotremain -= len(images)
                 payment_log.save()
                 remaining_snapshots = payment_log.snapshotremain

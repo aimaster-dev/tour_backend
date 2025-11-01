@@ -673,11 +673,11 @@ class SnapShotAddAPIView(APIView):
                 logging.info(f"Processing image: {image.name}")
                 snapshot = SnapShot(
                     client=client, venue_id=venue_id, image_path=image)
+                snapshot.save()  # Save individually to properly handle file upload
                 snapshots.append(snapshot)
+                logging.info(f"Saved snapshot with path: {snapshot.image_path}")
 
-            logging.info(f"Creating {len(snapshots)} snapshot records")
-            SnapShot.objects.bulk_create(snapshots)
-            logging.info("Snapshot records created successfully")
+            logging.info(f"Created {len(snapshots)} snapshot records successfully")
 
             # Decrement the snapshot count only if user doesn't have unlimited access
             if not client.has_free_recording_access() and (not venue or not venue.is_test):

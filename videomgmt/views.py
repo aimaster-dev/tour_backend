@@ -653,8 +653,13 @@ class SnapShotAddAPIView(APIView):
                                 status=status.HTTP_400_BAD_REQUEST)
             logging.info(f"Received {len(images)} images for processing")
 
-            # Check if user has unlimited access
-            if not client.has_free_recording_access() and (not venue or not venue.is_test):
+            # Check if user has unlimited access (matches VideoAddAPIView pattern)
+            # Test venue users should never have limits checked or decremented
+            if client.has_free_recording_access() or (venue and venue.is_test):
+                logging.info(
+                    f"User {client.username} has unlimited access - no limit check or decrement needed")
+                remaining_snapshots = "Unlimited"
+            else:
                 logging.info(
                     f"Checking snapshot limits for user {client.username}")
                 # Check the user's remaining snapshot count
@@ -680,15 +685,16 @@ class SnapShotAddAPIView(APIView):
             logging.info(f"Created {len(snapshots)} snapshot records successfully")
 
             # Decrement the snapshot count only if user doesn't have unlimited access
-            if not client.has_free_recording_access() and (not venue or not venue.is_test):
+            # Test venue users should never have counts decremented
+            if not (client.has_free_recording_access() or (venue and venue.is_test)):
+                # payment_log is already defined in the else block above
                 payment_log.snapshotremain -= len(images)
                 payment_log.save()
                 remaining_snapshots = payment_log.snapshotremain
                 logging.info(
                     f"Updated remaining snapshots count to {remaining_snapshots}")
             else:
-                remaining_snapshots = "Unlimited"
-                logging.info("User has unlimited snapshot access")
+                logging.info("User has unlimited snapshot access - count not decremented")
 
             # Send email with snapshots
             self.send_snapshot_email(client, snapshots, remaining_snapshots)

@@ -13,3 +13,4 @@
 /tourvideoproject/settings.py
 /venv/
 **/*.log
+video_processing.log

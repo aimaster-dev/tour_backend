@@ -600,7 +600,7 @@ class SnapShotAddAPIView(APIView):
             snapshot_data = []
             for snapshot in snapshots:
                 snapshot_data.append({
-                    'image_url': f"https://api.dwareapps.com/media/{snapshot.image_path}"
+                    'image_url': f"https://api.dwareapps.com/media/{snapshot.image_path.name}"
                 })
             logging.info(
                 f"Prepared {len(snapshot_data)} snapshot URLs for email")

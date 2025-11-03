@@ -74,8 +74,8 @@ class IPWebCam(object):
 
 
 class LiveWebCam(object):
-	def __init__(self, rtsp_url):
-		self.url = cv2.VideoCapture(rtsp_url)
+	def __init__(self, stream_url):
+		self.url = cv2.VideoCapture(stream_url)
 
 	def __del__(self):
 		cv2.destroyAllWindows()

@@ -7,7 +7,7 @@ from user.models import User
 class Camera(models.Model):
     camera_name = models.CharField(max_length=255, blank=True, default='')
     isp = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    rtsp_url = models.CharField(max_length=255)
+    stream_url = models.CharField(max_length=255)
     output_url = models.CharField(max_length=255)
     venue = models.ForeignKey(
         Venue, null=True, blank=True, on_delete=models.CASCADE)
@@ -19,7 +19,7 @@ class Camera(models.Model):
         db_table = 'camera_tbl'
         constraints = [
             models.UniqueConstraint(
-                fields=['rtsp_url', 'isp'], name='unique_rtsp_url_per_isp'
+                fields=['stream_url', 'isp'], name='unique_stream_url_per_isp'
             )
         ]
 

@@ -592,15 +592,58 @@ class SnapShotAddAPIView(APIView):
 
     def send_snapshot_email(self, user, snapshots, remaining_snapshots):
         try:
+            from django.conf import settings
+            from django.core.mail import get_connection
+            
             logging.info(
                 f"Starting email sending process for user {user.email}")
+            
+            # Log email configuration being used
+            logging.info("=" * 60)
+            logging.info("EMAIL CONFIGURATION DEBUG:")
+            logging.info(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
+            logging.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+            logging.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+            logging.info(f"EMAIL_USE_SSL: {getattr(settings, 'EMAIL_USE_SSL', False)}")
+            logging.info(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
+            logging.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+            # Mask password for security (show first 4 and last 4 chars)
+            password_display = settings.EMAIL_HOST_PASSWORD
+            if password_display and len(password_display) > 8:
+                masked_password = password_display[:4] + "*" * (len(password_display) - 8) + password_display[-4:]
+            else:
+                masked_password = "*" * len(password_display) if password_display else "EMPTY"
+            logging.info(f"EMAIL_HOST_PASSWORD: {masked_password} (length: {len(password_display) if password_display else 0})")
+            logging.info(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+            logging.info("=" * 60)
+            
+            # Test connection with credentials
+            try:
+                connection = get_connection()
+                logging.info(f"Email connection backend: {type(connection).__name__}")
+                logging.info(f"Connection username: {getattr(connection, 'username', 'N/A')}")
+            except Exception as conn_e:
+                logging.warning(f"Could not get connection details: {str(conn_e)}")
+            
             subject = 'Your Snapshot Have Been Created'
 
             # Prepare snapshot URLs
             snapshot_data = []
+            # Get BASE_URL from settings (configured in settings.py)
+            base_url = settings.BASE_URL.rstrip('/')
+            
+            logging.info(f"Using BASE_URL: {base_url} for snapshot image URLs")
             for snapshot in snapshots:
+                # Get the image path - image_path.name returns relative path like "images/filename.jpg"
+                image_path = snapshot.image_path.name
+                # Ensure image_path doesn't start with / (to avoid double slashes)
+                if image_path.startswith('/'):
+                    image_path = image_path[1:]
+                # Construct full URL
+                image_url = f"{base_url}/media/{image_path}"
+                logging.info(f"Generated image URL: {image_url} (from path: {snapshot.image_path.name})")
                 snapshot_data.append({
-                    'image_url': f"https://api.dwareapps.com/media/{snapshot.image_path.name}"
+                    'image_url': image_url
                 })
             logging.info(
                 f"Prepared {len(snapshot_data)} snapshot URLs for email")
@@ -614,6 +657,7 @@ class SnapShotAddAPIView(APIView):
 
             email = EmailMessage(subject, message, to=[user.email])
             email.content_subtype = "html"
+            logging.info(f"Attempting to send email from: {settings.EMAIL_HOST_USER} to: {user.email}")
             email.send()
             logging.info(f"Successfully sent email to {user.email}")
         except Exception as e:

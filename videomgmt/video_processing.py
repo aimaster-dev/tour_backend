@@ -533,7 +533,16 @@ def process_video(video_id, user_id, original_filename, venue):
         video.video_path = final_video_relative_path
         video.status = True
         video.save()
-        video_url = "https://api.dwareapps.com/media/" + final_video_relative_path
+        
+        # Get BASE_URL from settings (configured in settings.py)
+        base_url = settings.BASE_URL.rstrip('/')
+        # Ensure video path doesn't start with / (to avoid double slashes)
+        video_path = final_video_relative_path
+        if video_path.startswith('/'):
+            video_path = video_path[1:]
+        # Construct full URL using BASE_URL from settings
+        video_url = f"{base_url}/media/{video_path}"
+        logging.info(f"Generated video URL: {video_url} (from path: {final_video_relative_path})")
         send_notification_email(user, video_url, final_video_name)
         logging.info("Video processing completed successfully")
         return 

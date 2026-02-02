@@ -204,9 +204,9 @@ class UserLoginSerializer(serializers.Serializer):
         elif user.usertype in [3]:  # Customer
             # Validate both venue and ISP
             if not user.venue and 'venue' not in data:
-                raise serializers.ValidationError("Venue selection required")
+                raise serializers.ValidationError("Venue selection required. Please select a venue to continue.")
             if not user.isp_id and 'isp' not in data:
-                raise serializers.ValidationError("ISP selection required")
+                raise serializers.ValidationError("ISP selection required. Please select an ISP associated with your venue.")
 
             # For existing users without venue/ISP
             if 'venue' in data:

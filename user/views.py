@@ -945,6 +945,31 @@ class CustomerManagementView(APIView):
                     user = serializer.save()
                     user.is_activate = True
                     user.status = True
+                    
+                    # Auto-assign ISP if not provided and venue is set
+                    if not user.isp and user.venue:
+                        venue_id = user.venue[0] if isinstance(user.venue, list) and user.venue else user.venue
+                        if venue_id:
+                            # Find existing ISP for this venue (manual check for reliability with JSONField)
+                            isps = User.objects.filter(usertype=2, status=True)
+                            existing_isp = None
+                            for isp in isps:
+                                # Handle different venue storage formats
+                                if isinstance(isp.venue, list) and venue_id in isp.venue:
+                                    existing_isp = isp
+                                    break
+                                elif isinstance(isp.venue, int) and isp.venue == venue_id:
+                                    existing_isp = isp
+                                    break
+                            
+                            if existing_isp:
+                                # Assign existing ISP to the user
+                                user.isp = existing_isp
+                                logging.info(f"Auto-assigned existing ISP {existing_isp.id} ({existing_isp.email}) to customer {user.id}")
+                            else:
+                                # No ISP exists for this venue, log warning
+                                logging.warning(f"No ISP found for venue {venue_id}, customer {user.id} will need manual ISP assignment")
+                    
                     user.save()
 
                     # Create free trial if applicable

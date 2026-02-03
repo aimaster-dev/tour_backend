@@ -40,20 +40,19 @@ class UserRegUpdateSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         isp_id = validated_data.pop('isp_id', None)
         
-        # Create user with proper password hashing
-        user = User.objects.create_user(**validated_data)
-        user.set_password(password)
+        # Create user with proper password hashing - pass password directly to create_user
+        user = User.objects.create_user(password=password, **validated_data)
         
         # Handle ISP assignment if provided
         if isp_id:
             try:
                 isp = User.objects.get(id=isp_id, usertype=2, status=True)
                 user.isp = isp
+                user.save()
             except User.DoesNotExist:
                 # If ISP doesn't exist, continue without assignment
                 pass
         
-        user.save()
         return user
 
     def update(self, instance, validated_data):
@@ -472,10 +471,9 @@ class CustomerByISPSerializer(serializers.ModelSerializer):
         validated_data['status'] = True  # Ensure status is True
         validated_data['is_activate'] = True
         
-        # Create user with proper password hashing
+        # Create user with proper password hashing - pass password directly to create_user if provided
         if password:
-            user = User.objects.create_user(**validated_data)
-            user.save()
+            user = User.objects.create_user(password=password, **validated_data)
         else:
             user = User.objects.create(**validated_data)
         
